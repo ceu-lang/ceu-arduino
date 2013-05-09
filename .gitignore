@@ -1,0 +1,10 @@
+ignore/
+_ceu_*
+*_m4
+*.exe
+*.swp
+*.swo
+*.a
+*.o
+*.hex
+*.elf

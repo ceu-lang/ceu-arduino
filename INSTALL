@@ -1,0 +1,7 @@
+# INSTALATION
+
+> git clone https://github.com/fsantanna/ceu-arduino
+> cd ceu-arduino
+> make CEUFILE=samples/<example>
+
+# Requires Arduino (http://arduino.cc)

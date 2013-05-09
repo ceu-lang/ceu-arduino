@@ -1,7 +1,7 @@
 INOFILE ?= poll.ino
 CEUFILE ?= samples/blink1.ceu
 
-ARDUINODIR = /opt/arduino-1.0
+ARDUINODIR = /usr/share/arduino
 BOARD = uno
 #lilypad328
 #uno

@@ -29,111 +29,111 @@ typedef uint8_t   u8;
 
 u32 old = micros();
 
-int V;
+int _ceu_arduino_V;
 
 void setup ()
 {
-#ifdef IN_PIN00
+#ifdef CEU_IN_PIN00
     pinMode( 0, INPUT);
 #endif
-#ifdef OUT_PIN00
+#ifdef CEU_OUT_PIN00
     pinMode( 0, OUTPUT);
 #endif
 
-#ifdef IN_PIN01
+#ifdef CEU_IN_PIN01
     pinMode( 1, INPUT);
 #endif
-#ifdef OUT_PIN01
+#ifdef CEU_OUT_PIN01
     pinMode( 1, OUTPUT);
 #endif
 
-#ifdef IN_PIN02
+#ifdef CEU_IN_PIN02
     pinMode( 2, INPUT);
 #endif
-#ifdef OUT_PIN02
+#ifdef CEU_OUT_PIN02
     pinMode( 2, OUTPUT);
 #endif
 
-#ifdef IN_PIN03
+#ifdef CEU_IN_PIN03
     pinMode( 3, INPUT);
 #endif
-#ifdef OUT_PIN03
+#ifdef CEU_OUT_PIN03
     pinMode( 3, OUTPUT);
 #endif
 
-#ifdef IN_PIN04
+#ifdef CEU_IN_PIN04
     pinMode( 4, INPUT);
 #endif
-#ifdef OUT_PIN04
+#ifdef CEU_OUT_PIN04
     pinMode( 4, OUTPUT);
 #endif
 
-#ifdef IN_PIN05
+#ifdef CEU_IN_PIN05
     pinMode( 5, INPUT);
 #endif
-#ifdef OUT_PIN05
+#ifdef CEU_OUT_PIN05
     pinMode( 5, OUTPUT);
 #endif
 
-#ifdef IN_PIN06
+#ifdef CEU_IN_PIN06
     pinMode( 6, INPUT);
 #endif
-#ifdef OUT_PIN06
+#ifdef CEU_OUT_PIN06
     pinMode( 6, OUTPUT);
 #endif
 
-#ifdef IN_PIN07
+#ifdef CEU_IN_PIN07
     pinMode( 7, INPUT);
 #endif
-#ifdef OUT_PIN07
+#ifdef CEU_OUT_PIN07
     pinMode( 7, OUTPUT);
 #endif
 
-#ifdef IN_PIN08
+#ifdef CEU_IN_PIN08
     pinMode( 8, INPUT);
 #endif
-#ifdef OUT_PIN08
+#ifdef CEU_OUT_PIN08
     pinMode( 8, OUTPUT);
 #endif
 
-#ifdef IN_PIN09
+#ifdef CEU_IN_PIN09
     pinMode( 9, INPUT);
 #endif
-#ifdef OUT_PIN09
+#ifdef CEU_OUT_PIN09
     pinMode( 9, OUTPUT);
 #endif
 
-#ifdef IN_PIN10
+#ifdef CEU_IN_PIN10
     pinMode(10, INPUT);
 #endif
-#ifdef OUT_PIN10
+#ifdef CEU_OUT_PIN10
     pinMode(10, OUTPUT);
 #endif
 
-#ifdef IN_PIN11
+#ifdef CEU_IN_PIN11
     pinMode(11, INPUT);
 #endif
-#ifdef OUT_PIN11
+#ifdef CEU_OUT_PIN11
     pinMode(11, OUTPUT);
 #endif
 
-#ifdef IN_PIN12
+#ifdef CEU_IN_PIN12
     pinMode(12, INPUT);
 #endif
-#ifdef OUT_PIN12
+#ifdef CEU_OUT_PIN12
     pinMode(12, OUTPUT);
 #endif
 
-#ifdef IN_PIN13
+#ifdef CEU_IN_PIN13
     pinMode(13, INPUT);
 #endif
-#ifdef OUT_PIN13
+#ifdef CEU_OUT_PIN13
     pinMode(13, OUTPUT);
 #endif
 
     ceu_go_init();
-#ifdef IN_START
-    ceu_go_event(IN_START, NULL);
+#ifdef CEU_IN_START
+    ceu_go_event(CEU_IN_START, NULL);
 #endif
 }
 
@@ -141,122 +141,122 @@ void loop()
 {
     int tmp;
 
-#ifdef IN_PIN00
+#ifdef CEU_IN_PIN00
     tmp = digitalRead(0);
-    if (bitRead(V,0) != tmp) {
-        bitWrite(V,0,tmp);
-        ceu_go_event(IN_PIN00, (void*)tmp);
+    if (bitRead(_ceu_arduino_V,0) != tmp) {
+        bitWrite(_ceu_arduino_V,0,tmp);
+        ceu_go_event(CEU_IN_PIN00, (void*)tmp);
     }
 #endif
 
-#ifdef IN_PIN01
+#ifdef CEU_IN_PIN01
     tmp = digitalRead(1);
-    if (bitRead(V,1) != tmp) {
-        bitWrite(V,1,tmp);
-        ceu_go_event(IN_PIN01, (void*)tmp);
+    if (bitRead(_ceu_arduino_V,1) != tmp) {
+        bitWrite(_ceu_arduino_V,1,tmp);
+        ceu_go_event(CEU_IN_PIN01, (void*)tmp);
     }
 #endif
 
-#ifdef IN_PIN02
+#ifdef CEU_IN_PIN02
     tmp = digitalRead(2);
-    if (bitRead(V,2) != tmp) {
-        bitWrite(V,2,tmp);
-        ceu_go_event(IN_PIN02, (void*)tmp);
+    if (bitRead(_ceu_arduino_V,2) != tmp) {
+        bitWrite(_ceu_arduino_V,2,tmp);
+        ceu_go_event(CEU_IN_PIN02, (void*)tmp);
     }
 #endif
 
-#ifdef IN_PIN03
+#ifdef CEU_IN_PIN03
     tmp = digitalRead(3);
-    if (bitRead(V,3) != tmp) {
-        bitWrite(V,3,tmp);
-        ceu_go_event(IN_PIN03, (void*)tmp);
+    if (bitRead(_ceu_arduino_V,3) != tmp) {
+        bitWrite(_ceu_arduino_V,3,tmp);
+        ceu_go_event(CEU_IN_PIN03, (void*)tmp);
     }
 #endif
 
-#ifdef IN_PIN04
+#ifdef CEU_IN_PIN04
     tmp = digitalRead(4);
-    if (bitRead(V,4) != tmp) {
-        bitWrite(V,4,tmp);
-        ceu_go_event(IN_PIN04, (void*)tmp);
+    if (bitRead(_ceu_arduino_V,4) != tmp) {
+        bitWrite(_ceu_arduino_V,4,tmp);
+        ceu_go_event(CEU_IN_PIN04, (void*)tmp);
     }
 #endif
 
-#ifdef IN_PIN05
+#ifdef CEU_IN_PIN05
     tmp = digitalRead(5);
-    if (bitRead(V,5) != tmp) {
-        bitWrite(V,5,tmp);
-        ceu_go_event(IN_PIN05, (void*)tmp);
+    if (bitRead(_ceu_arduino_V,5) != tmp) {
+        bitWrite(_ceu_arduino_V,5,tmp);
+        ceu_go_event(CEU_IN_PIN05, (void*)tmp);
     }
 #endif
 
-#ifdef IN_PIN06
+#ifdef CEU_IN_PIN06
     tmp = digitalRead(6);
-    if (bitRead(V,6) != tmp) {
-        bitWrite(V,6,tmp);
-        ceu_go_event(IN_PIN06, (void*)tmp);
+    if (bitRead(_ceu_arduino_V,6) != tmp) {
+        bitWrite(_ceu_arduino_V,6,tmp);
+        ceu_go_event(CEU_IN_PIN06, (void*)tmp);
     }
 #endif
 
-#ifdef IN_PIN07
+#ifdef CEU_IN_PIN07
     tmp = digitalRead(7);
-    if (bitRead(V,7) != tmp) {
-        bitWrite(V,7,tmp);
-        ceu_go_event(IN_PIN07, (void*)tmp);
+    if (bitRead(_ceu_arduino_V,7) != tmp) {
+        bitWrite(_ceu_arduino_V,7,tmp);
+        ceu_go_event(CEU_IN_PIN07, (void*)tmp);
     }
 #endif
 
-#ifdef IN_PIN08
+#ifdef CEU_IN_PIN08
     tmp = digitalRead(8);
-    if (bitRead(V,8) != tmp) {
-        bitWrite(V,8,tmp);
-        ceu_go_event(IN_PIN08, (void*)tmp);
+    if (bitRead(_ceu_arduino_V,8) != tmp) {
+        bitWrite(_ceu_arduino_V,8,tmp);
+        ceu_go_event(CEU_IN_PIN08, (void*)tmp);
     }
 #endif
 
-#ifdef IN_PIN09
+#ifdef CEU_IN_PIN09
     tmp = digitalRead(9);
-    if (bitRead(V,9) != tmp) {
-        bitWrite(V,9,tmp);
-        ceu_go_event(IN_PIN09, (void*)tmp);
+    if (bitRead(_ceu_arduino_V,9) != tmp) {
+        bitWrite(_ceu_arduino_V,9,tmp);
+        ceu_go_event(CEU_IN_PIN09, (void*)tmp);
     }
 #endif
 
-#ifdef IN_PIN10
+#ifdef CEU_IN_PIN10
     tmp = digitalRead(10);
-    if (bitRead(V,10) != tmp) {
-        bitWrite(V,10,tmp);
-        ceu_go_event(IN_PIN10, (void*)tmp);
+    if (bitRead(_ceu_arduino_V,10) != tmp) {
+        bitWrite(_ceu_arduino_V,10,tmp);
+        ceu_go_event(CEU_IN_PIN10, (void*)tmp);
     }
 #endif
 
-#ifdef IN_PIN11
+#ifdef CEU_IN_PIN11
     tmp = digitalRead(11);
-    if (bitRead(V,11) != tmp) {
-        bitWrite(V,11,tmp);
-        ceu_go_event(IN_PIN11, (void*)tmp);
+    if (bitRead(_ceu_arduino_V,11) != tmp) {
+        bitWrite(_ceu_arduino_V,11,tmp);
+        ceu_go_event(CEU_IN_PIN11, (void*)tmp);
     }
 #endif
 
-#ifdef IN_PIN12
+#ifdef CEU_IN_PIN12
     tmp = digitalRead(12);
-    if (bitRead(V,12) != tmp) {
-        bitWrite(V,12,tmp);
-        ceu_go_event(IN_PIN12, (void*)tmp);
+    if (bitRead(_ceu_arduino_V,12) != tmp) {
+        bitWrite(_ceu_arduino_V,12,tmp);
+        ceu_go_event(CEU_IN_PIN12, (void*)tmp);
     }
 #endif
 
-#ifdef IN_PIN13
+#ifdef CEU_IN_PIN13
     tmp = digitalRead(13);
-    if (bitRead(V,13) != tmp) {
-        bitWrite(V,13,tmp);
-        ceu_go_event(IN_PIN13, (void*)tmp);
+    if (bitRead(_ceu_arduino_V,13) != tmp) {
+        bitWrite(_ceu_arduino_V,13,tmp);
+        ceu_go_event(CEU_IN_PIN13, (void*)tmp);
     }
 #endif
 
-#ifdef IN_SERIAL
+#ifdef CEU_IN_SERIAL
     if (Serial.available() > 0) {
         char c = Serial.read();
-        ceu_go_event(IN_SERIAL, c);
+        ceu_go_event(CEU_IN_SERIAL, c);
     }
 #endif
 

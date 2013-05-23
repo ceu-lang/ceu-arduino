@@ -18,25 +18,25 @@
 
 input int KEY;
 
-C constant _KEY_NONE, _KEY_RIGHT, _KEY_UP, _KEY_DOWN,
+native constant _KEY_NONE, _KEY_RIGHT, _KEY_UP, _KEY_DOWN,
                   _KEY_LEFT, _KEY_SELECT;
 
-C _analogRead(), _map_generate(), _redraw(),
-  _MAP, _END;
-C nohold _randomSeed();
+native _analogRead(), _map_generate(), _redraw(),
+       _MAP, _END;
+native nohold _randomSeed();
 
-C _lcd_begin(), _lcd_setCursor(), _lcd_write();
-C do
+native _lcd_begin(), _lcd_setCursor(), _lcd_write();
+native do
     #define lcd_begin(a,b)     lcd.begin(a,b)
     #define lcd_setCursor(a,b) lcd.setCursor(a,b)
     #define lcd_write(a)       lcd.write(a)
 end
 
-C pure _analog2key();
+native pure _analog2key();
 
 deterministic _analogRead with _map_generate, _redraw;
 
-C do
+native do
     #include <LiquidCrystal.h>
     LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 

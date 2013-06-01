@@ -27,7 +27,7 @@ typedef uint8_t   u8;
 
 #include "_ceu_code.cceu"
 
-u32 old = micros();
+u32 old;
 
 int _ceu_arduino_V;
 
@@ -131,6 +131,7 @@ void setup ()
     pinMode(13, OUTPUT);
 #endif
 
+    old = micros();
     ceu_go_init();
 #ifdef CEU_IN_START
     ceu_go_event(CEU_IN_START, NULL);

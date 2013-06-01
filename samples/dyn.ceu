@@ -10,7 +10,7 @@ end
 class T(5) with
 do
     _V = not _V;
-    emit PIN13(_V);
+    emit PIN13 => _V;
     await 7s111ms;
 end
 

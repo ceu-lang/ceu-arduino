@@ -10,9 +10,9 @@ var int t = 500;
 
 par/or do
     loop do
-        emit PIN13(_HIGH);
+        emit PIN13 => _HIGH;
         await (t)ms;
-        emit PIN13(_LOW);
+        emit PIN13 => _LOW;
         await (t)ms;
     end
 with

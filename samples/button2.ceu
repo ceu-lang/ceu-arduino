@@ -7,9 +7,9 @@ loop do
     par/or do
         var int t = 1000;
         loop do
-            emit PIN13(_LOW);
+            emit PIN13 => _LOW;
             await (t)ms;
-            emit PIN13(_HIGH);
+            emit PIN13 => _HIGH;
             await (t)ms;
             if t >= 200 then
                 t = t - 100;

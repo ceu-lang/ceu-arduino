@@ -110,7 +110,7 @@ end
 
 _lcd_begin(16, 2);
 output int PIN10;
-emit PIN10(_LOW);
+emit PIN10 => _LOW;
 
 _randomSeed(_analogRead(12));
 
@@ -200,7 +200,7 @@ with
             key = read1;
             if key != _KEY_NONE then
                 async (read1) do
-                    emit KEY(read1);
+                    emit KEY => read1;
                 end
             end
         end

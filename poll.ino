@@ -139,7 +139,22 @@ void setup ()
 
 void loop()
 {
+#if defined(CEU_IN_PIN00) || \
+    defined(CEU_IN_PIN01) || \
+    defined(CEU_IN_PIN02) || \
+    defined(CEU_IN_PIN03) || \
+    defined(CEU_IN_PIN04) || \
+    defined(CEU_IN_PIN05) || \
+    defined(CEU_IN_PIN06) || \
+    defined(CEU_IN_PIN07) || \
+    defined(CEU_IN_PIN08) || \
+    defined(CEU_IN_PIN09) || \
+    defined(CEU_IN_PIN10) || \
+    defined(CEU_IN_PIN11) || \
+    defined(CEU_IN_PIN12) || \
+    defined(CEU_IN_PIN13)
     int tmp;
+#endif
 
 #ifdef CEU_IN_PIN00
     tmp = digitalRead(0);

@@ -14,7 +14,7 @@
  * http://www.lua.inf.puc-rio.br/~francisco/
  */
 
-@include(arduino.ceu)
+#include "arduino.ceu"
 
 input int KEY;
 
@@ -27,17 +27,17 @@ native nohold _randomSeed();
 
 native _lcd_begin(), _lcd_setCursor(), _lcd_write();
 native do
-    #define lcd_begin(a,b)     lcd.begin(a,b)
-    #define lcd_setCursor(a,b) lcd.setCursor(a,b)
-    #define lcd_write(a)       lcd.write(a)
+    ##define lcd_begin(a,b)     lcd.begin(a,b)
+    ##define lcd_setCursor(a,b) lcd.setCursor(a,b)
+    ##define lcd_write(a)       lcd.write(a)
 end
 
 native pure _analog2key();
 
-deterministic _analogRead with _map_generate, _redraw;
+safe _analogRead with _map_generate, _redraw;
 
 native do
-    #include <LiquidCrystal.h>
+    ##include <LiquidCrystal.h>
     LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 
     enum {
@@ -49,10 +49,10 @@ native do
         KEY_SELECT,
     };
 
-    #define END 22
+    ##define END 22
     char MAP[2][END] = {
-        { ' ', '|', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', '|' },
-        { ' ', '|', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', '#', ' ', '|' },
+        { ' ', '|', ' ', '*', ' ', ' ', ' ', '*', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '*', ' ', ' ', '*', ' ', ' ', '|' },
+        { ' ', '|', ' ', ' ', ' ', '*', ' ', ' ', ' ', ' ', '*', ' ', ' ', '*', ' ', ' ', '*', ' ', ' ', '*', ' ', '|' },
     };
 
     void map_generate (int n) {
@@ -60,7 +60,7 @@ native do
         for (i=3; i<END-1; i++) {
             if (random(n) < 10) {
                 int j = random(2);
-                MAP[j]  [i] = '#';
+                MAP[j]  [i] = '*';
                 MAP[1-j][i] = ' ';
             } else {
                 MAP[0][i] = ' ';
@@ -131,7 +131,7 @@ par do
             end
         else
             // restart
-            pct    = 35;    // map generator (10 out of 35 for a '#')
+            pct    = 35;    // map generator (10 out of 35 for a '*')
             dt     = 500;   // game speed (500ms/step)
             step   = 0;     // current step
             ship   = 0;     // ship position (0=up, 1=down)
@@ -148,7 +148,7 @@ par do
                     step = step + 1;
                     _redraw(step, ship, points);
 
-                    if _MAP[ship][step] == '#' then
+                    if _MAP[ship][step] == '*' then
                         return 0;           // a collision
                     end
 

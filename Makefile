@@ -13,7 +13,7 @@ CEUCFILE = _ceu_$(notdir $(CEUFILE)).cceu
 all: ceu ino _all
 
 ceu:
-	ceu $(CEUFILE) --m4
+	ceu $(CEUFILE)
 
 ino:
 	touch poll.ino async.ino

@@ -1,4 +1,4 @@
-@include(arduino.ceu)
+#include "arduino.ceu"
 
 input  int START;
 input  int PIN02;

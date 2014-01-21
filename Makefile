@@ -19,10 +19,10 @@ ino:
 	touch poll.ino async.ino
 
 clean: _clean
-	find . -name "*.exe"    | xargs rm -f
-	find . -name "*.ceu_m4" | xargs rm -f
-	find . -name "*.hex"    | xargs rm -f
-	find . -name "*.o"      | xargs rm -f
+	find . -name "*.exe"  | xargs rm -f
+	find . -name "_ceu_*" | xargs rm -f
+	find . -name "*.hex"  | xargs rm -f
+	find . -name "*.o"    | xargs rm -f
 
 include arduino.mk
 

@@ -149,11 +149,11 @@ par do
                     _redraw(step, ship, points);
 
                     if _MAP[ship][step] == '*' then
-                        return 0;           // a collision
+                        escape 0;           // a collision
                     end
 
                     if step == _END-1 then
-                        return 1;           // finish line
+                        escape 1;           // finish line
                     end
 
                     points = points + 1;

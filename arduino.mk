@@ -261,10 +261,10 @@ $(TARGET).elf: $(ARDUINOLIB) $(OBJECTS)
 	$(AVRSIZE) $@
 
 %.o: %.ino
-	$(COMPILE.cpp) -o $@ -x c++ -include $(ARDUINOSRCDIR)/Arduino.h $<
+	$(COMPILE.cpp) -x c++ -c $< -o $@ -include $(ARDUINOSRCDIR)/Arduino.h
 
 %.o: %.pde
-	$(COMPILE.cpp) -o $@ -x c++ -include $(ARDUINOSRCDIR)/Arduino.h $<
+	$(COMPILE.c) -x c -c $< -o $@ -include $(ARDUINOSRCDIR)/Arduino.h
 
 # building the arduino library
 

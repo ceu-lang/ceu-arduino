@@ -6,17 +6,19 @@ BOARD = uno
 #lilypad328
 #uno
 
-CEUCFILE = _ceu_$(notdir $(CEUFILE)).cceu
-
-.PHONY: all ceu ino clean
+.PHONY: all ceu ino clean all-os ceu-os os
 
 all: ceu ino _all
 
+all-os: os ceu-os ino _all
+
 ceu:
 	ceu $(CEUFILE)
+ceu-os:
+	ceu $(CEUFILE) --os --out-c util/_ceu_app.c --out-h util/_ceu_app.h
 
 ino:
-	touch poll.ino async.ino
+	touch poll.ino async.ino os.pde
 
 clean: _clean
 	find . -name "*.exe"  | xargs rm -f

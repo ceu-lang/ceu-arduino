@@ -4,16 +4,27 @@ end
 
 native constant _OUTPUT;
 
+input int PIN12;
 input int PIN13;
 
 var u16 pins = 0;
 
 var int v;
 
-every v=PIN13 do
-    if (pins & 1<<13) == 0 then
-        pins = pins | 1<<13;
-        _pinMode(12, _OUTPUT);
+par do
+    every v=PIN12 do
+        if (pins & 1<<12) == 0 then
+            pins = pins | 1<<12;
+            _pinMode(12, _OUTPUT);
+        end
+        _digitalWrite(12, v);
     end
-    _digitalWrite(12, v);
+with
+    every v=PIN13 do
+        if (pins & 1<<13) == 0 then
+            pins = pins | 1<<13;
+            _pinMode(13, _OUTPUT);
+        end
+        _digitalWrite(13, v);
+    end
 end

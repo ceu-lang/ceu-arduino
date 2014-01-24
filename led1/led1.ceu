@@ -1,0 +1,15 @@
+native do
+    ##include "Arduino.h"
+end
+
+output int LED;
+
+native constant _OUTPUT, _HIGH, _LOW;
+
+loop do
+    emit LED => _HIGH;
+    await 1s;
+    emit LED => _LOW;
+    await 1s;
+end
+

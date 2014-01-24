@@ -1,0 +1,19 @@
+native do
+    ##include "Arduino.h"
+end
+
+native constant _OUTPUT;
+
+input int PIN13;
+
+var u16 pins = 0;
+
+var int v;
+
+every v=PIN13 do
+    if (pins & 1<<13) == 0 then
+        pins = pins | 1<<13;
+        _pinMode(12, _OUTPUT);
+    end
+    _digitalWrite(12, v);
+end

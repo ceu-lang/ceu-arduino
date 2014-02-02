@@ -11,7 +11,7 @@ BOARD = uno
 all: ceu ino _all
 
 ceu:
-	ceu $(CEUFILE)
+	ceu $(CEUFILE) --out-c _ceu_app.src
 
 ino:
 	touch poll.ino async.ino

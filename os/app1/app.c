@@ -18,16 +18,15 @@ tceu_lnk lnk6 = { &gpio_app,2    ,  &gpio_drv,245, NULL };
 tceu_lnk lnk7 = { &gpio_drv,1    ,  &gpio_app,244, NULL };
 
 void MAIN (void) {
-	APPS           = &serial_drv;
-	serial_drv.nxt = &serial_app;
-	serial_app.nxt = &gpio_drv;
-	gpio_drv.nxt   = &gpio_app;
-
-	LNKS = &lnk1;
-	lnk1.nxt = &lnk2;
-	lnk2.nxt = &lnk3;
-	lnk3.nxt = &lnk4;
-	lnk4.nxt = &lnk5;
-	lnk5.nxt = &lnk6;
-	lnk6.nxt = &lnk7;
+	ceu_sys_app(&serial_drv);
+	ceu_sys_app(&serial_app);
+	ceu_sys_app(&gpio_drv);
+	ceu_sys_app(&gpio_app);
+	ceu_sys_link(&lnk1);
+	ceu_sys_link(&lnk2);
+	ceu_sys_link(&lnk3);
+	ceu_sys_link(&lnk4);
+	ceu_sys_link(&lnk5);
+	ceu_sys_link(&lnk6);
+	ceu_sys_link(&lnk7);
 }

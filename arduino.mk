@@ -168,7 +168,7 @@ endif
 endif
 
 # files
-OBJECTS := $(addsuffix .o, $(basename $(SOURCES)))
+OBJECTS += $(addsuffix .o, $(basename $(SOURCES)))
 ARDUINOSRCDIR := $(ARDUINODIR)/hardware/arduino/cores/arduino
 ARDUINOLIB := _arduino.a
 ARDUINOLIBTMP := _arduino.a.tmp
@@ -220,11 +220,11 @@ LINKFLAGS = -Os -Wl,--gc-sections -mmcu=$(BOARD_BUILD_MCU)
 #_______________________________________________________________________________
 #                                                                          RULES
 
-.PHONY:	_all target upload _clean boards monitor
+.PHONY:	_all _target upload _clean boards monitor
 
-_all: target upload
+_all: _target upload
 
-target: $(TARGET).hex
+_target: $(TARGET).hex
 
 upload:
 	@echo "\nUploading to board..."

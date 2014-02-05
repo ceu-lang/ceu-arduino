@@ -6,9 +6,10 @@ BOARD = uno
 #lilypad328
 #uno
 
-.PHONY: all ceu ino clean
+.PHONY: all target ceu ino clean
 
-all: ceu _all
+all:    ceu _all
+target: ceu _target
 
 ceu:
 	ceu app.ceu    	--os --verbose \

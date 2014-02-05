@@ -9,6 +9,7 @@ call SERIAL_BEGIN => 9600;
 native nohold _snprintf(), _strlen(), _strcmp();
 native do
     ##include "stdio.h"
+    ##include "string.h"
 end
 
 loop do

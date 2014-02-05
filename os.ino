@@ -1,8 +1,9 @@
-#include "ceu_os.h"
-
-extern void MAIN (void);
-extern tceu_app* APPS;
-extern tceu_lnk* LNKS;
+extern "C" {
+    #include "ceu_os.h"
+    extern void MAIN (void);
+    extern tceu_app* APPS;
+    extern tceu_lnk* LNKS;
+}
 
 u32 old;
 int dt () {
@@ -12,11 +13,14 @@ int dt () {
     return dt;
 }
 
+#include "Arduino.h"
+
 void setup ()
 {
 	MAIN();
     old = micros();
-	ceu_scheduler_static(APPS, LNKS, dt);
+
+    ceu_scheduler_static(APPS, LNKS, dt);
 	delay(10);
 }
 

@@ -1,15 +1,33 @@
-native do
-    ##include "Arduino.h"
+#include "gpio.h"
+
+output (u8 pin, u8 mode)=>void PIN_MODE;
+output (u8 pin, u8 val) =>void DIGITAL_WRITE;
+
+input (u8,int) DIGITAL_CHANGED;
+
+call PIN_MODE => (13,_OUTPUT);
+call PIN_MODE => ( 2,_INPUT);
+
+var int dt = 1000;
+
+await START;
+
+par do
+    loop do
+        var u8 pin;
+        var int v;
+        (pin, v) = await DIGITAL_CHANGED
+                      until pin == 2;
+        if dt > 100 then
+            dt = dt - 50;
+        end
+        await 200ms;
+    end
+with
+    loop do
+        call DIGITAL_WRITE => (13,_HIGH);
+        await (dt)ms;
+        call DIGITAL_WRITE => (13,_LOW);
+        await (dt)ms;
+    end
 end
-
-output int LED;
-
-native constant _OUTPUT, _HIGH, _LOW;
-
-loop do
-    emit LED => _HIGH;
-    await 1s;
-    emit LED => _LOW;
-    await 1s;
-end
-

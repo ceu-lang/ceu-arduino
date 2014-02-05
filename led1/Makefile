@@ -1,4 +1,4 @@
-INOFILE ?= ../os.pde
+INOFILE ?= ../os.ino
 CEUFILE ?= samples/blink1.ceu
 
 ARDUINODIR = /usr/share/arduino

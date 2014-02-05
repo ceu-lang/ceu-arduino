@@ -1,0 +1,25 @@
+native do
+    #include "serial.hh"
+end
+
+input (int speed)=>void SERIAL_BEGIN do
+    _serial_begin(speed);
+end
+
+input (void)=>void SERIAL_END do
+    _serial_end();
+end
+
+input (char* buf, int len)=>void SERIAL_WRITE do
+    _serial_write(buf, len);
+end
+
+output int SERIAL_READ;
+
+async do
+    loop do
+        if _serial_if() and _serial_available() then
+            emit SERIAL_READ => _serial_read();
+        end
+    end
+end

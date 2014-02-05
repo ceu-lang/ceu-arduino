@@ -1,5 +1,5 @@
 INOFILE ?= ../os.ino
-CEUFILE ?= samples/blink1.ceu
+INCLUDES += -I ../
 
 ARDUINODIR = /usr/share/arduino
 BOARD = uno
@@ -8,20 +8,19 @@ BOARD = uno
 
 .PHONY: all ceu ino clean
 
-all: ceu ino _all
+all: ceu _all
 
 ceu:
-	ceu led1.ceu --os --verbose \
-					--out-c _ceu_led1.c \
-					--out-h _ceu_led1.h \
-					--out-v app_led1
-	ceu gpio.ceu --os --verbose \
+	ceu app.ceu    	--os --verbose \
+					--out-c _ceu_app.c \
+					--out-h _ceu_app.h \
+					--out-v app \
+					--cpp-args "$(INCLUDES)"
+	ceu gpio.ceu 	--os --verbose \
 					--out-c _ceu_gpio.c \
 					--out-h _ceu_gpio.h \
-					--out-v drv_gpio
-
-ino:
-	touch os.pde
+					--out-v drv \
+					--cpp-args "$(INCLUDES)"
 
 clean: _clean
 	find . -name "*.exe"  | xargs rm -f
@@ -29,7 +28,10 @@ clean: _clean
 	find . -name "*.hex"  | xargs rm -f
 	find . -name "*.o"    | xargs rm -f
 
-include ../arduino.mk
+SOURCES  += $(wildcard $(addprefix ../, *.c *.cc *.cpp))
+
+include ../../arduino.mk
 
 CPPFLAGS += -Wno-pointer-arith
 CPPFLAGS += -DCEU_OS
+CPPFLAGS += $(INCLUDES)

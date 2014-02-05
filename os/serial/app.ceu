@@ -1,0 +1,33 @@
+output (int)      =>void SERIAL_BEGIN;
+output (void)     =>void SERIAL_END;
+output (char*,int)=>void SERIAL_WRITE;
+
+input int SERIAL_READ;
+
+call SERIAL_BEGIN => 9600;
+
+native nohold _snprintf(), _strlen(), _strcmp();
+native do
+    ##include "stdio.h"
+end
+
+loop do
+    var char[22] str;
+    loop i, 20 do
+        var char v = await SERIAL_READ;
+        str[i] = v;
+        if v == '\n' then
+            str[i+1] = '\0';
+            break;
+        end
+    end
+    str[20] = '\n';
+    str[21] = '\0';
+
+    call SERIAL_WRITE => (str, _strlen(str));
+    if _strcmp(str, "end") == 0 then
+        break;
+    end
+end
+
+call SERIAL_END;

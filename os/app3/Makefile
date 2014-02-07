@@ -31,10 +31,10 @@ ceu:
 					--out-h _ceu_shell.h \
 					--out-v shell \
 					--cpp-args "$(INCLUDES)"
-	ceu tst.ceu  	--os --verbose \
+	ceu app.ceu  	--os --verbose \
 					--out-c _ceu_tst.c \
 					--out-h _ceu_tst.h \
-					--out-v tst \
+					--out-v app \
 					--cpp-args "$(INCLUDES)"
 
 clean: _clean

@@ -1,6 +1,10 @@
 INOFILE ?= ../os.ino
 INCLUDES += -I ../ -I ../gpio/
 
+ifndef TST
+$(error missing test file)
+endif
+
 ARDUINOSUB = Microduino
 #BOARD = uno
 BOARD = 644pa16m
@@ -31,10 +35,10 @@ ceu:
 					--out-h _ceu_shell.h \
 					--out-v shell \
 					--cpp-args "$(INCLUDES)"
-	ceu app.ceu  	--os --verbose \
+	ceu $(TST)  	--os --verbose \
 					--out-c _ceu_tst.c \
 					--out-h _ceu_tst.h \
-					--out-v app \
+					--out-v tst \
 					--cpp-args "$(INCLUDES)"
 
 clean: _clean

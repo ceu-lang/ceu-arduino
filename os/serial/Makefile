@@ -13,10 +13,10 @@ all:    ceu _all
 target: ceu _target
 
 ceu:
-	ceu app.ceu    	--os --verbose \
-					--out-c _ceu_app.c \
-					--out-h _ceu_app.h \
-					--out-v app \
+	ceu tst.ceu    	--os --verbose \
+					--out-c _ceu_tst.c \
+					--out-h _ceu_tst.h \
+					--out-v tst \
 					--cpp-args "$(INCLUDES)"
 	ceu serial.ceu 	--os --verbose \
 					--out-c _ceu_serial.c \

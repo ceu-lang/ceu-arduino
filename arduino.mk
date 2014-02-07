@@ -120,12 +120,11 @@
 #
 
 # The full path to the arduino software, from arduino.cc
-ifndef ARDUINODIR
-ARDUINODIR := $(wildcard ~/opt/arduino)
-endif
+ARDUINODIR ?= /opt/arduino
+ARDUINOSUB ?= arduino
 
 # check arduino software
-ifeq ($(wildcard $(ARDUINODIR)/hardware/arduino/boards.txt), )
+ifeq ($(wildcard $(ARDUINODIR)/hardware/$(ARDUINOSUB)/boards.txt), )
 $(error ARDUINODIR is not set correctly; arduino software not found)
 endif
 
@@ -169,7 +168,7 @@ endif
 
 # files
 OBJECTS += $(addsuffix .o, $(basename $(SOURCES)))
-ARDUINOSRCDIR := $(ARDUINODIR)/hardware/arduino/cores/arduino
+ARDUINOSRCDIR := $(ARDUINODIR)/hardware/$(ARDUINOSUB)/cores/arduino
 ARDUINOLIB := _arduino.a
 ARDUINOLIBTMP := _arduino.a.tmp
 ARDUINOLIBOBJS := $(patsubst %, $(ARDUINOLIBTMP)/%.o, $(basename $(notdir \
@@ -179,7 +178,7 @@ ARDUINOLIBOBJS += $(foreach lib, $(LIBRARIES), \
 	$(wildcard $(addprefix $(ARDUINODIR)/libraries/$(lib)/, *.c *.cpp))))))
 
 # obtain board parameters from the arduino boards.txt file
-BOARDS_FILE := $(ARDUINODIR)/hardware/arduino/boards.txt
+BOARDS_FILE := $(ARDUINODIR)/hardware/$(ARDUINOSUB)/boards.txt
 BOARD_BUILD_MCU := \
 	$(shell sed -ne "s/$(BOARD).build.mcu=\(.*\)/\1/p" $(BOARDS_FILE))
 BOARD_BUILD_FCPU := \
@@ -192,20 +191,20 @@ BOARD_UPLOAD_PROTOCOL := \
 	$(shell sed -ne "s/$(BOARD).upload.protocol=\(.*\)/\1/p" $(BOARDS_FILE))
 
 # software
-CC := avr-gcc
-CXX := avr-g++
-LD := avr-ld
-AR := avr-ar
-OBJCOPY := avr-objcopy
+CC := $(ARDUINODIR)/hardware/tools/avr/bin/avr-gcc
+CXX := $(ARDUINODIR)/hardware/tools/avr/bin/avr-g++
+LD := $(ARDUINODIR)/hardware/tools/avr/bin/avr-ld
+AR := $(ARDUINODIR)/hardware/tools/avr/bin/avr-ar
+OBJCOPY := $(ARDUINODIR)/hardware/tools/avr/bin/avr-objcopy
 AVRDUDE := avrdude
-AVRSIZE := avr-size
+AVRSIZE := $(ARDUINODIR)/hardware/tools/avr/bin/avr-size
 
 # flags
 CPPFLAGS = -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections
 CPPFLAGS += -fno-strict-aliasing      # required for accessing VARS
 CPPFLAGS += -mmcu=$(BOARD_BUILD_MCU) -DF_CPU=$(BOARD_BUILD_FCPU)
 CPPFLAGS += -I. -Iutil -Iutility -I$(ARDUINOSRCDIR)
-CPPFLAGS += -I$(ARDUINODIR)/hardware/arduino/variants/$(BOARD_BUILD_VARIANT)/
+CPPFLAGS += -I$(ARDUINODIR)/hardware/$(ARDUINOSUB)/variants/$(BOARD_BUILD_VARIANT)/
 CPPFLAGS += $(addprefix -I$(ARDUINODIR)/libraries/, $(LIBRARIES))
 CPPFLAGS += $(patsubst %, -I$(ARDUINODIR)/libraries/%/utility, $(LIBRARIES))
 #AVRDUDEFLAGS = -C $(ARDUINODIR)/hardware/tools/avrdude.conf -DV

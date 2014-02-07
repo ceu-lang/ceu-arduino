@@ -1,8 +1,9 @@
 INOFILE ?= ../os.ino
 INCLUDES += -I ../
 
-ARDUINODIR = /usr/share/arduino
-BOARD = uno
+ARDUINOSUB = Microduino
+#BOARD = uno
+BOARD = 644pa16m
 #lilypad328
 #uno
 

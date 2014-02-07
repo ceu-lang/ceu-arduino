@@ -16,6 +16,8 @@ end
 
 output int SERIAL_READ;
 
+// request SERIAL_READLINE
+
 async do
     loop do
         if _serial_if() and _serial_available() then

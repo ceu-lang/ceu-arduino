@@ -10,7 +10,7 @@ call PIN_MODE => ( 2,_INPUT);
 
 var int dt = 1000;
 
-await START;
+await OS_START;
 
 par do
     loop do

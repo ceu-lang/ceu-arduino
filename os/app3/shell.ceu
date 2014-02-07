@@ -1,0 +1,40 @@
+native nohold _ceu_sys_start(), _ceu_sys_stop();
+        // TODO: wrong!
+native do
+    ##include <stdio.h>
+    ##include <string.h>
+end
+
+var void** apps = null;
+var int    apps_n = 0;
+
+input (hold void** apps, int n)=>void APPS do
+    this.apps = apps;
+    this.apps_n = n;
+end
+
+input (char* buf, int n)=>void COMMAND do
+    var char[15] pre;
+    var int      pid;
+
+    var int ret = _sscanf(buf, "%10s %d\n", pre, &pid);
+
+    if ret == 0 then
+        _snprintf(buf, n, "invalid command");
+        return;
+    end
+
+    if pid >= this.apps_n then
+        _snprintf(buf, n, "invalid pid");
+        return;
+    end
+
+    if _strcmp(pre,"start") == 0 then
+        _ceu_sys_start(this.apps[pid]);
+    else/if _strcmp(pre,"stop") == 0 then
+        _ceu_sys_stop(this.apps[pid]);
+    end
+    _snprintf(buf, n, "ok");
+end
+
+await FOREVER;

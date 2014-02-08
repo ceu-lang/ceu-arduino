@@ -6,7 +6,7 @@ output (u8 pin, u8 val) =>void DIGITAL_WRITE;
 call PIN_MODE => (11,_OUTPUT);
 
 finalize with
-	call DIGITAL_WRITE => (12,_LOW);
+	call DIGITAL_WRITE => (11,_LOW);
 end
 
 loop do

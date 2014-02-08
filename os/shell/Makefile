@@ -37,7 +37,7 @@ ceu:
 					--out-h _ceu_shell.h \
 					--out-v shell \
 					--cpp-args "$(INCLUDES)"
-	ceu $(TST)  	--os --verbose \
+	ceu $(TST).ceu 	--os --verbose \
 					--out-c _ceu_tst.c \
 					--out-h _ceu_tst.h \
 					--out-v tst \

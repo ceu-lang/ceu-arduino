@@ -10,6 +10,8 @@ input int SERIAL_READ;
 
 native nohold _strlen(), _strncat();
 native do
+    ##include <string.h>
+
     extern tceu_app gpio;
     extern tceu_app app1;
     extern tceu_app app2;
@@ -17,7 +19,7 @@ native do
 	extern tceu_app serial;
 	extern tceu_app tst;
 
-    void* APPS[] = { &app1, &app2 };
+    void* APPS[] = { &gpio, &app1, &app2 };
 
     tceu_lnk lnk1 = { &app1,1   ,  &gpio,245, NULL };
     tceu_lnk lnk2 = { &app1,2   ,  &gpio,244, NULL };
@@ -93,7 +95,7 @@ native do
     }
 end
 
-call APPS => (_APPS, 2);
+call APPS => (_APPS, 3);
 
 call SERIAL_BEGIN => 9600;
 

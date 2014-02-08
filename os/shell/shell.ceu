@@ -19,7 +19,7 @@ input (char* buf, int n)=>void COMMAND do
 
     var int ret = _sscanf(buf, "%10s %d\n", pre, &pid);
 
-    if ret == 0 then
+    if ret != 2 then
         _snprintf(buf, n, "invalid command");
         return;
     end

@@ -17,7 +17,9 @@ all: ceu other _all
 
 other:
 	cd ../gpio/   && make target
-	avr-objcopy ../gpio/_ceu_gpio.o --redefine-sym drv=gpio
+	cd ../serial/ && make target
+	avr-objcopy ../gpio/_ceu_gpio.o     --redefine-sym drv=gpio
+	avr-objcopy ../serial/_ceu_serial.o --redefine-sym drv=serial
 
 ceu:
 	ceu app1.ceu   	--os --verbose \
@@ -48,7 +50,8 @@ clean: _clean
 	find . -name "*.o"    | xargs rm -f
 
 SOURCES  += $(wildcard $(addprefix ../, *.c *.cc *.cpp))
-OBJECTS  += ../gpio/_ceu_gpio.o
+OBJECTS  += ../serial/_ceu_serial.o ../serial/serial.o \
+			../gpio/_ceu_gpio.o
 
 include ../../arduino.mk
 

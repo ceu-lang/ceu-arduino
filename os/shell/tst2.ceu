@@ -34,6 +34,26 @@ native do
 	tceu_lnk lnk9  = { &tst,5    ,  &serial,243, NULL };
 	tceu_lnk lnk10 = { &serial,1 ,  &tst,240, NULL };
 
+    void MAIN (void) {
+        ceu_sys_link(&lnk1);
+        ceu_sys_link(&lnk2);
+        ceu_sys_link(&lnk3);
+        ceu_sys_link(&lnk4);
+        ceu_sys_start(&gpio);
+
+        ceu_sys_link(&lnk5);
+        ceu_sys_link(&lnk6);
+        ceu_sys_start(&shell);
+
+		ceu_sys_link(&lnk7);
+        ceu_sys_link(&lnk8);
+		ceu_sys_link(&lnk9);
+		ceu_sys_link(&lnk10);
+		ceu_sys_start(&serial);
+
+		ceu_sys_start(&tst);
+    }
+
 /*
 	// APP 1
 	#define CEU_IN_OS_STOP 246
@@ -74,25 +94,6 @@ native do
 
 */
 
-    void MAIN (void) {
-        ceu_sys_link(&lnk1);
-        ceu_sys_link(&lnk2);
-        ceu_sys_link(&lnk3);
-        ceu_sys_link(&lnk4);
-        ceu_sys_start(&gpio);
-
-        ceu_sys_link(&lnk5);
-        ceu_sys_link(&lnk6);
-        ceu_sys_start(&shell);
-
-		ceu_sys_link(&lnk7);
-        ceu_sys_link(&lnk8);
-		ceu_sys_link(&lnk9);
-		ceu_sys_link(&lnk10);
-		ceu_sys_start(&serial);
-
-		ceu_sys_start(&tst);
-    }
 end
 
 call APPS => (_APPS, 3);

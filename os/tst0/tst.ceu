@@ -1,0 +1,13 @@
+native constant _OUTPUT, _HIGH, _LOW;
+native do
+    ##include "Arduino.h"
+end
+
+_pinMode(13, _OUTPUT);
+
+loop do
+    _digitalWrite(13, _HIGH);
+    await 250ms;
+    _digitalWrite(13, _LOW);
+    await 250ms;
+end

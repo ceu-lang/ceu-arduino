@@ -24,7 +24,7 @@ output (u8,int) DIGITAL_CHANGED;
 #define DT 50     // avoid flood of DIGITAL_CHANGED
 
 every (DT)ms do
-    async (pins_v, pins_m) do
+    //async (pins_v, pins_m) do
         loop i, N_PINS do
             if _bitRead(pins_m,i) == _INPUT then
                 var int v = _digitalRead(i);    // returns "int"
@@ -34,5 +34,5 @@ every (DT)ms do
                 end
             end
         end
-    end
+    //end
 end

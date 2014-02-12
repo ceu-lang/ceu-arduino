@@ -16,12 +16,14 @@ ceu:
 	ceu tst.ceu    	--os --verbose \
 					--out-c _ceu_tst.c \
 					--out-h _ceu_tst.h \
-					--out-v tst \
+					--out-s TST_SIZE \
+					--out-f tst_init \
 					--cpp-args "$(INCLUDES)"
 	ceu gpio.ceu 	--os --verbose \
 					--out-c _ceu_gpio.c \
 					--out-h _ceu_gpio.h \
-					--out-v drv \
+					--out-s GPIO_SIZE \
+					--out-f gpio_init \
 					--cpp-args "$(INCLUDES)"
 
 clean: _clean
@@ -34,6 +36,6 @@ SOURCES  += $(wildcard $(addprefix ../, *.c *.cc *.cpp))
 
 include ../../arduino.mk
 
-CPPFLAGS += -Wno-pointer-arith
+CPPFLAGS += -Wno-pointer-arith -mrelax  -Wl,--undefined=sygnatura
 CPPFLAGS += -DCEU_OS
 CPPFLAGS += $(INCLUDES)

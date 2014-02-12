@@ -15,24 +15,46 @@ end
 
 input (char* buf, int n)=>void COMMAND do
     var char[15] pre;
-    var int      pid;
+    var int      pid, p1;
 
-    var int ret = _sscanf(buf, "%10s %d\n", pre, &pid);
-
-    if ret != 2 then
-        _snprintf(buf, n, "invalid command");
+    var int ret = _sscanf(buf, "%10s %d %X\n", pre, &pid, &p1);
+    if ret < 2 then
+        _snprintf(buf, n, "incomplete command");
         return;
     end
-
     if pid >= this.apps_n then
         _snprintf(buf, n, "invalid pid");
         return;
     end
+    var int has_pid? = (this.apps[pid] != null);
 
     if _strcmp(pre,"start") == 0 then
-        _ceu_sys_start(this.apps[pid]);
+        if has_pid? then
+            _ceu_sys_start(this.apps[pid]);
+        else
+            _snprintf(buf, n, "invalid pid");
+            return;
+        end
     else/if _strcmp(pre,"stop") == 0 then
-        _ceu_sys_stop(this.apps[pid]);
+        if has_pid? then
+            _ceu_sys_stop(this.apps[pid]);
+        else
+            _snprintf(buf, n, "invalid pid");
+            return;
+        end
+    else/if _strcmp(pre,"load") == 0 then
+        if has_pid? then
+            _snprintf(buf, n, "invalid pid");
+            return;
+        else/if ret < 3 then
+            _snprintf(buf, n, "incomplete command");
+            return;
+        end
+        _snprintf(buf, n, "todo: %d", p1);
+        return;
+    else
+        _snprintf(buf, n, "invalid command");
+        return;
     end
     _snprintf(buf, n, "ok");
 end

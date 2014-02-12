@@ -11,9 +11,10 @@ BOARD = 644pa16m
 #lilypad328
 #uno
 
-.PHONY: all ino clean
+.PHONY: all target ceu ino clean
 
 all: ceu other _all
+target: ceu other _target
 
 other:
 	cd ../gpio/   && make target

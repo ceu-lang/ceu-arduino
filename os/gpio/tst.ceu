@@ -25,9 +25,9 @@ par do
     end
 with
     loop do
+        await (dt)ms;
         call DIGITAL_WRITE => (13,_HIGH);
         await (dt)ms;
         call DIGITAL_WRITE => (13,_LOW);
-        await (dt)ms;
     end
 end

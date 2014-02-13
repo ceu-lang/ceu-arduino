@@ -7,7 +7,7 @@ BOARD = 644pa16m
 #lilypad328
 #uno
 
-.PHONY: all ino clean
+.PHONY: all apps ino clean
 
 all: apps _all
 
@@ -27,7 +27,7 @@ clean: _clean
 
 SOURCES  += $(wildcard $(addprefix ../, *.c *.cc *.cpp))
 OBJECTS  += ../serial/_ceu_tst.o ../serial/_ceu_serial.o ../serial/serial.o \
-			../gpio/_ceu_tst.o   ../gpio/_ceu_gpio.o
+		../gpio/_ceu_tst.o   ../gpio/_ceu_gpio.o
 
 include ../../arduino.mk
 

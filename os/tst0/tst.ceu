@@ -5,9 +5,12 @@ end
 
 _pinMode(13, _OUTPUT);
 
+output int O;
+
 loop do
     _digitalWrite(13, _HIGH);
-    await 250ms;
+    await 100ms;
     _digitalWrite(13, _LOW);
-    await 250ms;
+    await 100ms;
+    emit O => 1;
 end

@@ -16,12 +16,14 @@ ceu:
 	ceu tst.ceu    	--os --verbose \
 					--out-c _ceu_tst.c \
 					--out-h _ceu_tst.h \
-					--out-v tst \
+					--out-s TST_SIZE \
+					--out-f tst_init \
 					--cpp-args "$(INCLUDES)"
 	ceu serial.ceu 	--os --verbose \
 					--out-c _ceu_serial.c \
 					--out-h _ceu_serial.h \
-					--out-v drv \
+					--out-s SERIAL_SIZE \
+					--out-f serial_init \
 					--cpp-args "$(INCLUDES)"
 
 clean: _clean

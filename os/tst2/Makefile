@@ -13,23 +13,25 @@ all: ceu other _all
 
 other:
 	cd ../gpio/   && make target
-	avr-objcopy ../gpio/_ceu_gpio.o --redefine-sym drv=gpio
 
 ceu:
 	ceu app1.ceu   	--os --verbose \
 					--out-c _ceu_app1.c \
 					--out-h _ceu_app1.h \
-					--out-v app1 \
+					--out-s APP1_SIZE \
+					--out-f app1_init \
 					--cpp-args "$(INCLUDES)"
 	ceu app2.ceu   	--os --verbose \
 					--out-c _ceu_app2.c \
 					--out-h _ceu_app2.h \
-					--out-v app2 \
+					--out-s APP2_SIZE \
+					--out-f app2_init \
 					--cpp-args "$(INCLUDES)"
 	ceu shell.ceu  	--os --verbose \
 					--out-c _ceu_shell.c \
 					--out-h _ceu_shell.h \
-					--out-v shell \
+					--out-s SHELL_SIZE \
+					--out-f shell_init \
 					--cpp-args "$(INCLUDES)"
 
 clean: _clean

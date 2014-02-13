@@ -1,11 +1,10 @@
 INOFILE ?= ../os.ino
 INCLUDES += -I ../
 
-ARDUINOSUB = arduino
-BOARD = uno
-
-#ARDUINOSUB = Microduino
-#BOARD = 644pa16m
+#ARDUINOSUB = arduino
+#BOARD = uno
+ARDUINOSUB = Microduino
+BOARD = 644pa16m
 #lilypad328
 #uno
 

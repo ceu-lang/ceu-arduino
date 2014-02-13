@@ -1,9 +1,7 @@
 INOFILE ?= ../os.ino
 INCLUDES += -I ../ -I ../gpio/
 
-ifndef TST
-$(error missing test file)
-endif
+TST ?= tst1
 
 ARDUINOSUB = Microduino
 #BOARD = uno
@@ -19,29 +17,31 @@ target: ceu other _target
 other:
 	cd ../gpio/   && make target
 	cd ../serial/ && make target
-	avr-objcopy ../gpio/_ceu_gpio.o     --redefine-sym drv=gpio
-	avr-objcopy ../serial/_ceu_serial.o --redefine-sym drv=serial
 
 ceu:
 	ceu app1.ceu   	--os --verbose \
 					--out-c _ceu_app1.c \
 					--out-h _ceu_app1.h \
-					--out-v app1 \
+					--out-s APP1_SIZE \
+					--out-f app1_init \
 					--cpp-args "$(INCLUDES)"
 	ceu app2.ceu   	--os --verbose \
 					--out-c _ceu_app2.c \
 					--out-h _ceu_app2.h \
-					--out-v app2 \
+					--out-s APP2_SIZE \
+					--out-f app2_init \
 					--cpp-args "$(INCLUDES)"
 	ceu shell.ceu  	--os --verbose \
 					--out-c _ceu_shell.c \
 					--out-h _ceu_shell.h \
-					--out-v shell \
+					--out-s SHELL_SIZE \
+					--out-f shell_init \
 					--cpp-args "$(INCLUDES)"
 	ceu $(TST).ceu 	--os --verbose \
 					--out-c _ceu_tst.c \
 					--out-h _ceu_tst.h \
-					--out-v tst \
+					--out-s TST_SIZE \
+					--out-f tst_init \
 					--cpp-args "$(INCLUDES)"
 
 clean: _clean

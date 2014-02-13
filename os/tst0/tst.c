@@ -3,7 +3,7 @@
 extern int TST_SIZE;
 extern void tst_init (tceu_app* app);
 
-char tst_data[300]; // = malloc(TST_SIZE);
+char tst_data[50]; // TODO: = malloc(TST_SIZE);
 tceu_app tst;
 
 void MAIN (void) {

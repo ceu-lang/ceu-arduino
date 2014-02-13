@@ -14,10 +14,10 @@ all: apps _all
 apps:
 	cd ../serial/ && make target
 	cd ../gpio/   && make target
-	avr-objcopy ../serial/_ceu_tst.o    --redefine-sym tst=serial_tst
-	avr-objcopy ../serial/_ceu_serial.o --redefine-sym drv=serial_drv
-	avr-objcopy ../gpio/_ceu_tst.o      --redefine-sym tst=gpio_tst
-	avr-objcopy ../gpio/_ceu_gpio.o     --redefine-sym drv=gpio_drv
+	avr-objcopy ../serial/_ceu_tst.o --redefine-sym tst_init=serial_tst_init
+	avr-objcopy ../serial/_ceu_tst.o --redefine-sym TST_SIZE==SERIAL_TST_SIZE
+	avr-objcopy ../gpio/_ceu_tst.o   --redefine-sym tst_init=gpio_tst_init
+	avr-objcopy ../gpio/_ceu_tst.o   --redefine-sym TST_SIZE=GPIO_TST_SIZE
 
 clean: _clean
 	find . -name "*.exe"  | xargs rm -f

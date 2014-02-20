@@ -191,10 +191,11 @@ BOARD_UPLOAD_PROTOCOL := \
 	$(shell sed -ne "s/$(BOARD).upload.protocol=\(.*\)/\1/p" $(BOARDS_FILE))
 
 # software
-CC := $(ARDUINODIR)/hardware/tools/avr/bin/avr-gcc
+CPP := $(ARDUINODIR)/hardware/tools/avr/bin/avr-cpp
+CC  := $(ARDUINODIR)/hardware/tools/avr/bin/avr-gcc
 CXX := $(ARDUINODIR)/hardware/tools/avr/bin/avr-g++
-LD := $(ARDUINODIR)/hardware/tools/avr/bin/avr-ld
-AR := $(ARDUINODIR)/hardware/tools/avr/bin/avr-ar
+LD  := $(ARDUINODIR)/hardware/tools/avr/bin/avr-ld
+AR  := $(ARDUINODIR)/hardware/tools/avr/bin/avr-ar
 STRIP := $(ARDUINODIR)/hardware/tools/avr/bin/avr-strip
 OBJCOPY := $(ARDUINODIR)/hardware/tools/avr/bin/avr-objcopy
 AVRDUDE := avrdude

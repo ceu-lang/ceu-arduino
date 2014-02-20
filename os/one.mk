@@ -7,9 +7,11 @@ BOARD ?= 644pa16m
 #lilypad328
 #uno
 
-INCLUDES += -I $(CEUDIR)/os
-CPPFLAGS += $(INCLUDES)
+CPPFLAGS += -I $(CEUDIR)/os
 CPPFLAGS += -mrelax -DCEU_OS
+#CPPFLAGS += -I/opt/arduino/hardware/Microduino/variants/plus/
+#CPPFLAGS += -imultilib avr5 -iprefix
+#CPPFLAGS += /opt/arduino-1.0.5/hardware/tools/avr/bin/../lib/gcc/avr/4.3.2/
 
 ifndef CEUFILE
 $(error missing CEUFILE application)
@@ -19,9 +21,7 @@ OBJECT = $(addprefix _ceu_, $(addsuffix .o, $(basename $(CEUFILE))))
 TARGET = $(basename $(OBJECT))
 FLASHADDR ?= 0x00
 
-_comma := ,
-LINKFLAGS += $(addprefix -Wl$(_comma)-u, $(addsuffix _SIZE, $(basename $(CEUFILE))))
-LINKFLAGS += $(addprefix -Wl$(_comma)-u, $(addsuffix _init, $(basename $(CEUFILE))))
+LINKFLAGS += -Wl,-uCEU_SIZE -Wl,-uCEU_INIT
 #LIBS    +=
 
 .PHONY:	all target flash
@@ -36,10 +36,11 @@ upload: _upload
 _ceu_%.c: %.ceu
 	ceu $< 	--os --verbose \
 			--out-c $@ \
-			--out-h $(basename $@).h \
-			--out-s $(basename $<)_SIZE \
-			--out-f $(basename $<)_init \
-			--cpp-args "$(INCLUDES)"
+			--cpp-exe "$(CPP)" \
+			--cpp-args "$(CPPFLAGS)"
+#--out-h $(basename $@).h
+#--out-s $(basename $<)_SIZE
+#--out-f $(basename $<)_init
 
 _ceu_%.o: _ceu_%.c $(LIBS)
 	$(CC) $(CPPFLAGS) $(LINKFLAGS) \

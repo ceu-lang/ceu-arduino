@@ -7,8 +7,6 @@ input (u8,int) DIGITAL_CHANGED;
 
 await OS_START;
 
-await 1s;   /* TODO: OS_START not on sys_start (rename to "sys_load") */
-
 call PIN_MODE => (12,_OUTPUT);
 call PIN_MODE => ( 2,_INPUT);
 
@@ -27,9 +25,9 @@ par do
     end
 with
     loop do
-        await (dt)ms;
         call DIGITAL_WRITE => (12,_HIGH);
         await (dt)ms;
         call DIGITAL_WRITE => (12,_LOW);
+        await (dt)ms;
     end
 end

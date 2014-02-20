@@ -5,12 +5,14 @@ output (u8 pin, u8 val) =>void DIGITAL_WRITE;
 
 input (u8,int) DIGITAL_CHANGED;
 
-call PIN_MODE => (13,_OUTPUT);
+await OS_START;
+
+await 1s;   /* TODO: OS_START not on sys_start (rename to "sys_load") */
+
+call PIN_MODE => (12,_OUTPUT);
 call PIN_MODE => ( 2,_INPUT);
 
 var int dt = 1000;
-
-await OS_START;
 
 par do
     loop do
@@ -26,8 +28,8 @@ par do
 with
     loop do
         await (dt)ms;
-        call DIGITAL_WRITE => (13,_HIGH);
+        call DIGITAL_WRITE => (12,_HIGH);
         await (dt)ms;
-        call DIGITAL_WRITE => (13,_LOW);
+        call DIGITAL_WRITE => (12,_LOW);
     end
 end

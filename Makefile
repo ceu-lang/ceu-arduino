@@ -12,7 +12,7 @@ BOARD = 644pa16m
 all: ceu ino _all
 
 ceu:
-	#ceu $(CEUFILE) --out-c _ceu_app.src
+	ceu $(CEUFILE) --out-c _ceu_app.src
 
 ino:
 	touch poll.ino async.ino
@@ -26,4 +26,4 @@ clean: _clean
 include arduino.mk
 
 CPPFLAGS += -Wno-pointer-arith
-LINKFLAGS += -Wl,--section-start=.bootloader=0xE000
+#LINKFLAGS += -Wl,--section-start=.bootloader=0xE000

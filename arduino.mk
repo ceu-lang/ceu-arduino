@@ -136,7 +136,7 @@ ifdef INOFILE
 ifneq ($(words $(INOFILE)), 1)
 $(error There is more than one .pde or .ino file in this directory!)
 endif
-TARGET := $(basename $(INOFILE))
+TARGET ?= $(basename $(INOFILE))
 SOURCES += $(INOFILE) \
 	$(wildcard *.c *.cc *.cpp) \
 	$(wildcard $(addprefix util/, *.c *.cc *.cpp)) \
@@ -195,13 +195,20 @@ CC := $(ARDUINODIR)/hardware/tools/avr/bin/avr-gcc
 CXX := $(ARDUINODIR)/hardware/tools/avr/bin/avr-g++
 LD := $(ARDUINODIR)/hardware/tools/avr/bin/avr-ld
 AR := $(ARDUINODIR)/hardware/tools/avr/bin/avr-ar
+STRIP := $(ARDUINODIR)/hardware/tools/avr/bin/avr-strip
 OBJCOPY := $(ARDUINODIR)/hardware/tools/avr/bin/avr-objcopy
 AVRDUDE := avrdude
 AVRSIZE := $(ARDUINODIR)/hardware/tools/avr/bin/avr-size
 
+#CC := /usr/bin/avr-gcc
+#CXX := /usr/bin/avr-g++
+#LD := /usr/bin/avr-ld
+#AR := /usr/bin/avr-ar
+
 # flags
-CPPFLAGS = -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections
-CPPFLAGS += -fno-strict-aliasing      # required for accessing VARS
+CPPFLAGS += -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections
+#CPPFLAGS += -fno-strict-aliasing      # required for accessing VARS
+CPPFLAGS += -fno-inline-small-functions
 CPPFLAGS += -mmcu=$(BOARD_BUILD_MCU) -DF_CPU=$(BOARD_BUILD_FCPU)
 CPPFLAGS += -I. -Iutil -Iutility -I$(ARDUINOSRCDIR)
 CPPFLAGS += -I$(ARDUINODIR)/hardware/$(ARDUINOSUB)/variants/$(BOARD_BUILD_VARIANT)/
@@ -211,7 +218,7 @@ CPPFLAGS += $(patsubst %, -I$(ARDUINODIR)/libraries/%/utility, $(LIBRARIES))
 AVRDUDEFLAGS = -C /etc/avrdude.conf -DV
 AVRDUDEFLAGS += -p $(BOARD_BUILD_MCU) -P $(SERIALDEV)
 AVRDUDEFLAGS += -c $(BOARD_UPLOAD_PROTOCOL) -b $(BOARD_UPLOAD_SPEED)
-LINKFLAGS = -Os -Wl,--gc-sections -mmcu=$(BOARD_BUILD_MCU)
+LINKFLAGS += -Os -Wl,--gc-sections -mmcu=$(BOARD_BUILD_MCU)
 
 # default rule
 #.DEFAULT_GOAL := _all
@@ -219,13 +226,13 @@ LINKFLAGS = -Os -Wl,--gc-sections -mmcu=$(BOARD_BUILD_MCU)
 #_______________________________________________________________________________
 #                                                                          RULES
 
-.PHONY:	_all _target upload _clean boards monitor
+.PHONY:	_all _target _upload _clean boards monitor
 
-_all: _target upload
+_all: _target _upload
 
 _target: $(TARGET).hex
 
-upload:
+_upload:
 	@echo "\nUploading to board..."
 	@test -n "$(SERIALDEV)" || { \
 		echo "error: SERIALDEV could not be determined automatically." >&2; \
@@ -254,7 +261,7 @@ monitor:
 $(TARGET).hex: $(TARGET).elf
 	$(OBJCOPY) -O ihex -R .eeprom $< $@
 
-.INTERMEDIATE: $(TARGET).elf
+#.INTERMEDIATE: $(TARGET).elf
 
 $(TARGET).elf: $(ARDUINOLIB) $(OBJECTS)
 	$(CC) $(LINKFLAGS) $(OBJECTS) $(ARDUINOLIB) -o $@

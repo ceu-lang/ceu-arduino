@@ -1,14 +1,7 @@
 #include "ceu_os.h"
 
-extern int TST_SIZE;
-extern void tst_init (tceu_app* app);
-
-char tst_data[50]; // TODO: = malloc(TST_SIZE);
-tceu_app tst;
-
-void MAIN (void) {
-    tst.data = (tceu_org*) tst_data;
-    tst.init = &tst_init;
-    tst.sys_vec = CEU_SYS_VEC;
-    ceu_sys_start(&tst);
+void MAIN (void)
+{
+    u16 tst = ceu_sys_start(0x3000);
+    // TODO: check pids
 }

@@ -21,8 +21,10 @@ OBJECT = $(addprefix _ceu_, $(addsuffix .o, $(basename $(CEUFILE))))
 TARGET = $(basename $(OBJECT))
 FLASHADDR ?= 0x00
 
-LINKFLAGS += -Wl,-uCEU_SIZE -Wl,-uCEU_INIT
-#LIBS    +=
+LINKFLAGS += -Wl,--section-start=.export=0x00 \
+			 -Wl,--section-start=.text=0x16   \
+			 -Wl,-uCEU_EXPORT
+# TODO: 0x16 is hardcoded (size of CEU_EXPORT)
 
 .PHONY:	all target flash
 

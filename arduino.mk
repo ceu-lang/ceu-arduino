@@ -210,6 +210,7 @@ AVRSIZE := $(ARDUINODIR)/hardware/tools/avr/bin/avr-size
 CPPFLAGS += -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections
 #CPPFLAGS += -fno-strict-aliasing      # required for accessing VARS
 CPPFLAGS += -fno-inline-small-functions
+CPPFLAGS += -fno-jump-tables
 CPPFLAGS += -mmcu=$(BOARD_BUILD_MCU) -DF_CPU=$(BOARD_BUILD_FCPU)
 CPPFLAGS += -I. -Iutil -Iutility -I$(ARDUINOSRCDIR)
 CPPFLAGS += -I$(ARDUINODIR)/hardware/$(ARDUINOSUB)/variants/$(BOARD_BUILD_VARIANT)/

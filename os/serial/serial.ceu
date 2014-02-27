@@ -1,27 +1,74 @@
 native do
-    #include "serial.hh"
+    #include <avr/io.h>
+    #define BAUD_USART(baud_human) (((F_CPU / (baud_human * 16UL))) - 1)
 end
 
-input (int speed)=>void SERIAL_BEGIN do
-    _serial_begin(speed);
+input (int speed)=>void BEGIN do
+    /* Set baud rate */
+    _UBRR0H = (char)(_BAUD_USART(speed)>>8);
+    _UBRR0L = (char)_BAUD_USART(speed);
+
+    /* Enable receiver and transmitter */
+    _UCSR0B = (1<<_RXEN0) | (1<<_TXEN0);
+
+    /* Set frame format: 8data, 2stop bit */
+    _UCSR0C = (1<<_USBS0)|(3<<_UCSZ00);
+    // (tutorial) _UCSR0C = (1 << _URSEL0) | (1 << _UCSZ00) | (1 << _UCSZ01);
 end
 
-input (void)=>void SERIAL_END do
-    _serial_end();
+input (void)=>void END do
+    /* Disable receiver and transmitter */
+    _UCSR0B = (1<<_RXEN0) | (1<<_TXEN0);
 end
 
-input (char* buf, int len)=>void SERIAL_WRITE do
-    _serial_write(buf, len);
+/* TODO: call/rec */
+
+input delay (char c, char c1)=>void WRITE do
+    /* Put data into buffer, sends the data */
+    loop do
+        if (_UCSR0A & (1<<_UDRE0)) then
+            break;
+        end
+    end
+    _UDR0 = c;
+    // Do nothing until transmission complete flag set
+    /*
+    loop do
+        if ((_UCSR0A & (1 << _TXC0)) != 0) then
+            break;
+        end
+    end
+    */
 end
 
-output int SERIAL_READ;
+// TODO: remove?
+input delay (char* buf, int len)=>void WRITE_BUF do
+    loop i, len do
+        // TODO: call WRITE => (buf[i],buf[i]);
+        loop do
+            if (_UCSR0A & (1<<_UDRE0)) then
+                break;
+            end
+        end
+        _UDR0 = buf[i];
+    end
+end
 
-// request SERIAL_READLINE
+output int READ;
+        // TODO: request READLINE
 
 async do
     loop do
-        if _serial_if() and _serial_available() then
-            emit SERIAL_READ => _serial_read();
+        loop do
+            // Wait for data to be received
+            if (_UCSR0A & (1<<_RXC0)) then
+                break;
+            end
         end
+        // Get and return received data from buffer
+        var int v = _UDR0;
+        emit READ => v;
     end
 end
+
+await FOREVER;

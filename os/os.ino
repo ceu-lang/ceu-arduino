@@ -5,7 +5,7 @@ extern "C" {
 
 u32 old;
 int dt () {
-    delay(10);
+    //delay(2);
     u32 now = micros();
     int dt = now - old;     // no problems with overflow
     old = now;
@@ -24,6 +24,4 @@ void setup ()
     ceu_scheduler(dt);
 }
 
-void loop()
-{
-}
+void loop() { }

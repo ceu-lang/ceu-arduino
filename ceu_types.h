@@ -3,9 +3,7 @@
 
 #include <stdint.h>
 
-/*#include "Arduino.h"*/
 typedef unsigned int  word;
-
 typedef unsigned int  uint;
 typedef unsigned char uchar;
 

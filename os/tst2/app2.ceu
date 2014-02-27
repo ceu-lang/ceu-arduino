@@ -3,6 +3,8 @@
 output (u8 pin, u8 mode)=>void PIN_MODE;
 output (u8 pin, u8 val) =>void DIGITAL_WRITE;
 
+await OS_START;
+
 call PIN_MODE => (11,_OUTPUT);
 
 loop do

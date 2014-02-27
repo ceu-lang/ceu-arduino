@@ -2,6 +2,7 @@
 
 void MAIN (void)
 {
-    tceu_app* tst = ceu_sys_start((void*)0x3000);
-    // TODO: check pids
+    tceu_app* tst = ceu_sys_load((void*)0x3000);
+    ceu_sys_start(tst);
+    // TODO: check tst
 }

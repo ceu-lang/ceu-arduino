@@ -2,8 +2,8 @@
 
 void MAIN (void)
 {
-    tceu_app* ser = ceu_sys_load((void*)0x6000);
-    tceu_app* tst = ceu_sys_load((void*)0x7000);
+    tceu_app* ser = ceu_sys_load((void*)0x3000);
+    tceu_app* tst = ceu_sys_load((void*)0xD000);
 
     ceu_sys_link( tst,1  ,  ser,244 );
     ceu_sys_link( tst,2  ,  ser,243 );

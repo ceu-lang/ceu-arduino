@@ -198,6 +198,7 @@ LD  := $(ARDUINODIR)/hardware/tools/avr/bin/avr-ld
 AR  := $(ARDUINODIR)/hardware/tools/avr/bin/avr-ar
 STRIP := $(ARDUINODIR)/hardware/tools/avr/bin/avr-strip
 OBJCOPY := $(ARDUINODIR)/hardware/tools/avr/bin/avr-objcopy
+OBJDUMP := $(ARDUINODIR)/hardware/tools/avr/bin/avr-objdump
 AVRDUDE := avrdude
 AVRSIZE := $(ARDUINODIR)/hardware/tools/avr/bin/avr-size
 

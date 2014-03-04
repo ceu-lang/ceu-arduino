@@ -48,6 +48,7 @@ _ceu_%.o: _ceu_%.c $(LIBS)
 	$(CC) $(CPPFLAGS) $(LINKFLAGS) \
 		-nostartfiles \
 		$^ -o $@
+	! $(OBJDUMP) -h $@ | fgrep ".data"
 	#$(STRIP) -s $@
 	$(AVRSIZE) $@
 	$(OBJCOPY) --change-addresses=$(FLASHADDR) -O ihex $@ $(TARGET).hex

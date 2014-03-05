@@ -12,7 +12,7 @@ finalize with
     call END;
 end
 
-native nohold _snprintf(), _strncpy(), _strlen(), _strcmp();
+native nohold _strncat(), _strlen(), _itoa();
 native do
     ##include "stdio.h"
     ##include "string.h"
@@ -58,39 +58,15 @@ with
             end
         with
             await 1s;
-            var char[25] str;
-                str[ 0] = '[';
-                str[ 1] = '%';
-                str[ 2] = '%';
-                str[ 3] = '%';
-                str[ 4] = ',';
-                str[ 5] = '%';
-                str[ 6] = '%';
-                str[ 7] = '%';
-                str[ 8] = ',';
-                str[ 9] = '%';
-                str[10] = '%';
-                str[11] = '%';
-                str[12] = '%';
-                str[13] = '%';
-                str[14] = ']';
-                str[15] = '\n';
-                str[16] = '\0';
-
-                str[ 1]  = '0' + dt_min/100;
-                str[ 2]  = '0' + dt_min%100/10;
-                str[ 3]  = '0' + dt_min%10;
-
-                var int one = 1000000/fps;
-                str[ 5] = '0' + one/100;
-                str[ 6] = '0' + one%100/10;
-                str[ 7] = '0' + one%10;
-
-                str[ 9] = '0' + dt_max/10000;
-                str[10] = '0' + dt_max%10000/1000;
-                str[11] = '0' + dt_max%1000/100;
-                str[12] = '0' + dt_max%100/10;
-                str[13] = '0' + dt_max%10;
+            var char[25] str; // [%d,%d,%d] (snprintf is too expensive!)
+            str[0] = '\0';
+            _strncat(str, "[", 25);
+                _itoa(dt_min, &str[_strlen(str)], 10);
+            _strncat(str, ",", 25);
+                _itoa(1000000/fps, &str[_strlen(str)], 10);
+            _strncat(str, ",", 25);
+                _itoa(dt_max, &str[_strlen(str)], 10);
+            _strncat(str, "]\n", 25);
 
             //call WRITE_BUF => (str, _strlen(str));
             loop i, _strlen(str) do

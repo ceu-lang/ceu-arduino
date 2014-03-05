@@ -3,8 +3,10 @@
 
 #include <stdint.h>
 
-#include "Arduino.h"
-/*typedef unsigned int  word;*/
+#ifndef CEU_WORD
+#define CEU_WORD
+typedef unsigned int  word;
+#endif
 
 typedef unsigned int  uint;
 typedef unsigned char uchar;

@@ -1,9 +1,11 @@
 native nohold _ceu_out_start(); // TODO: wrong!
 
 native nohold _ceu_out_stop(), _ceu_out_go();
-native nohold _strsep(), _strtol();
+native nohold _strsep(), _strtol(), _boot_program_page();
 native do
     ##include <string.h>
+    void boot_program_page (uint32_t page, uint8_t *buf);
+    typedef typeof(boot_program_page)* boot_program_page_t;
 end
 
 #define N_APPS 10
@@ -61,6 +63,18 @@ input (char* buf, int n)=>void COMMAND do
         var int evt2 = _strtol(buf,null,10);
         _ceu_out_link(this.apps[pid1],evt1 , this.apps[pid2],evt2);
         _strncpy(ret, "linked", n);
+
+    // SAVE addr size ......
+    else/if _strcmp(cmd,"save") == 0 then
+        var int addr = _strtol(buf,&buf,16);
+        var int size = _strtol(buf,&buf,10);
+        var char[256] mem;
+        _strncpy(mem, &buf[1], size); // skip space
+        loop i, (256-size) do
+            mem[size+i] = 0x00;       // complete page with 0's
+        end
+        var _boot_program_page_t f = (_boot_program_page_t) 0x7ED5;
+        f(addr, mem);
 
     // ???
     else

@@ -5,44 +5,49 @@ native do
     ##include <string.h>
 end
 
-var char[20] cmd;
+#define CMD_SIZE 32
+var char[CMD_SIZE] cmd;
 
 // GPIO
-_strncpy(cmd, "load 0 0x2000", 20);
-call COMMAND => (cmd,20);
-_strncpy(cmd, "start 0", 20);
-call COMMAND => (cmd,20);
+_strncpy(cmd, "load 0 0x2000", CMD_SIZE);
+call COMMAND => (cmd,CMD_SIZE);
+_strncpy(cmd, "start 0", CMD_SIZE);
+call COMMAND => (cmd,CMD_SIZE);
+
+// SAVE
+_strncpy(cmd, "save 0xF800 10 0123456789", CMD_SIZE);
+call COMMAND => (cmd,CMD_SIZE);
 
 loop do
     // APP1
-    _strncpy(cmd, "load 1 0xC000", 20);
-    call COMMAND => (cmd,20);
+    _strncpy(cmd, "load 1 0xC000", CMD_SIZE);
+    call COMMAND => (cmd,CMD_SIZE);
 
-    _strncpy(cmd, "link 1 1 0 244", 20);
-    call COMMAND => (cmd,20);
-    _strncpy(cmd, "link 1 2 0 243", 20);
-    call COMMAND => (cmd,20);
-    _strncpy(cmd, "start 1", 20);
-    call COMMAND => (cmd,20);
+    _strncpy(cmd, "link 1 1 0 244", CMD_SIZE);
+    call COMMAND => (cmd,CMD_SIZE);
+    _strncpy(cmd, "link 1 2 0 243", CMD_SIZE);
+    call COMMAND => (cmd,CMD_SIZE);
+    _strncpy(cmd, "start 1", CMD_SIZE);
+    call COMMAND => (cmd,CMD_SIZE);
 
     await 5s;
 
-    _strncpy(cmd, "stop 1", 20);
-    call COMMAND => (cmd,20);
+    _strncpy(cmd, "stop 1", CMD_SIZE);
+    call COMMAND => (cmd,CMD_SIZE);
 
     // APP2
-    _strncpy(cmd, "load 2 0xC500", 20);
-    call COMMAND => (cmd,20);
+    _strncpy(cmd, "load 2 0xC500", CMD_SIZE);
+    call COMMAND => (cmd,CMD_SIZE);
 
-    _strncpy(cmd, "link 2 1 0 244", 20);
-    call COMMAND => (cmd,20);
-    _strncpy(cmd, "link 2 2 0 243", 20);
-    call COMMAND => (cmd,20);
-    _strncpy(cmd, "start 2", 20);
-    call COMMAND => (cmd,20);
+    _strncpy(cmd, "link 2 1 0 244", CMD_SIZE);
+    call COMMAND => (cmd,CMD_SIZE);
+    _strncpy(cmd, "link 2 2 0 243", CMD_SIZE);
+    call COMMAND => (cmd,CMD_SIZE);
+    _strncpy(cmd, "start 2", CMD_SIZE);
+    call COMMAND => (cmd,CMD_SIZE);
 
     await 5s;
 
-    _strncpy(cmd, "stop 2", 20);
-    call COMMAND => (cmd,20);
+    _strncpy(cmd, "stop 2", CMD_SIZE);
+    call COMMAND => (cmd,CMD_SIZE);
 end

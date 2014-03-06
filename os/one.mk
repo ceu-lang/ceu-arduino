@@ -8,7 +8,7 @@ BOARD ?= 644pa16m
 #uno
 
 CPPFLAGS += -DCEU_OS -I $(CEUDIR)/os
-CPPFLAGS += -mrelax #-mcall-prologues -mshort-calls -fpic
+CPPFLAGS += -mrelax -mshort-calls #-mcall-prologues -fpic
 #CPPFLAGS += -I/opt/arduino/hardware/Microduino/variants/plus/
 #CPPFLAGS += -imultilib avr5 -iprefix
 #CPPFLAGS += /opt/arduino-1.0.5/hardware/tools/avr/bin/../lib/gcc/avr/4.3.2/

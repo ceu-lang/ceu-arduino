@@ -1,62 +1,72 @@
-native nohold _ceu_sys_start(), _ceu_sys_stop();
-        // TODO: wrong!
+native nohold _ceu_out_start(); // TODO: wrong!
+
+native nohold _ceu_out_stop(), _ceu_out_go();
+native nohold _strsep(), _strtol();
 native do
-    ##include <stdio.h>
     ##include <string.h>
 end
 
-var void** apps = null;
-var int    apps_n = 0;
-
-input (hold void** apps, int n)=>void APPS do
-    this.apps = apps;
-    this.apps_n = n;
+#define N_APPS 10
+var _tceu_app* [N_APPS] apps;
+loop i, N_APPS do
+    apps[i] = null;
 end
 
+/*
+var _tceu_app* app;
+app := _ceu_out_load((void*)0x2000);
+_ceu_out_start(app);
+app := _ceu_out_load((void*)0xC000);
+_ceu_out_start(app);
+app := _ceu_out_load((void*)0xC500);
+_ceu_out_start(app);
+
+var _tceu_app* app;
+app := _ceu_out_load((void*)0xF000);
+_ceu_out_start(app);
+*/
+
 input (char* buf, int n)=>void COMMAND do
-    var char[15] pre;
-    var int      pid, p1;
 
-    var int ret = _sscanf(buf, "%10s %d %X\n", pre, &pid, &p1);
-    if ret < 2 then
-        _snprintf(buf, n, "incomplete command");
-        return;
-    end
-    if pid >= this.apps_n then
-        _snprintf(buf, n, "invalid pid");
-        return;
-    end
-    var int has_pid? = (this.apps[pid] != null);
+    var char* ret = buf;
+    var char* cmd := _strsep(&buf, " ");
+                        // return value is pure
 
-    if _strcmp(pre,"start") == 0 then
-        if has_pid? then
-            _ceu_sys_start(this.apps[pid]);
-        else
-            _snprintf(buf, n, "invalid pid");
-            return;
-        end
-    else/if _strcmp(pre,"stop") == 0 then
-        if has_pid? then
-            _ceu_sys_stop(this.apps[pid]);
-        else
-            _snprintf(buf, n, "invalid pid");
-            return;
-        end
-    else/if _strcmp(pre,"load") == 0 then
-        if has_pid? then
-            _snprintf(buf, n, "invalid pid");
-            return;
-        else/if ret < 3 then
-            _snprintf(buf, n, "incomplete command");
-            return;
-        end
-        _snprintf(buf, n, "todo: %d", p1);
-        return;
+    // LOAD pid addr
+    if _strcmp(cmd,"load") == 0 then
+        var int pid  = _strtol(buf,&buf,10);
+        var int addr = _strtol(buf,null,16);
+        var _tceu_app* app := _ceu_out_load((void*)addr);
+        this.apps[pid] := app;
+               // all apps run forever, or remove from apps on explicit "stop"
+        _strncpy(ret, "loaded", n);
+
+    // START pid
+    else/if _strcmp(cmd,"start") == 0 then
+        var int pid = _strtol(buf,null,10);
+        _ceu_out_start(this.apps[pid]);
+        _strncpy(ret, "started", n);
+
+    // STOP pid
+    else/if _strcmp(cmd,"stop") == 0 then
+        var int pid = _strtol(buf,null,10);
+        _ceu_out_go(this.apps[pid], _CEU_IN_OS_STOP, (_tceu_evtp)null);
+        _strncpy(ret, "stopped", n);
+
+    // LINK pid evt pid evt
+    else/if _strcmp(cmd,"link") == 0 then
+        var int pid1 = _strtol(buf,&buf,10);
+        var int evt1 = _strtol(buf,&buf,10);
+        var int pid2 = _strtol(buf,&buf,10);
+        var int evt2 = _strtol(buf,null,10);
+        _ceu_out_link(this.apps[pid1],evt1 , this.apps[pid2],evt2);
+        _strncpy(ret, "linked", n);
+
+    // ???
     else
-        _snprintf(buf, n, "invalid command");
+        _strncpy(ret, "invalid command", n);
         return;
     end
-    _snprintf(buf, n, "ok");
 end
 
 await FOREVER;

@@ -4,8 +4,8 @@ output (char* buf, int n)  =>void COMMAND;
 // SERIAL
 output (int)      =>void SERIAL_BEGIN;
 output (void)     =>void SERIAL_END;
-output (char,char)=>void SERIAL_WRITE;
-output (char*,int)=>void SERIAL_WRITE_BUF;
+output (byte,byte)=>void SERIAL_WRITE;
+output (byte*,int)=>void SERIAL_WRITE_BUF;
 input int SERIAL_READ;
 
 native nohold _strlen(), _strncat(), _strncpy(), _strtol(), _itoa();
@@ -24,7 +24,7 @@ end
 #define PAGE_SIZE 256
 
 loop do
-    var char v = await SERIAL_READ;
+    var byte v = await SERIAL_READ;
 
     // FLASH WRITE
     if v == ':' then

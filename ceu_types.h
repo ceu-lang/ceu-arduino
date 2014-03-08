@@ -9,7 +9,11 @@ typedef unsigned int  word;
 #endif
 
 typedef unsigned int  uint;
-typedef unsigned char uchar;
+
+#ifndef CEU_BYTE
+#define CEU_BYTE
+typedef unsigned char byte;
+#endif
 
 typedef int64_t  s64;
 typedef int32_t  s32;

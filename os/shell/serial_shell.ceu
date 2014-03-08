@@ -4,12 +4,15 @@ output (char* buf, int n)  =>void COMMAND;
 // SERIAL
 output (int)      =>void SERIAL_BEGIN;
 output (void)     =>void SERIAL_END;
+output (char,char)=>void SERIAL_WRITE;
 output (char*,int)=>void SERIAL_WRITE_BUF;
 input int SERIAL_READ;
 
-native nohold _strlen(), _strncat(), _strncpy();
+native nohold _strlen(), _strncat(), _strncpy(), _strtol(), _itoa();
 native do
     ##include <string.h>
+    void boot_program_page (uint32_t page, uint8_t *buf);
+    typedef typeof(boot_program_page)* boot_program_page_t;
 end
 
 call SERIAL_BEGIN => 9600;
@@ -17,22 +20,123 @@ finalize with
     call SERIAL_END;
 end
 
-#define CMD_SIZE 32
+#define CMD_SIZE   32
+#define PAGE_SIZE 256
 
 loop do
-    var char[CMD_SIZE] cmd;
-    loop i, CMD_SIZE-2 do
-        var char v = await SERIAL_READ;
-		cmd[i] = v;
-        if v == '\n' then
-			cmd[i+1] = '\0';
-            break;
-        end
-    end
-    cmd[CMD_SIZE-2] = '\n';
-    cmd[CMD_SIZE-1] = '\0';
-    call COMMAND => (cmd,CMD_SIZE);
+    var char v = await SERIAL_READ;
 
-    _strncat(cmd, "\n", CMD_SIZE);
-    call SERIAL_WRITE_BUF => (cmd,_strlen(cmd));
+    // FLASH WRITE
+    if v == ':' then
+        var _uint8_t[PAGE_SIZE] mem;
+        //var char[100] out;
+        var int  mem_i = 0;
+        var uint mem_addr;
+
+        /* Intel hex format
+         * : nn addr 00 .... XX \n
+         * ^                    :       (starting colon)
+         *    ^                 nn      (number of bytes of data)
+         *       ^              addr    (address to save)
+         *           ^          00      (data record)
+         *               ^      ....    (data)
+         *                   ^  XX      (checksum)
+         * : 00 0000 01 FF              (last line)
+         */
+
+        loop do
+            // LEN
+            var uint len;
+            do
+                var char[3] num;
+                num[0] = await SERIAL_READ;
+                num[1] = await SERIAL_READ;
+                num[2] = '\0';
+                len = _strtol(num,null,16);
+                //_itoa(len, out, 16);
+            end
+
+            // ADDR
+            do
+                var char[5] num;
+                num[0] = await SERIAL_READ;
+                num[1] = await SERIAL_READ;
+                num[2] = await SERIAL_READ;
+                num[3] = await SERIAL_READ;
+                num[4] = '\0';
+                if mem_i == 0 then
+                    // first line: set "mem_addr"
+                    // TODO: assumes line addresses are contiguous
+                    mem_addr = _strtol(num,null,16);
+                end
+                //_itoa(mem_addr,&out[_strlen(out)], 16);
+            end
+
+            // TYPE
+            var int type;
+            do
+                var char[3] num;
+                num[0] = await SERIAL_READ;
+                num[1] = await SERIAL_READ;
+                num[2] = '\0';
+                type = _strtol(num,null,16);
+                //_itoa(type,&out[_strlen(out)], 16);
+            end
+
+            // DATA
+            loop i, len do
+                var char[3] num;
+                num[0] = await SERIAL_READ;
+                num[1] = await SERIAL_READ;
+                num[2] = '\0';
+                if type == 0x00 then
+                    mem[mem_i] := _strtol(num,null,16);
+                                // uchar
+                    mem_i = mem_i + 1;
+                end
+                //_itoa(mem[mem_i-1],&out[_strlen(out)], 16);
+            end
+
+            // TODO: CHECKSUM
+            await SERIAL_READ;
+            await SERIAL_READ;
+
+            // "\n"
+            await SERIAL_READ;
+
+            //_strncat(out, "\n", 1);
+            //call SERIAL_WRITE_BUF => (out, _strlen(out));
+
+            if type==0x01 or mem_i==256 then
+                break;
+            end
+
+            // ":"
+            await SERIAL_READ;
+        end
+
+        // assumes (1) starting line address is aligned;
+        //         (2) line addresses are contiguous;
+        //         (3) lines never skip byte 256
+        var _boot_program_page_t f = (_boot_program_page_t) 0x7EC3;
+        f(mem_addr, mem)
+            finalize with nothing; end; // nohold
+
+    // NORMAL COMMAND
+    else
+        var char[CMD_SIZE] cmd;
+        loop i, CMD_SIZE-2 do
+            cmd[i] = v;
+            if v == '\n' then
+                cmd[i+1] = '\0';
+                break;
+            end
+            v = await SERIAL_READ;
+        end
+        cmd[CMD_SIZE-2] = '\n';
+        cmd[CMD_SIZE-1] = '\0';
+        call COMMAND => (cmd,CMD_SIZE);
+        call SERIAL_WRITE_BUF => (cmd,_strlen(cmd));
+    end
+
 end

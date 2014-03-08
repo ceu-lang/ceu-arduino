@@ -201,6 +201,7 @@ OBJCOPY := $(ARDUINODIR)/hardware/tools/avr/bin/avr-objcopy
 OBJDUMP := $(ARDUINODIR)/hardware/tools/avr/bin/avr-objdump
 AVRDUDE := avrdude
 AVRSIZE := $(ARDUINODIR)/hardware/tools/avr/bin/avr-size
+SRECCAT := srec_cat
 
 #CC := /usr/bin/avr-gcc
 #CXX := /usr/bin/avr-g++

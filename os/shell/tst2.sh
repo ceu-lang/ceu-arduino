@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# OUT.HEX
+./upload.lua out.hex
+
 # TST0
 echo "load 0 0xF000"    > /dev/ttyUSB0
 sleep 1
@@ -14,6 +17,7 @@ sleep 1
 echo "start 0"          > /dev/ttyUSB0
 sleep 1
 
+# APP1
 echo "load 1 0xC000"    > /dev/ttyUSB0
 sleep 1
 echo "link 1 1 0 244"   > /dev/ttyUSB0
@@ -23,6 +27,7 @@ sleep 1
 echo "start 1"          > /dev/ttyUSB0
 sleep 1
 
+# APP2
 echo "load 2 0xC500"    > /dev/ttyUSB0
 sleep 1
 echo "link 2 1 0 244"   > /dev/ttyUSB0

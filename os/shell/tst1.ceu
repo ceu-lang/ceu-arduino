@@ -9,10 +9,12 @@ end
 var char[CMD_SIZE] cmd;
 
 // SAVE
-_strncpy(cmd, "save 0xBE00 10 abcdefghij", CMD_SIZE);
+/*
+_strncpy(cmd, "save 10 0xBE00 abcdefghij", CMD_SIZE);
 call COMMAND => (cmd,CMD_SIZE);
-_strncpy(cmd, "save 0xBF00 10 jihgfedcba", CMD_SIZE);
+_strncpy(cmd, "save 10 0xBF00 jihgfedcba", CMD_SIZE);
 call COMMAND => (cmd,CMD_SIZE);
+*/
 
 // GPIO
 _strncpy(cmd, "load 0 0x2000", CMD_SIZE);

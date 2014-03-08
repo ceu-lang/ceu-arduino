@@ -49,9 +49,14 @@ _ceu_%.o: _ceu_%.c $(LIBS)
 		-nostartfiles \
 		$^ -o $@
 	! $(OBJDUMP) -h $@ | fgrep ".data"
-	#$(STRIP) -s $@
+	$(STRIP) -s $@
 	$(AVRSIZE) $@
-	$(OBJCOPY) --change-addresses=$(FLASHADDR) -O ihex $@ $(TARGET).hex
+	$(OBJCOPY) -S --change-addresses=$(FLASHADDR) -O ihex $@ $(TARGET).hex
+	$(SRECCAT) $(TARGET).hex -intel -o $(TARGET).srec
+	$(SRECCAT) $(TARGET).srec -o $(TARGET).hex -intel
+
+# WORKAROUND: OBJDUMP generates a difficult HEX to parse.
+#             SRECCAT does HEX => SREC => HEX (easy one)
 
 #-nostartfiles -nodefaultlibs -nostdlib
 #$(LINKFLAGS)

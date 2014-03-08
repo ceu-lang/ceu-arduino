@@ -4,7 +4,7 @@ output (char* buf, int n)  =>void COMMAND;
 // SERIAL
 output (int)      =>void SERIAL_BEGIN;
 output (void)     =>void SERIAL_END;
-output (byte,byte)=>void SERIAL_WRITE;
+output (byte)     =>void SERIAL_WRITE;
 output (byte*,int)=>void SERIAL_WRITE_BUF;
 input int SERIAL_READ;
 

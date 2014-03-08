@@ -23,7 +23,7 @@ end
 
 /* TODO: call/rec */
 
-input delay (byte c, byte c1)=>void WRITE do
+input recursive (byte c)=>void WRITE do
     /* Put data into buffer, sends the data */
     loop do
         if (_UCSR0A & (1<<_UDRE0)) then
@@ -42,15 +42,9 @@ input delay (byte c, byte c1)=>void WRITE do
 end
 
 // TODO: remove?
-input delay (byte* buf, int len)=>void WRITE_BUF do
+input recursive (byte* buf, int len)=>void WRITE_BUF do
     loop i, len do
-        // TODO: call WRITE => (buf[i],buf[i]);
-        loop do
-            if (_UCSR0A & (1<<_UDRE0)) then
-                break;
-            end
-        end
-        _UDR0 = buf[i];
+        call WRITE => buf[i];
     end
 end
 

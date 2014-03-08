@@ -1,6 +1,6 @@
 output (int)      =>void BEGIN;
 output (void)     =>void END;
-output (char,char)=>void WRITE;
+output (char)     =>void WRITE;
 output (char*,int)=>void WRITE_BUF;
 
 input int READ;
@@ -35,7 +35,7 @@ par do
 
         //call WRITE_BUF => (str, _strlen(str));
         loop i, _strlen(str) do
-            call WRITE => (str[i],str[i]);
+            call WRITE => str[i];
             await 800us;
         end
     end
@@ -70,7 +70,7 @@ with
 
             //call WRITE_BUF => (str, _strlen(str));
             loop i, _strlen(str) do
-                call WRITE => (str[i],str[i]);
+                call WRITE => str[i];
                 await 800us;
             end
 /*

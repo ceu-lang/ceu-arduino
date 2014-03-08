@@ -17,14 +17,11 @@ finalize with
     call SERIAL_END;
 end
 
-var char[20] str;
-    str[0] = 'F';
-    str[1] = '\n';
-    str[2] = '\0';
+#define CMD_SIZE 32
 
 loop do
-	var char[20] cmd;
-	loop i, 18 do
+    var char[CMD_SIZE] cmd;
+    loop i, CMD_SIZE-2 do
         var char v = await SERIAL_READ;
 		cmd[i] = v;
         if v == '\n' then
@@ -32,10 +29,10 @@ loop do
             break;
         end
     end
-	cmd[18] = '\n';
-	cmd[19] = '\0';
-    call COMMAND => (cmd,20);
+    cmd[CMD_SIZE-2] = '\n';
+    cmd[CMD_SIZE-1] = '\0';
+    call COMMAND => (cmd,CMD_SIZE);
 
-    _strncat(cmd, "\n", 20);
+    _strncat(cmd, "\n", CMD_SIZE);
     call SERIAL_WRITE_BUF => (cmd,_strlen(cmd));
 end

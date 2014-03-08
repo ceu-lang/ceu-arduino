@@ -8,14 +8,16 @@ end
 #define CMD_SIZE 32
 var char[CMD_SIZE] cmd;
 
+// SAVE
+_strncpy(cmd, "save 0xBE00 10 abcdefghij", CMD_SIZE);
+call COMMAND => (cmd,CMD_SIZE);
+_strncpy(cmd, "save 0xBF00 10 jihgfedcba", CMD_SIZE);
+call COMMAND => (cmd,CMD_SIZE);
+
 // GPIO
 _strncpy(cmd, "load 0 0x2000", CMD_SIZE);
 call COMMAND => (cmd,CMD_SIZE);
 _strncpy(cmd, "start 0", CMD_SIZE);
-call COMMAND => (cmd,CMD_SIZE);
-
-// SAVE
-_strncpy(cmd, "save 0xF800 10 0123456789", CMD_SIZE);
 call COMMAND => (cmd,CMD_SIZE);
 
 loop do

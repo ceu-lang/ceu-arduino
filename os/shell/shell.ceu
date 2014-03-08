@@ -68,13 +68,14 @@ input (char* buf, int n)=>void COMMAND do
     else/if _strcmp(cmd,"save") == 0 then
         var int addr = _strtol(buf,&buf,16);
         var int size = _strtol(buf,&buf,10);
-        var char[256] mem;
+        var _uint8_t[256] mem;
         _strncpy(mem, &buf[1], size); // skip space
         loop i, (256-size) do
             mem[size+i] = 0x00;       // complete page with 0's
         end
-        var _boot_program_page_t f = (_boot_program_page_t) 0x7ED5;
+        var _boot_program_page_t f = (_boot_program_page_t) 0x7EC3;
         f(addr, mem);
+        _strncpy(ret, "saved", n);
 
     // ???
     else

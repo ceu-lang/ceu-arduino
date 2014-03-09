@@ -4,7 +4,7 @@ void MAIN (void)
 {
     tceu_app* serial = ceu_sys_load((void*)0x3000);
     tceu_app* shell  = ceu_sys_load((void*)0x4000);
-    tceu_app* s2s    = ceu_sys_load((void*)0x6000);
+    tceu_app* s2s    = ceu_sys_load((void*)0x5000);
 
     ceu_sys_link(s2s,1    ,  shell,244);    // COMMAND
 

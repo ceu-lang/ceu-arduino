@@ -20,7 +20,7 @@ clean: _clean
 	find . -name "*.o"    | xargs rm -f
 
 ifndef APP
-$(error missing MAIN application)
+#$(error missing MAIN application)
 endif
 
 SOURCES += $(APP)

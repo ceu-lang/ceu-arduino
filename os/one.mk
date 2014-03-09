@@ -14,7 +14,7 @@ CPPFLAGS += -mrelax -mshort-calls #-mcall-prologues -fpic
 #CPPFLAGS += /opt/arduino-1.0.5/hardware/tools/avr/bin/../lib/gcc/avr/4.3.2/
 
 ifndef CEUFILE
-$(error missing CEUFILE application)
+#$(error missing CEUFILE application)
 endif
 
 OBJECT = $(addprefix _ceu_, $(addsuffix .o, $(basename $(CEUFILE))))
@@ -49,9 +49,9 @@ _ceu_%.o: _ceu_%.c $(LIBS)
 		-nostartfiles \
 		$^ -o $@
 	! $(OBJDUMP) -h $@ | fgrep ".data"
-	$(STRIP) -s $@
+	#$(STRIP) -s $@
 	$(AVRSIZE) $@
-	$(OBJCOPY) -S --change-addresses=$(FLASHADDR) -O ihex $@ $(TARGET).hex
+	$(OBJCOPY) --change-addresses=$(FLASHADDR) -O ihex $@ $(TARGET).hex
 	$(SRECCAT) $(TARGET).hex -intel -o $(TARGET).srec
 	$(SRECCAT) $(TARGET).srec -o $(TARGET).hex -intel
 

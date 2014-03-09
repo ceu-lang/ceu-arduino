@@ -16,9 +16,6 @@ int dt () {
 
 void setup ()
 {
-/*
-    ceu_sys_start(0x3000);
-*/
     MAIN();
     old = micros();
     ceu_scheduler(dt);

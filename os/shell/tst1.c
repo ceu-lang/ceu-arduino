@@ -10,4 +10,3 @@ void MAIN (void)
     ceu_sys_start(shell);
     ceu_sys_start(tst);
 }
-

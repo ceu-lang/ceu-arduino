@@ -16,6 +16,15 @@ _strncpy(cmd, "save 10 0xBF00 jihgfedcba", CMD_SIZE);
 call COMMAND => (cmd,CMD_SIZE);
 */
 
+// TST0
+_strncpy(cmd, "load 0 0xF000", CMD_SIZE);
+call COMMAND => (cmd,CMD_SIZE);
+_strncpy(cmd, "start 0", CMD_SIZE);
+call COMMAND => (cmd,CMD_SIZE);
+await 5s;
+_strncpy(cmd, "stop 0", CMD_SIZE);
+call COMMAND => (cmd,CMD_SIZE);
+
 // GPIO
 _strncpy(cmd, "load 0 0x2000", CMD_SIZE);
 call COMMAND => (cmd,CMD_SIZE);

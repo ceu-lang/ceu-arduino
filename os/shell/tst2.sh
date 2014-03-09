@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # OUT.HEX
-./upload.lua out.hex
+#./upload.lua out.hex
 
 # TST0
 echo "load 0 0xF000"    > /dev/ttyUSB0

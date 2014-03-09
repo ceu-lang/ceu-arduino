@@ -36,9 +36,9 @@ loop do
     _strncpy(cmd, "load 1 0xC000", CMD_SIZE);
     call COMMAND => (cmd,CMD_SIZE);
 
-    _strncpy(cmd, "link 1 1 0 244", CMD_SIZE);
+    _strncpy(cmd, "link 1 1 0 243", CMD_SIZE);
     call COMMAND => (cmd,CMD_SIZE);
-    _strncpy(cmd, "link 1 2 0 243", CMD_SIZE);
+    _strncpy(cmd, "link 1 2 0 242", CMD_SIZE);
     call COMMAND => (cmd,CMD_SIZE);
     _strncpy(cmd, "start 1", CMD_SIZE);
     call COMMAND => (cmd,CMD_SIZE);
@@ -52,9 +52,9 @@ loop do
     _strncpy(cmd, "load 2 0xC500", CMD_SIZE);
     call COMMAND => (cmd,CMD_SIZE);
 
-    _strncpy(cmd, "link 2 1 0 244", CMD_SIZE);
+    _strncpy(cmd, "link 2 1 0 243", CMD_SIZE);
     call COMMAND => (cmd,CMD_SIZE);
-    _strncpy(cmd, "link 2 2 0 243", CMD_SIZE);
+    _strncpy(cmd, "link 2 2 0 242", CMD_SIZE);
     call COMMAND => (cmd,CMD_SIZE);
     _strncpy(cmd, "start 2", CMD_SIZE);
     call COMMAND => (cmd,CMD_SIZE);

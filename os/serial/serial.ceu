@@ -41,7 +41,7 @@ input recursive (byte c)=>void WRITE do
     */
 end
 
-// TODO: remove?
+// TODO: recursive
 input recursive (byte* buf, int len)=>void WRITE_BUF do
     loop i, len do
         call WRITE => buf[i];

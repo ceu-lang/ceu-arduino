@@ -72,6 +72,7 @@ with
             loop i, _strlen(str) do
                 call WRITE => str[i];
                 await 800us;
+// TODO: swap await/noawait to see the FPS variation (or swap WRITE/WRITE_BUF)
             end
 /*
 */

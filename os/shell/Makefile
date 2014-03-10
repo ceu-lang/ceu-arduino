@@ -7,7 +7,7 @@ tst1:
 	make CEUFILE=shell.ceu FLASHADDR=0x4000 all
 	make CEUFILE=tst1.ceu  FLASHADDR=0xA000 all
 	cd ../tst2/ && make clean && make CEUFILE=app1.ceu FLASHADDR=0xC000 all
-	cd ../tst2/ && make clean && make CEUFILE=app2.ceu FLASHADDR=0xC500 all
+	cd ../tst2/ && make clean && make CEUFILE=app2.ceu FLASHADDR=0xC800 all
 	cd ../ && make clean && make APP=shell/tst1.c
 
 s2s:

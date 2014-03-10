@@ -20,7 +20,7 @@ app := _ceu_out_load((void*)0x2000);
 _ceu_out_start(app);
 app := _ceu_out_load((void*)0xC000);
 _ceu_out_start(app);
-app := _ceu_out_load((void*)0xC500);
+app := _ceu_out_load((void*)0xC800);
 _ceu_out_start(app);
 
 var _tceu_app* app;

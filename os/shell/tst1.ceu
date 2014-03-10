@@ -49,7 +49,7 @@ loop do
     call COMMAND => (cmd,CMD_SIZE);
 
     // APP2
-    _strncpy(cmd, "load 2 0xC500", CMD_SIZE);
+    _strncpy(cmd, "load 2 0xC800", CMD_SIZE);
     call COMMAND => (cmd,CMD_SIZE);
 
     _strncpy(cmd, "link 2 1 0 243", CMD_SIZE);

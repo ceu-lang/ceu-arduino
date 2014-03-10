@@ -7,8 +7,6 @@ _pinMode(12, _OUTPUT);
 _pinMode(13, _OUTPUT);
 
 function (void)=>void isr do
-    _pinMode(11, _OUTPUT);
-    _digitalWrite(11, 1);
     var char b = _UDR0;
 end
 

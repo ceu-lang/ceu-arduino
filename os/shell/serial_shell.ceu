@@ -28,10 +28,6 @@ loop do
 
     // FLASH WRITE
     if v == ':' then
-        var _uint8_t[PAGE_SIZE] mem;
-        //var char[100] out;
-        var int  mem_i = 0;
-        var uint mem_addr;
 
         /* Intel hex format
          * : nn addr 00 .... XX \n
@@ -43,6 +39,11 @@ loop do
          *                   ^  XX      (checksum)
          * : 00 0000 01 FF              (last line)
          */
+
+        var _uint8_t[PAGE_SIZE] mem;
+        //var char[100] out;
+        var int  mem_i = 0;
+        var uint mem_addr;
 
         loop do
             // LEN
@@ -108,19 +109,28 @@ loop do
             //call SERIAL_WRITE_BUF => (out, _strlen(out));
 
             if type==0x01 or mem_i==256 then
-                break;
+                /*
+                 * WRITE TO FLASH:
+                 * assumes (1) starting line address is aligned;
+                 *         (2) line addresses are contiguous;
+                 *         (3) lines never skip byte 256
+                 */
+                if mem_i > 0 then
+                    var _boot_program_page_t f = (_boot_program_page_t) 0x7EC3;
+                    _ISR_OFF();
+                    f(mem_addr, mem)
+                        finalize with nothing; end; // nohold
+                    _ISR_ON();
+                else
+                    // no data (type==0x01 and there are no pending bytes)
+                end
+
+                break;      // finished .HEX or next line
             end
 
             // ":"
             await SERIAL_READ;
         end
-
-        // assumes (1) starting line address is aligned;
-        //         (2) line addresses are contiguous;
-        //         (3) lines never skip byte 256
-        var _boot_program_page_t f = (_boot_program_page_t) 0x7EC3;
-        f(mem_addr, mem)
-            finalize with nothing; end; // nohold
 
     // NORMAL COMMAND
     else

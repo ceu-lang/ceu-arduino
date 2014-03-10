@@ -1,44 +1,39 @@
+#define ISR
+
+function (void)=>void rx_isr;
+
 native do
-    #include <avr/io.h>
-    #define BAUD_USART(baud_human) (((F_CPU / (baud_human * 16UL))) - 1)
+    ##include <avr/io.h>
+    ##define BAUD_USART(baud_human) (((F_CPU / (baud_human * 16UL))) - 1)
 end
 
 input (int speed)=>void BEGIN do
-    /* Set baud rate */
-    _UBRR0H = (byte)(_BAUD_USART(speed)>>8);
+    _UBRR0H = (byte)(_BAUD_USART(speed)>>8);    // set baud rate
     _UBRR0L = (byte)_BAUD_USART(speed);
-
-    /* Enable receiver and transmitter */
-    _UCSR0B = (1<<_RXEN0) | (1<<_TXEN0);
-
-    /* Set frame format: 8data, 2stop bit */
-    _UCSR0C = (1<<_USBS0)|(3<<_UCSZ00);
-    // (tutorial) _UCSR0C = (1 << _URSEL0) | (1 << _UCSZ00) | (1 << _UCSZ01);
+    _UCSR0B = (1<<_RXEN0) | (1<<_TXEN0);        // enable RX/TX
+    _UCSR0C = (1<<_USBS0)|(3<<_UCSZ00);         // format: 8data, 2stop-bit
+#ifdef ISR
+    _ceu_out_isr(20, rx_isr);
+    _UCSR0B = _UCSR0B | (1 << _RXCIE0);         // enable RX interrupts
+#endif
 end
 
 input (void)=>void END do
-    /* Disable receiver and transmitter */
-    _UCSR0B = (1<<_RXEN0) | (1<<_TXEN0);
+    _UCSR0B = 0;                                // disable RX/TX/ISR
+#ifdef ISR
+    _ceu_out_isr(20, null);
+#endif
 end
 
 /* TODO: call/rec */
 
 input recursive (byte c)=>void WRITE do
-    /* Put data into buffer, sends the data */
     loop do
         if (_UCSR0A & (1<<_UDRE0)) then
-            break;
+            break;      // ready to transmit
         end
     end
-    _UDR0 = c;
-    // Do nothing until transmission complete flag set
-    /*
-    loop do
-        if ((_UCSR0A & (1 << _TXC0)) != 0) then
-            break;
-        end
-    end
-    */
+    _UDR0 = c;          // send data
 end
 
 // TODO: recursive
@@ -51,6 +46,44 @@ end
 output int READ;
         // TODO: request READLINE
 
+#ifdef ISR
+
+#define RX_SIZE 16
+
+var byte[RX_SIZE] rxs;
+var u8            rx_get = 0;
+var u8            rx_put = 0;
+
+function (void)=>void rx_isr do
+    var u8 put = (rx_put + 1) % RX_SIZE;
+    var byte c = _UDR0;     // must always read (regardless of the space)
+    if put != rx_get then
+        rxs[rx_put] = c;
+        rx_put = put;
+    end
+end
+
+loop do
+    var int isr = await OS_INTERRUPT
+                  until isr==20;        // USART0_RX_vect
+
+    loop do
+        var byte c;
+        _ISR_OFF();                     // TODO: atomic do ... end
+        if rx_get == rx_put then
+            _ISR_ON();
+            break;                      // no more data
+        else
+            c = rxs[rx_get];
+            rx_get = (rx_get + 1) % RX_SIZE;
+        end
+        _ISR_ON();
+        emit READ => c;
+    end
+end
+
+#else  // ! ISR
+
 async do
     loop do
         loop do
@@ -60,9 +93,11 @@ async do
             end
         end
         // Get and return received data from buffer
-        var int v = _UDR0;
+        var byte v = _UDR0;
         emit READ => v;
     end
 end
 
 await FOREVER;
+
+#endif // ISR

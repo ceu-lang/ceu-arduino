@@ -30,30 +30,38 @@ loop do
     if v == ':' then
 
         /* Intel hex format
-         * : nn addr 00 .... XX \n
+         * : nn addr tp .... XX \n
          * ^                    :       (starting colon)
          *    ^                 nn      (number of bytes of data)
          *       ^              addr    (address to save)
-         *           ^          00      (data record)
+         *           ^          tp      (record type)
          *               ^      ....    (data)
          *                   ^  XX      (checksum)
          * : 00 0000 01 FF              (last line)
          */
 
+        /* scope of 256 bytes of data or tp="end" */
+
         var _uint8_t[PAGE_SIZE] mem;
         //var char[100] out;
         var int  mem_i = 0;
         var uint mem_addr;
+        var s8   checksum? = 1;     // (sum+XX == 0) ? 1 : 0
 
         loop do
+            /* scope of one line */
+
+            var byte sum = 0;       // add nn+add+tp+...
+
             // LEN
-            var uint len;
+            var u8 len;
             do
                 var char[3] num;
                 num[0] = await SERIAL_READ;
                 num[1] = await SERIAL_READ;
                 num[2] = '\0';
                 len = _strtol(num,null,16);
+                sum = sum + (byte)len;
                 //_itoa(len, out, 16);
             end
 
@@ -62,25 +70,30 @@ loop do
                 var char[5] num;
                 num[0] = await SERIAL_READ;
                 num[1] = await SERIAL_READ;
+                num[2] = '\0';
+                sum = sum + (byte)_strtol(num,null,16);
                 num[2] = await SERIAL_READ;
                 num[3] = await SERIAL_READ;
                 num[4] = '\0';
+                sum = sum + (byte)_strtol(&num[2],null,16);
+                var u16 addr = _strtol(num,null,16);
                 if mem_i == 0 then
                     // first line: set "mem_addr"
                     // TODO: assumes line addresses are contiguous
-                    mem_addr = _strtol(num,null,16);
+                    mem_addr = addr;
                 end
                 //_itoa(mem_addr,&out[_strlen(out)], 16);
             end
 
             // TYPE
-            var int type;
+            var u8 type;
             do
                 var char[3] num;
                 num[0] = await SERIAL_READ;
                 num[1] = await SERIAL_READ;
                 num[2] = '\0';
                 type = _strtol(num,null,16);
+                sum = sum + (byte)type;
                 //_itoa(type,&out[_strlen(out)], 16);
             end
 
@@ -90,23 +103,29 @@ loop do
                 num[0] = await SERIAL_READ;
                 num[1] = await SERIAL_READ;
                 num[2] = '\0';
+                var byte b = _strtol(num,null,16);
+                sum = sum + (byte)b;
                 if type == 0x00 then
-                    mem[mem_i] := _strtol(num,null,16);
-                                // uchar
+                    mem[mem_i] = b;
                     mem_i = mem_i + 1;
                 end
                 //_itoa(mem[mem_i-1],&out[_strlen(out)], 16);
             end
 
-            // TODO: CHECKSUM
-            await SERIAL_READ;
-            await SERIAL_READ;
+            // CHECKSUM
+            do
+                var char[3] num;
+                num[0] = await SERIAL_READ;
+                num[1] = await SERIAL_READ;
+                num[2] = '\0';
+                sum = sum + (byte)_strtol(num,null,16);
+                if (sum != 0) then
+                    checksum? = 0;  // all 256 will be ignored
+                end
+            end
 
             // "\n"
             await SERIAL_READ;
-
-            //_strncat(out, "\n", 1);
-            //call SERIAL_WRITE_BUF => (out, _strlen(out));
 
             if type==0x01 or mem_i==256 then
                 /*
@@ -115,7 +134,7 @@ loop do
                  *         (2) line addresses are contiguous;
                  *         (3) lines never skip byte 256
                  */
-                if mem_i > 0 then
+                if checksum? and (mem_i > 0) then
                     var _boot_program_page_t f = (_boot_program_page_t) 0x7EC3;
                     _ISR_OFF();
                     f(mem_addr, mem)
@@ -123,6 +142,9 @@ loop do
                     _ISR_ON();
                 else
                     // no data (type==0x01 and there are no pending bytes)
+                    if not checksum? then
+                        call SERIAL_WRITE_BUF => ("checksum error\n",15);
+                    end
                 end
 
                 break;      // finished .HEX or next line

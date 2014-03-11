@@ -7,7 +7,7 @@ call PIN_MODE => (12,1);
 
 loop do
     call DIGITAL_WRITE => (12,1);
-	await 1s;
+    await 1s;
     call DIGITAL_WRITE => (12,0);
-	await 1s;
+    await 1s;
 end

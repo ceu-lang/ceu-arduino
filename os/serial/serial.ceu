@@ -13,16 +13,12 @@ input (int speed)=>void BEGIN do
     _UCSR0B = (1<<_RXEN0) | (1<<_TXEN0);        // enable RX/TX
     _UCSR0C = (1<<_USBS0)|(3<<_UCSZ00);         // format: 8data, 2stop-bit
 #ifdef ISR
-    _ceu_out_isr(20, rx_isr);
     _UCSR0B = _UCSR0B | (1 << _RXCIE0);         // enable RX interrupts
 #endif
 end
 
 input (void)=>void END do
     _UCSR0B = 0;                                // disable RX/TX/ISR
-#ifdef ISR
-    _ceu_out_isr(20, null);
-#endif
 end
 
 /* TODO: call/rec */
@@ -54,7 +50,7 @@ var byte[RX_SIZE] rxs;
 var u8            rx_get = 0;
 var u8            rx_put = 0;
 
-function (void)=>void rx_isr do
+function isr[20] do
     var u8 put = (rx_put + 1) % RX_SIZE;
     var byte c = _UDR0;     // must always read (regardless of the space)
     if put != rx_get then

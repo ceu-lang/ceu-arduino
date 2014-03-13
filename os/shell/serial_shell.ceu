@@ -46,7 +46,7 @@ loop do
         //var char[100] out;
         var int  mem_i = 0;
         var uint mem_addr;
-        var s8   checksum? = 1;     // (sum+XX == 0) ? 1 : 0
+        var bool checksum? = true;  // (sum+XX == 0) ? 1 : 0
 
         loop do
             /* scope of one line */
@@ -120,7 +120,7 @@ loop do
                 num[2] = '\0';
                 sum = sum + (byte)_strtol(num,null,16);
                 if (sum != 0) then
-                    checksum? = 0;  // all 256 will be ignored
+                    checksum? = false;  // all 256 will be ignored
                 end
             end
 

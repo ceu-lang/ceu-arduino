@@ -68,8 +68,8 @@ loop do
                  until tp==20;        // USART0_RX_vect
 
     loop do
-        var byte c  = 0;    // =0 avoids "uninit" warning
-        var s8 has? = 0;    // =0 avoids "uninit" warning
+        var byte c  = 0;        // =0 avoids "uninit" warning
+        var bool has? = false;  // =false avoids "uninit" warning
         atomic do
             has? = (rx_get != rx_put);
             if has? then

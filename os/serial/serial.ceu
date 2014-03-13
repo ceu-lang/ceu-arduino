@@ -1,7 +1,5 @@
 #define ISR
 
-function (void)=>void rx_isr;
-
 native do
     ##include <avr/io.h>
     ##define BAUD_USART(baud_human) (((F_CPU / (baud_human * 16UL))) - 1)
@@ -29,7 +27,9 @@ input recursive (byte c)=>void WRITE do
             break;      // ready to transmit
         end
     end
-    _UDR0 = c;          // send data
+    atomic do
+        _UDR0 = c;          // send data
+    end
 end
 
 // TODO: recursive
@@ -47,8 +47,12 @@ output int READ;
 #define RX_SIZE 16
 
 var byte[RX_SIZE] rxs;
-var u8            rx_get = 0;
-var u8            rx_put = 0;
+var u8            rx_get;
+var u8            rx_put;
+atomic do
+    rx_get = 0;
+    rx_put = 0;
+end
 
 function isr[20] do
     var u8 put = (rx_put + 1) % RX_SIZE;
@@ -60,21 +64,24 @@ function isr[20] do
 end
 
 loop do
-    var int isr = await OS_INTERRUPT
-                  until isr==20;        // USART0_RX_vect
+    var int tp = await OS_INTERRUPT
+                 until tp==20;        // USART0_RX_vect
 
     loop do
-        var byte c;
-        _ISR_OFF();                     // TODO: atomic do ... end
-        if rx_get == rx_put then
-            _ISR_ON();
-            break;                      // no more data
-        else
-            c = rxs[rx_get];
-            rx_get = (rx_get + 1) % RX_SIZE;
+        var byte c  = 0;    // =0 avoids "uninit" warning
+        var s8 has? = 0;    // =0 avoids "uninit" warning
+        atomic do
+            has? = (rx_get != rx_put);
+            if has? then
+                c = rxs[rx_get];
+                rx_get = (rx_get + 1) % RX_SIZE;
+            end
         end
-        _ISR_ON();
-        emit READ => c;
+        if has? then
+            emit READ => c;
+        else
+            break;
+        end
     end
 end
 

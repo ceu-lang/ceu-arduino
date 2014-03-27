@@ -15,6 +15,11 @@ typedef unsigned int  uint;
 typedef unsigned char byte;
 #endif
 
+#ifndef CEU_BOOL
+#define CEU_BOOL
+typedef unsigned char bool;
+#endif
+
 typedef int64_t  s64;
 typedef int32_t  s32;
 typedef int16_t  s16;

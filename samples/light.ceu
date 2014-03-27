@@ -19,7 +19,22 @@ par do
     end
 with
     loop do
+#if 0
         var int light = _analogRead(0);
+#elif 1
+        var int pin = 7 - (0);
+        _ADMUX = (_DEFAULT << 6) | (pin & 0x07);
+        _ADCSRA = _ADCSRA | (1<<_ADSC);
+        loop do
+            if not (_ADCSRA & (1<<_ADSC)) then
+                break;
+            end
+        end
+        var byte low  = _ADCL;
+        var byte high = _ADCH;
+        var int light = (high << 8) | low;
+
+#endif
         dt = _map(light, 0,1023, 100,1000);
         await 200ms;
     end

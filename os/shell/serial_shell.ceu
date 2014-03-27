@@ -136,10 +136,11 @@ loop do
                  */
                 if checksum? and (mem_i > 0) then
                     var _boot_program_page_t f = (_boot_program_page_t) 0x7EC3;
-                    _ISR_OFF();
+                    _CEU_ISR_OFF();
                     f(mem_addr, mem)
                         finalize with nothing; end; // nohold
-                    _ISR_ON();
+                    //call SERIAL_WRITE_BUF => ("write\n",7);
+                    _CEU_ISR_ON();
                 else
                     // no data (type==0x01 and there are no pending bytes)
                     if not checksum? then

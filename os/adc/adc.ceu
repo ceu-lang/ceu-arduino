@@ -1,0 +1,23 @@
+native do
+    ##include <avr/io.h>
+end
+
+input/output (u8 pin)=>s16 [1] READ do
+    pin = 7 - pin;  // TODO: atmega644PA
+    _ADMUX  = (_DEFAULT<<6) | (pin & 0x7);      // channel pin
+    _ADCSRA = _ADCSRA | (1 << _ADSC);           // start conversion
+
+    async do
+        loop do
+            if not (_ADCSRA & (1 << _ADSC)) then
+                break;                          // wait for conversion
+            end
+        end
+    end
+
+    var byte low  = _ADCL;
+    var byte high = _ADCH;
+    return (high<<8) | low;                     // read value
+end
+
+await FOREVER;

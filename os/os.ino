@@ -1,7 +1,5 @@
-extern "C" {
-    #include "ceu_os.h"
-    extern void MAIN (void);
-}
+#include "ceu_os.h"
+extern void MAIN (void);
 
 u32 old;
 int dt () {

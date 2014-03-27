@@ -1,4 +1,4 @@
-#define ISR
+//#define ISR
 
 native do
     ##include <avr/io.h>

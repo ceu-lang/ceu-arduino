@@ -1,0 +1,26 @@
+#include "arduino.ceu"
+
+native do
+    long map (long x, long in_min, long in_max, long out_min, long out_max) {
+        return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+    }
+end
+
+var int dt = 1000;
+
+_pinMode(13, _OUTPUT);
+
+par do
+    loop do
+        _digitalWrite(13, _HIGH);
+        await (dt)ms;
+        _digitalWrite(13, _LOW);
+        await (dt)ms;
+    end
+with
+    loop do
+        var int light = _analogRead(0);
+        dt = _map(light, 0,1023, 100,1000);
+        await 200ms;
+    end
+end

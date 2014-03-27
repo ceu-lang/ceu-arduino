@@ -272,7 +272,7 @@ $(TARGET).elf: $(ARDUINOLIB) $(OBJECTS)
 	$(AVRSIZE) $@
 
 %.o: %.ino
-	$(COMPILE.cpp) -x c++ -c $< -o $@ -include $(ARDUINOSRCDIR)/Arduino.h
+	$(COMPILE.c) -x c -c $< -o $@ -include $(ARDUINOSRCDIR)/Arduino.h
 
 %.o: %.pde
 	$(COMPILE.c) -x c -c $< -o $@ -include $(ARDUINOSRCDIR)/Arduino.h

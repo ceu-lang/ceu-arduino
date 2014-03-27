@@ -21,6 +21,9 @@ u32 old;
 
 int _ceu_arduino_V;
 
+byte CEU_DATA[sizeof(CEU_Main)];
+tceu_app CEU_APP;
+
 void setup ()
 {
 #ifdef CEU_IN_PIN00
@@ -122,7 +125,10 @@ void setup ()
 #endif
 
     old = micros();
-    ceu_go_init(&CEU_APP);
+
+    CEU_APP.data = (tceu_org*) &CEU_DATA;
+    CEU_APP.init = &ceu_app_init;
+    CEU_APP.init(&CEU_APP);
 #ifdef CEU_IN_START
     ceu_go_event(&CEU_APP, CEU_IN_START, NULL);
 #endif
@@ -270,7 +276,7 @@ void loop()
     s32 dt = now - old;     // no problems with overflow
 
     old = now;
-    ceu_go_wclock(&CEU_APP, dt);
+    ceu_sys_go(&CEU_APP, CEU_IN__WCLOCK, (tceu_evtp)dt);
 
 
 #ifdef POLLING_INTERVAL
@@ -279,6 +285,6 @@ void loop()
 #endif
 
 #ifdef CEU_ASYNCS
-    ceu_go_async(&CEU_APP);
+    ceu_sys_go(&CEU_APP, CEU_IN__ASYNC, (tceu_evtp)NULL);
 #endif
 }

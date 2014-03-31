@@ -1,10 +1,10 @@
 INOFILE ?= os.ino
 
-ARDUINOSUB = Microduino
-#BOARD = uno
-BOARD = 644pa16m
-#lilypad328
-#uno
+ARDUINOSUB = arduino
+BOARD = uno
+#BOARD = lilypad328
+#ARDUINOSUB = Microduino
+#BOARD = 644pa16m
 
 .PHONY: all target clean
 

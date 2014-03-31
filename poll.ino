@@ -130,7 +130,7 @@ void setup ()
     CEU_APP.init = &ceu_app_init;
     CEU_APP.init(&CEU_APP);
 #ifdef CEU_IN_START
-    ceu_go_event(&CEU_APP, CEU_IN_START, NULL);
+    ceu_sys_go(&CEU_APP, CEU_IN_START, (tceu_evtp)NULL);
 #endif
 }
 
@@ -157,7 +157,7 @@ void loop()
     tmp = digitalRead(0);
     if (bitRead(_ceu_arduino_V,0) != tmp) {
         bitWrite(_ceu_arduino_V,0,tmp);
-        ceu_go_event(&CEU_APP, CEU_IN_PIN00, (void*)tmp);
+        ceu_sys_go(&CEU_APP, CEU_IN_PIN00, (tceu_evtp)tmp);
     }
 #endif
 
@@ -165,7 +165,7 @@ void loop()
     tmp = digitalRead(1);
     if (bitRead(_ceu_arduino_V,1) != tmp) {
         bitWrite(_ceu_arduino_V,1,tmp);
-        ceu_go_event(&CEU_APP, CEU_IN_PIN01, (void*)tmp);
+        ceu_sys_go(&CEU_APP, CEU_IN_PIN01, (tceu_evtp)tmp);
     }
 #endif
 
@@ -173,7 +173,7 @@ void loop()
     tmp = digitalRead(2);
     if (bitRead(_ceu_arduino_V,2) != tmp) {
         bitWrite(_ceu_arduino_V,2,tmp);
-        ceu_go_event(&CEU_APP, CEU_IN_PIN02, (void*)tmp);
+        ceu_sys_go(&CEU_APP, CEU_IN_PIN02, (tceu_evtp)tmp);
     }
 #endif
 
@@ -181,7 +181,7 @@ void loop()
     tmp = digitalRead(3);
     if (bitRead(_ceu_arduino_V,3) != tmp) {
         bitWrite(_ceu_arduino_V,3,tmp);
-        ceu_go_event(&CEU_APP, CEU_IN_PIN03, (void*)tmp);
+        ceu_sys_go(&CEU_APP, CEU_IN_PIN03, (tceu_evtp)tmp);
     }
 #endif
 
@@ -189,7 +189,7 @@ void loop()
     tmp = digitalRead(4);
     if (bitRead(_ceu_arduino_V,4) != tmp) {
         bitWrite(_ceu_arduino_V,4,tmp);
-        ceu_go_event(&CEU_APP, CEU_IN_PIN04, (void*)tmp);
+        ceu_sys_go(&CEU_APP, CEU_IN_PIN04, (tceu_evtp)tmp);
     }
 #endif
 
@@ -197,7 +197,7 @@ void loop()
     tmp = digitalRead(5);
     if (bitRead(_ceu_arduino_V,5) != tmp) {
         bitWrite(_ceu_arduino_V,5,tmp);
-        ceu_go_event(&CEU_APP, CEU_IN_PIN05, (void*)tmp);
+        ceu_sys_go(&CEU_APP, CEU_IN_PIN05, (tceu_evtp)tmp);
     }
 #endif
 
@@ -205,7 +205,7 @@ void loop()
     tmp = digitalRead(6);
     if (bitRead(_ceu_arduino_V,6) != tmp) {
         bitWrite(_ceu_arduino_V,6,tmp);
-        ceu_go_event(&CEU_APP, CEU_IN_PIN06, (void*)tmp);
+        ceu_sys_go(&CEU_APP, CEU_IN_PIN06, (tceu_evtp)tmp);
     }
 #endif
 
@@ -213,7 +213,7 @@ void loop()
     tmp = digitalRead(7);
     if (bitRead(_ceu_arduino_V,7) != tmp) {
         bitWrite(_ceu_arduino_V,7,tmp);
-        ceu_go_event(&CEU_APP, CEU_IN_PIN07, (void*)tmp);
+        ceu_sys_go(&CEU_APP, CEU_IN_PIN07, (tceu_evtp)tmp);
     }
 #endif
 
@@ -221,7 +221,7 @@ void loop()
     tmp = digitalRead(8);
     if (bitRead(_ceu_arduino_V,8) != tmp) {
         bitWrite(_ceu_arduino_V,8,tmp);
-        ceu_go_event(&CEU_APP, CEU_IN_PIN08, (void*)tmp);
+        ceu_sys_go(&CEU_APP, CEU_IN_PIN08, (tceu_evtp)tmp);
     }
 #endif
 
@@ -229,7 +229,7 @@ void loop()
     tmp = digitalRead(9);
     if (bitRead(_ceu_arduino_V,9) != tmp) {
         bitWrite(_ceu_arduino_V,9,tmp);
-        ceu_go_event(&CEU_APP, CEU_IN_PIN09, (void*)tmp);
+        ceu_sys_go(&CEU_APP, CEU_IN_PIN09, (tceu_evtp)tmp);
     }
 #endif
 
@@ -237,7 +237,7 @@ void loop()
     tmp = digitalRead(10);
     if (bitRead(_ceu_arduino_V,10) != tmp) {
         bitWrite(_ceu_arduino_V,10,tmp);
-        ceu_go_event(&CEU_APP, CEU_IN_PIN10, (void*)tmp);
+        ceu_sys_go(&CEU_APP, CEU_IN_PIN10, (tceu_evtp)tmp);
     }
 #endif
 
@@ -245,7 +245,7 @@ void loop()
     tmp = digitalRead(11);
     if (bitRead(_ceu_arduino_V,11) != tmp) {
         bitWrite(_ceu_arduino_V,11,tmp);
-        ceu_go_event(&CEU_APP, CEU_IN_PIN11, (void*)tmp);
+        ceu_sys_go(&CEU_APP, CEU_IN_PIN11, (tceu_evtp)tmp);
     }
 #endif
 
@@ -253,7 +253,7 @@ void loop()
     tmp = digitalRead(12);
     if (bitRead(_ceu_arduino_V,12) != tmp) {
         bitWrite(_ceu_arduino_V,12,tmp);
-        ceu_go_event(&CEU_APP, CEU_IN_PIN12, (void*)tmp);
+        ceu_sys_go(&CEU_APP, CEU_IN_PIN12, (tceu_evtp)tmp);
     }
 #endif
 
@@ -261,14 +261,14 @@ void loop()
     tmp = digitalRead(13);
     if (bitRead(_ceu_arduino_V,13) != tmp) {
         bitWrite(_ceu_arduino_V,13,tmp);
-        ceu_go_event(&CEU_APP, CEU_IN_PIN13, (void*)tmp);
+        ceu_sys_go(&CEU_APP, CEU_IN_PIN13, (tceu_evtp)tmp);
     }
 #endif
 
 #ifdef CEU_IN_SERIAL
     if (Serial.available() > 0) {
         char c = Serial.read();
-        ceu_go_event(&CEU_APP, CEU_IN_SERIAL, c);
+        ceu_sys_go(&CEU_APP, CEU_IN_SERIAL, (tceu_evtp)c);
     }
 #endif
 

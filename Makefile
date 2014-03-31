@@ -1,12 +1,11 @@
 INOFILE ?= poll.ino
 CEUFILE ?= samples/blink1.ceu
 
-ARDUINOSUB = Microduino
-BOARD = 644pa16m
-#ARDUINOSUB = arduino
-#BOARD = uno
-#lilypad328
-#uno
+ARDUINOSUB = arduino
+BOARD = uno
+#BOARD = lilypad328
+#ARDUINOSUB = Microduino
+#BOARD = 644pa16m
 
 .PHONY: all ceu ino clean
 

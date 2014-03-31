@@ -1,0 +1,35 @@
+output (u8 pin, u8 mode)=>void PIN_MODE;
+output (u8 pin, u8 val) =>void DIGITAL_WRITE;
+
+output/input (u8 pin)=>s16 READ_ANALOG;
+
+native do
+    long map (long x, long in_min, long in_max, long out_min, long out_max) {
+        return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+    }
+end
+
+var int dt = 1000;
+
+await OS_START;
+
+call PIN_MODE => (12,1);
+
+var int dt = 1000;
+
+par do
+    loop do
+        call DIGITAL_WRITE => (12,_HIGH);
+        await (dt)ms;
+        call DIGITAL_WRITE => (12,_LOW);
+        await (dt)ms;
+    end
+with
+    loop do
+        var int err, light;
+        (err,light) = (request READ_ANALOG=>0);
+        dt = _map(light, 0,1023, 100,1000);
+        await 200ms;
+    end
+end
+

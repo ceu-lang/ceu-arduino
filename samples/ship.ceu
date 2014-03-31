@@ -19,26 +19,19 @@
 input int KEY;
 
 native constant _KEY_NONE, _KEY_RIGHT, _KEY_UP, _KEY_DOWN,
-                  _KEY_LEFT, _KEY_SELECT;
+                _KEY_LEFT, _KEY_SELECT;
 
 native _analogRead(), _map_generate(), _redraw(),
        _MAP, _END;
-native nohold _randomSeed();
-
-native _lcd_begin(), _lcd_setCursor(), _lcd_write();
-native do
-    ##define lcd_begin(a,b)     lcd.begin(a,b)
-    ##define lcd_setCursor(a,b) lcd.setCursor(a,b)
-    ##define lcd_write(a)       lcd.write(a)
-end
+native nohold _math_randomSeed();
 
 native pure _analog2key();
 
 safe _analogRead with _map_generate, _redraw;
 
 native do
-    ##include <LiquidCrystal.h>
-    LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
+    ##include "lcd.hh"
+    ##include "math.hh"
 
     enum {
         KEY_NONE,
@@ -58,8 +51,8 @@ native do
     void map_generate (int n) {
         int i;
         for (i=3; i<END-1; i++) {
-            if (random(n) < 10) {
-                int j = random(2);
+            if (math_random(0,n) < 10) {
+                int j = math_random(0,2);
                 MAP[j]  [i] = '*';
                 MAP[1-j][i] = ' ';
             } else {
@@ -72,25 +65,25 @@ native do
     void redraw (int N, int ship, int pts) {
         int i;
 
-        lcd.setCursor(0, 0);
+        lcd_setCursor(0, 0);
         for (i=N; i<N+16; i++)
             if (i >= END)
-                lcd.write(' ');
+                lcd_write(' ');
             else
-                lcd.write( MAP[0][i] );
+                lcd_write( MAP[0][i] );
 
-        lcd.setCursor(0, 1);
+        lcd_setCursor(0, 1);
         for (i=N; i<N+16; i++)
             if (i >= END)
-                lcd.write(' ');
+                lcd_write(' ');
             else
-                lcd.write( MAP[1][i] );
+                lcd_write( MAP[1][i] );
 
-        lcd.setCursor(13, 1);
-        lcd.print(pts);
+        lcd_setCursor(13, 1);
+        lcd_print(pts);
 
-        lcd.setCursor(0, ship);
-        lcd.write('>');
+        lcd_setCursor(0, ship);
+        lcd_write('>');
     }
 
     int analog2key (u16 analog) {
@@ -112,7 +105,7 @@ _lcd_begin(16, 2);
 output int PIN10;
 emit PIN10 => _LOW;
 
-_randomSeed(_analogRead(12));
+_math_randomSeed(_analogRead(12));
 
 par do
     var int pct, dt, step, ship, points;

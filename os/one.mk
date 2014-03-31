@@ -1,11 +1,10 @@
 CEUDIR ?= /data/ceu/ceu-arduino
 
-#ARDUINOSUB = arduino
-#BOARD = uno
-ARDUINOSUB ?= Microduino
-BOARD ?= 644pa16m
-#lilypad328
-#uno
+ARDUINOSUB = arduino
+BOARD = uno
+#BOARD = lilypad328
+#ARDUINOSUB ?= Microduino
+#BOARD ?= 644pa16m
 
 CPPFLAGS += -DCEU_OS -I $(CEUDIR)/os
 CPPFLAGS += -mrelax -mshort-calls #-mcall-prologues -fpic

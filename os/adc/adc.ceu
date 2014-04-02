@@ -3,7 +3,9 @@ native do
 end
 
 input/output (u8 pin)=>s16 [1] READ do
-    pin = 7 - pin;  // TODO: atmega644PA
+#ifdef __AVR_ATmega644P__
+    pin = 7 - pin;
+#endif
     _ADMUX  = (_DEFAULT<<6) | (pin & 0x7);      // channel pin
     _ADCSRA = _ADCSRA | (1 << _ADSC);           // start conversion
 

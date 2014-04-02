@@ -3,8 +3,8 @@
 void MAIN (void)
 {
     tceu_app* gpio = ceu_sys_load((void*)0x2000);
-    tceu_app* adc  = ceu_sys_load((void*)0x7000);
-    tceu_app* tst  = ceu_sys_load((void*)0x8000);
+    tceu_app* adc  = ceu_sys_load((void*)0x3000);
+    tceu_app* tst  = ceu_sys_load((void*)0x4000);
 
     // GPIO
     ceu_sys_link( tst,1  ,  gpio,CEU_IN-1);

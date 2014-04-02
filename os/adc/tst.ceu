@@ -9,8 +9,6 @@ native do
     }
 end
 
-var int dt = 1000;
-
 await OS_START;
 
 call PIN_MODE => (12,1);

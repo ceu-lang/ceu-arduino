@@ -271,6 +271,9 @@ $(TARGET).elf: $(ARDUINOLIB) $(OBJECTS)
 	$(CC) $(LINKFLAGS) $(OBJECTS) $(ARDUINOLIB) -o $@
 	$(AVRSIZE) $@
 
+# TODO: problems with type casting (tceu_evtp)x
+#%.o: %.ino
+	#$(COMPILE.cpp) -x c++ -c $< -o $@ -include $(ARDUINOSRCDIR)/Arduino.h
 %.o: %.ino
 	$(COMPILE.c) -x c -c $< -o $@ -include $(ARDUINOSRCDIR)/Arduino.h
 

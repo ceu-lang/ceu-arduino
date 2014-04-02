@@ -3,7 +3,7 @@
 void MAIN (void)
 {
     tceu_app* shell = ceu_sys_load((void*)0x4000);
-    tceu_app* tst   = ceu_sys_load((void*)0xA000);
+    tceu_app* tst   = ceu_sys_load((void*)0x5000);
 
     ceu_sys_link(tst,1  ,  shell,CEU_IN-1);
 

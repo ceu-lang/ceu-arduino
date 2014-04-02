@@ -3,6 +3,7 @@ CEUFILE ?= samples/blink1.ceu
 
 ARDUINOSUB = arduino
 BOARD = uno
+#BOARD = atmega328
 #BOARD = lilypad328
 #ARDUINOSUB = Microduino
 #BOARD = 644pa16m

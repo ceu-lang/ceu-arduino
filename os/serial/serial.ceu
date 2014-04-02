@@ -2,7 +2,11 @@
 
 native do
     ##include <avr/io.h>
+#ifdef __AVR_ATmega644P__
     ##define BAUD_USART(baud_human) (((F_CPU / (baud_human * 16UL))) - 1)
+#else
+    ##define BAUD_USART(baud_human) ((F_CPU / 4 / baud_human - 1) / 2)
+#endif
 end
 
 input (int speed)=>void BEGIN do

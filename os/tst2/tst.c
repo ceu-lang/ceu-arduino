@@ -5,8 +5,8 @@
 void MAIN (void)
 {
     tceu_app* gpio = ceu_sys_load((void*)0x2000);
-    tceu_app* app1 = ceu_sys_load((void*)0xC000);
-    tceu_app* app2 = ceu_sys_load((void*)0xC800);
+    tceu_app* app1 = ceu_sys_load((void*)0x3000);
+    tceu_app* app2 = ceu_sys_load((void*)0x4800);
 
     ceu_sys_link(app1,1  ,  gpio,CEU_IN-1);
     ceu_sys_link(app1,2  ,  gpio,CEU_IN-2);

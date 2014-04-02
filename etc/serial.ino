@@ -1,30 +1,49 @@
-
 #include <avr/io.h>
+#define USART_BAUDRATE 9600
+#define UBRR_VALUE ((F_CPU / 4 / USART_BAUDRATE - 1) / 2)
 
-#define BAUD_HUMAN   9600
-#define BAUD_USART   (((F_CPU / (BAUD_HUMAN * 16UL))) - 1)
-
-void setup (void) {
-    /* Set baud rate */
-    UBRR0H = (unsigned char)(BAUD_USART>>8);
-    UBRR0L = (unsigned char)BAUD_USART;
-
-    /* Enable receiver and transmitter */
-    UCSR0B = (1<<RXEN0) | (1<<TXEN0);
-
-    /* Set frame format: 8data, 2stop bit */
-    UCSR0C = (1<<USBS0)|(3<<UCSZ00);
+void USART0Init(void)
+{
+    // Set baud rate
+    UBRR0H = (uint8_t)(UBRR_VALUE>>8);
+    UBRR0L = (uint8_t)UBRR_VALUE;
+    // Set frame format to 8 data bits, no parity, 1 stop bit
+    UCSR0C |= (1<<UCSZ01)|(1<<UCSZ00);
+    //enable transmission and reception
+    UCSR0B |= (1<<RXEN0)|(1<<TXEN0);
 }
 
-void loop (void) {
-    /* Wait for data to be received */
-    while (! (UCSR0A & (1<<RXC0)));
-    /* Get and return received data from buffer */
-    char v = UDR0;
+void USART0SendByte(uint8_t u8Data)
+{
+    //wait while previous byte is completed
+    while(!(UCSR0A&(1<<UDRE0))){};
+    // Transmit data
+    UDR0 = u8Data;
+}
 
-    /* Put data into buffer, sends the data */
-    while (! (UCSR0A & (1<<UDRE0)));
-    UDR0 = v + 1;
-    // Do nothing until transmission complete flag set
-    //while ((UCSRA & (1 << TXC)) == 0) {};
+uint8_t USART0ReceiveByte()
+{
+    // Wait for byte to be received
+    while(!(UCSR0A&(1<<RXC0))){};
+    // Return received data
+    return UDR0;
+}
+
+void setup (void)
+{
+    uint8_t u8TempData;
+    //Initialize USART0
+    USART0Init();
+    while(1)
+    {
+        // Receive data
+        u8TempData = USART0ReceiveByte();
+        // Increment received data
+        u8TempData++;
+        //Send back to terminal
+        USART0SendByte(u8TempData);
+    }
+}
+
+void loop () {
 }

@@ -1,5 +1,7 @@
 #include "Arduino.h"
 
+#include "util/math.hh"
+
 void setup ()
 {
     pinMode(13, OUTPUT);
@@ -21,7 +23,7 @@ void loop()
     int light = (high<<8) | low;           // read value
 #endif
 
-    int dt = map(light, 0,1024, 100,1000);
+    int dt = math_map(light, 0,1024, 100,1000);
     for (i=0; i<5; i++) {
         digitalWrite(13, 1);
         delay(dt);

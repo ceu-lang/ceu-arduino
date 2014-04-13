@@ -1,13 +1,14 @@
 #!/usr/bin/env lua
 
-local file = ...
+local FILE, PORT = ...
+assert(FILE and PORT, 'missing FILE or PORT')
 
-io.write('Uploading '..file..': ')
+io.write('Uploading '..FILE..': ')
 io.flush()
 
 local i = 0
-for line in io.lines(file) do
-    os.execute('/bin/echo -ne "'..line..'\n'..'" > /dev/ttyUSB0')
+for line in io.lines(FILE) do
+    os.execute('/bin/echo -ne "'..line..'\n'..'" > '..PORT)
     --print(line)
     io.write('.')
     io.flush()

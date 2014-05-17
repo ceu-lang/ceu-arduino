@@ -218,6 +218,7 @@ CPPFLAGS += -I. -Iutil -Iutility -I$(ARDUINOSRCDIR)
 CPPFLAGS += -I$(ARDUINODIR)/hardware/$(ARDUINOSUB)/variants/$(BOARD_BUILD_VARIANT)/
 CPPFLAGS += $(addprefix -I$(ARDUINODIR)/libraries/, $(LIBRARIES))
 CPPFLAGS += $(patsubst %, -I$(ARDUINODIR)/libraries/%/utility, $(LIBRARIES))
+CPPFLAGS += -DARDUINO
 #AVRDUDEFLAGS = -C $(ARDUINODIR)/hardware/tools/avrdude.conf -DV
 AVRDUDEFLAGS = -C /etc/avrdude.conf -DV
 AVRDUDEFLAGS += -p $(BOARD_BUILD_MCU) -P $(SERIALDEV)
@@ -272,10 +273,10 @@ $(TARGET).elf: $(ARDUINOLIB) $(OBJECTS)
 	$(AVRSIZE) $@
 
 # TODO: problems with type casting (tceu_evtp)x
-#%.o: %.ino
-	#$(COMPILE.cpp) -x c++ -c $< -o $@ -include $(ARDUINOSRCDIR)/Arduino.h
 %.o: %.ino
-	$(COMPILE.c) -x c -c $< -o $@ -include $(ARDUINOSRCDIR)/Arduino.h
+	$(COMPILE.cpp) -x c++ -c $< -o $@ -include $(ARDUINOSRCDIR)/Arduino.h
+#%.o: %.ino
+	#$(COMPILE.c) -x c -c $< -o $@ -include $(ARDUINOSRCDIR)/Arduino.h
 
 %.o: %.pde
 	$(COMPILE.c) -x c -c $< -o $@ -include $(ARDUINOSRCDIR)/Arduino.h

@@ -1,7 +1,7 @@
 #ifndef _ARDUINO_CEU
 #define _ARDUINO_CEU
 
-native constant _INPUT, _INPUT_PULLUP, _OUTPUT, _LOW, _HIGH;
+native const  _INPUT, _INPUT_PULLUP, _OUTPUT, _LOW, _HIGH;
 
 safe PIN00 with PIN01, PIN02, PIN03, PIN04, PIN05, PIN06, PIN07,
                 PIN08, PIN09, PIN10, PIN11, PIN12, PIN13;

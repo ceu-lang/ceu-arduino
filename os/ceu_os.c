@@ -211,9 +211,13 @@ void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
 
     go.evt  = evt;
     go.evtp = evtp;
-    go.stki = 0;      /* stki */
+    go.stki = 0;
 #ifdef CEU_CLEAR
-    go.stop = NULL;   /* stop */
+    go.stop = NULL;     /* traverse all (don't stop) */
+#endif
+
+#ifdef CEU_NEWS
+    tceu_org* lst_free = NULL;  /* "to free" list (only on reaction end) */
 #endif
 
     app->seqno++;
@@ -289,16 +293,21 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", app->seqno,
                         /* TODO: check if needed? (freed manually?) */
                         /*fprintf(stderr, "FREE: %p\n", go.org);*/
                         /* TODO(speed): avoid free if pool and blk out of scope */
-#if    defined(CEU_NEWS_POOL) && !defined(CEU_NEWS_MALLOC)
-                        ceu_pool_free(go.org->pool, (byte*)go.org);
-#elif  defined(CEU_NEWS_POOL) &&  defined(CEU_NEWS_MALLOC)
-                        if (go.org->pool == NULL)
-                            ceu_sys_free(go.org);
-                        else
-                            ceu_pool_free(go.org->pool, (byte*)go.org);
-#elif !defined(CEU_NEWS_POOL) &&  defined(CEU_NEWS_MALLOC)
-                        ceu_sys_free(go.org);
-#endif
+
+                        /* insert "org" into "lst_free" to be
+                         *  free'd on reaction end */
+                        {
+                            tceu_org* nxt = lst_free;
+                            go.org->nxt_free = NULL;    /* no next element */
+                            if (lst_free == NULL) {
+                                lst_free = go.org;      /* new first element */
+                            } else {
+                                while (nxt->nxt_free != NULL) {
+                                    nxt = nxt->nxt_free; /* find last element */
+                                }
+                                nxt->nxt_free = go.org;  /* put after that */
+                            }
+                        }
 
                         /* explicit free(me) or end of spawn */
                         if (go.stop == go.org)
@@ -425,7 +434,7 @@ _CEU_GO_NEXT_:
         go.evtp = go.stk[--go.stki].evtp;
 #ifdef CEU_INTS
 #ifdef CEU_ORGS
-        go.evto = go.stk[  go.stki].evto;
+        go.evto = (tceu_org*) go.stk[  go.stki].evto;
 #endif
 #endif
         go.evt  = go.stk[  go.stki].evt;
@@ -446,6 +455,24 @@ _CEU_GO_QUIT_:;
         app->wclk_late = 0;
     }
 #endif
+
+    /* free all orgs on "lst_free" on reaction termination */
+#ifdef CEU_NEWS
+    while (lst_free != NULL) {
+        tceu_org* org = lst_free;
+        lst_free = org->nxt_free;
+#if    defined(CEU_NEWS_POOL) && !defined(CEU_NEWS_MALLOC)
+        ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
+#elif  defined(CEU_NEWS_POOL) &&  defined(CEU_NEWS_MALLOC)
+        if (org->pool == NULL)
+            ceu_sys_free(org);
+        else
+            ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
+#elif !defined(CEU_NEWS_POOL) &&  defined(CEU_NEWS_MALLOC)
+        ceu_sys_free(org);
+#endif
+    }
+#endif
 }
 
 int ceu_go_all (tceu_app* app)
@@ -461,7 +488,7 @@ int ceu_go_all (tceu_app* app)
 #if defined(CEU_RET) || defined(CEU_OS)
     if (app->isAlive)
 #endif
-        ceu_sys_go(app, CEU_IN_OS_START, (tceu_evtp)NULL);
+        ceu_sys_go(app, CEU_IN_OS_START, CEU_EVTP((void*)NULL));
 #endif
 
 #ifdef CEU_ASYNCS
@@ -476,7 +503,7 @@ int ceu_go_all (tceu_app* app)
                 app->pendingAsyncs
             ) )
     {
-        ceu_sys_go(app, CEU_IN__ASYNC, (tceu_evtp)NULL);
+        ceu_sys_go(app, CEU_IN__ASYNC, CEU_EVTP((void*)NULL));
 #ifdef CEU_THREADS
         CEU_THREADS_MUTEX_UNLOCK(&app->threads_mutex);
         /* allow threads to also execute */
@@ -644,7 +671,7 @@ tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
         return ret;
     }
 /* TODO: error? */
-    return (tceu_evtp)NULL;
+    return CEU_EVTP((void*)NULL);
 }
 
 static void _ceu_sys_unlink (tceu_lnk* lnk) {
@@ -788,7 +815,7 @@ int ceu_scheduler (int(*dt)())
         {
             tceu_app* app = CEU_APPS;
             while (app) {
-                ceu_sys_go(app, CEU_IN_OS_DT, (tceu_evtp)_dt);
+                ceu_sys_go(app, CEU_IN_OS_DT, CEU_EVTP(_dt));
                 app = app->nxt;
             }
         }
@@ -799,7 +826,7 @@ int ceu_scheduler (int(*dt)())
         {
             tceu_app* app = CEU_APPS;
             while (app) {
-                ceu_sys_go(app, CEU_IN__WCLOCK, (tceu_evtp)_dt);
+                ceu_sys_go(app, CEU_IN__WCLOCK, CEU_EVTP(_dt));
                 app = app->nxt;
             }
         }
@@ -810,7 +837,7 @@ int ceu_scheduler (int(*dt)())
         {
             tceu_app* app = CEU_APPS;
             while (app) {
-                ceu_sys_go(app, CEU_IN__ASYNC, (tceu_evtp)NULL);
+                ceu_sys_go(app, CEU_IN__ASYNC, CEU_EVTP((void*)NULL));
                 app = app->nxt;
             }
         }
@@ -939,7 +966,7 @@ printf("<<< %d %d\n", app->isAlive, app->ret);
     /* OS_START */
 
 #ifdef CEU_IN_OS_START
-    ceu_sys_emit(NULL, CEU_IN_OS_START, (tceu_evtp)NULL, 0, NULL);
+    ceu_sys_emit(NULL, CEU_IN_OS_START, CEU_EVTP((void*)NULL), 0, NULL);
 #endif
 }
 
@@ -1002,7 +1029,7 @@ int ceu_sys_unlink (tceu_app* src_app, tceu_nevt src_evt,
             isr->f(isr->app, isr->app->data);                       \
             CEU_APP_ADDR = 0;                                       \
         }                                                           \
-        ceu_sys_emit(NULL,CEU_IN_OS_INTERRUPT,(tceu_evtp)n,0,NULL); \
+        ceu_sys_emit(NULL,CEU_IN_OS_INTERRUPT,CEU_EVTP(n),0,NULL); \
     }
 #define _GEN_ISR(n)
 

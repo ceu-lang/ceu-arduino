@@ -14,6 +14,12 @@
 #define CEU_ISR_OFF()
 #endif
 
+#ifdef __cplusplus
+#define CEU_EVTP(v) (tceu_evtp(v))
+#else
+#define CEU_EVTP(v) ((tceu_evtp)v)
+#endif
+
 #ifdef CEU_OS
     /* TODO: all should be configurable */
     #define CEU_EXTS
@@ -81,7 +87,7 @@
         ((__typeof__(ceu_sys_link)*)((_ceu_app)->sys_vec[CEU_SYS_LINK]))(app1,evt1,app2,evt2)
 
     #define ceu_out_emit_buf(app,id,sz,buf) \
-        ((__typeof__(ceu_sys_emit)*)((app)->sys_vec[CEU_SYS_EMIT]))(app,id,(tceu_evtp)NULL,sz,buf)
+        ((__typeof__(ceu_sys_emit)*)((app)->sys_vec[CEU_SYS_EMIT]))(app,id,CEU_EVTP((void*)NULL),sz,buf)
 
     #define ceu_out_emit_val(app,id,param) \
         ((__typeof__(ceu_sys_emit)*)((app)->sys_vec[CEU_SYS_EMIT]))(app,id,param,0,NULL)
@@ -109,7 +115,7 @@
             ceu_sys_org(org,n,lbl,seqno,par_org,par_trl)
 /*#ifdef ceu_out_emit_val*/
     #define ceu_out_emit_buf(app,id,sz,buf) \
-            ceu_out_emit_val(app,id,(tceu_evtp)(void*)buf)
+            ceu_out_emit_val(app,id,CEU_EVTP((void*)buf))
 /*#endif*/
 #ifdef CEU_WCLOCKS
     #define ceu_out_wclock(app,dt,set,get) \
@@ -130,6 +136,9 @@
 typedef u8 tceu_nevt;   /* max number of events */
                         /* TODO: should "u8" be fixed? */
 
+typedef u8 tceu_ntrl;   /* max number of trails per class */
+                        /* TODO: should "u8" be fixed? */
+
 #ifdef __cplusplus
 #define CEU_WCLOCK_INACTIVE 0x7fffffffL     /* TODO */
 #else
@@ -141,16 +150,22 @@ typedef u8 tceu_nevt;   /* max number of events */
 
 typedef union tceu_trl {
     tceu_nevt evt;
+
+    /* normal await // IN__CLEAR */
     struct {                    /* TODO(ram): bitfields */
         tceu_nevt evt1;
         tceu_nlbl lbl;
         u8        seqno;        /* TODO(ram): 2 bits is enough */
     };
+
+    /* IN__STK */
     struct {                    /* TODO(ram): bitfields */
         tceu_nevt evt2;
         tceu_nlbl lbl2;
         u8        stk;
     };
+
+    /* IN__ORG */
 #ifdef CEU_ORGS
     struct {                    /* TODO(ram): bad for alignment */
         tceu_nevt evt3;
@@ -167,6 +182,12 @@ typedef union tceu_evtp {
     s32   dt;
 #ifdef CEU_THREADS
     CEU_THREADS_T thread;
+#endif
+#ifdef __cplusplus
+    tceu_evtp () {}
+    tceu_evtp (void* vv) : ptr(vv) {}
+    tceu_evtp (s32   vv) : dt(vv)  {}
+    /*tceu_evtp (int   vv) : v(vv)   {}*/
 #endif
 } tceu_evtp;
 
@@ -190,7 +211,7 @@ typedef struct tceu_org_lnk {
     struct tceu_org* prv;   /* TODO(ram): lnks[0] does not use */
     struct tceu_org* nxt;   /*      prv, n, lnk                  */
     u8 lnk;
-    u8 n;                   /* use for ands/fins                 */
+    tceu_ntrl n;            /* use for ands/fins                 */
 } tceu_org_lnk;
 
 /* TCEU_ORG */
@@ -203,7 +224,7 @@ typedef struct tceu_org
     u8 lnk;
 #endif
 #if defined(CEU_ORGS) || defined(CEU_OS)
-    u8 n;                   /* number of trails (TODO(ram): opt, metadata) */
+    tceu_ntrl n;            /* number of trails (TODO(ram): opt, metadata) */
 #endif
     /* prv/nxt/lnk/n must be in the same order as "tceu_org_lnk" */
 
@@ -211,9 +232,11 @@ typedef struct tceu_org
 #ifdef CEU_IFCS
     tceu_ncls cls;          /* class id */
 #endif
+    u8 isAlive: 1;          /* required by "watching o" */
 #ifdef CEU_NEWS
     u8 isDyn: 1;            /* created w/ new or spawn? */
-    u8 isSpw: 1;            /* free on termination? */
+    /*u8 isSpw: 1;            // free on termination? */
+    struct tceu_org* nxt_free;  /* "to free" list (only on reaction end) */
 #endif
 #endif  /* CEU_ORGS */
 
@@ -365,6 +388,11 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed);
 
 int  ceu_go_all    (tceu_app* app);
 
+#ifdef CEU_WCLOCKS
+int       ceu_sys_wclock (tceu_app* app, s32 dt, s32* set, s32* get);
+#endif
+void      ceu_sys_go     (tceu_app* app, int evt, tceu_evtp evtp);
+
 #ifdef CEU_OS
 
 /* TCEU_LINK */
@@ -413,10 +441,6 @@ int       ceu_sys_link   (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_ap
 int       ceu_sys_unlink (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
 int       ceu_sys_emit   (tceu_app* app, tceu_nevt evt, tceu_evtp param, int sz, byte* buf);
 tceu_evtp ceu_sys_call   (tceu_app* app, tceu_nevt evt, tceu_evtp param);
-#ifdef CEU_WCLOCKS
-int       ceu_sys_wclock (tceu_app* app, s32 dt, s32* set, s32* get);
-#endif
-void      ceu_sys_go     (tceu_app* app, int evt, tceu_evtp evtp);
 
 enum {
     CEU_SYS_MALLOC = 0,

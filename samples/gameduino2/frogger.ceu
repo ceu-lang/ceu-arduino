@@ -1,0 +1,227 @@
+input void GD_REDRAW;
+input int FR_DONE;
+input void FR_GAMEOVER;
+input void FR_DIE;
+
+
+#define CONTROL_LEFT  1
+#define CONTROL_RIGHT 2
+#define CONTROL_UP    4
+#define CONTROL_DOWN  8
+
+class Keyboard with
+do
+    #define PADX(x) (480 + (x - 3) * 48)
+    #define PADY(y) (272 + (y - 3) * 48)
+    every GD_REDRAW do
+    
+        _GD.Begin(_BITMAPS);
+        
+        _GD.Tag(CONTROL_RIGHT);
+        _GD.Vertex2ii(PADX(2), PADY(1), _ARROW_HANDLE, 0);
+        _rotate_around(24, 24, 3 * 0x4000);
+
+        _GD.Tag(CONTROL_UP);
+        _GD.Vertex2ii(PADX(1), PADY(0), _ARROW_HANDLE, 0);
+        _rotate_around(24, 24, 2 * 0x4000);
+
+        _GD.Tag(CONTROL_LEFT);
+        _GD.Vertex2ii(PADX(0), PADY(1), _ARROW_HANDLE, 0);
+        _rotate_around(24, 24, 1 * 0x4000);
+        
+        _GD.Tag(CONTROL_DOWN);
+        _GD.Vertex2ii(384, 224, _ARROW_HANDLE, 0);
+        _GD.RestoreContext();
+    
+    end
+end
+
+class Frog with
+do
+    var int x,y,leaping, frogdir, frogface;
+    x = 120;
+    y = 232;
+    leaping = 0;
+    frogdir = 0;
+    frogface = 0x0000;
+    par/or do
+         every GD_REDRAW do
+             _GD.get_inputs();
+             var byte r = _GD.inputs.tag;  //& (CONTROL_LEFT | CONTROL_RIGHT | CONTROL_UP | CONTROL_DOWN);
+             if(r == CONTROL_RIGHT) then
+                  _GD.cmd_text(10,10, 31, _OPT_CENTER, "2");
+             end
+         end
+    with
+        every GD_REDRAW do
+            native do
+                static byte frog_anim[] = {2, 1, 0, 0, 2};
+            end
+            _sprite(x, y, _frog_anim[leaping / 2], frogface);
+        end
+    end
+end
+
+var Keyboard kb;
+
+native do
+    #include "frogger_assets.h"
+    
+    static void sprite(byte x, byte y, byte anim, uint16_t rot = 0xffff)
+    {
+        x -= 16;
+        y -= 8;
+        if (rot != 0xffff) {
+            GD.cmd_loadidentity();
+            GD.cmd_translate(F16(8),F16(8));
+            GD.cmd_rotate(rot);
+            GD.cmd_translate(F16(-8),F16(-8));
+            GD.cmd_setmatrix();
+        }
+        if (x > 224) {
+            GD.Cell(anim);
+            GD.Vertex2f(16 * (x - 256), 16 * y);
+        } else {
+            GD.Vertex2ii(x, y, SPRITES_HANDLE, anim);
+        }
+    }
+    
+    static void turtle3(byte x, byte y, int t)
+    {
+        byte anim = 50 + ((t / 32) % 3);
+        sprite(x, y, anim);
+        sprite(x + 16, y, anim);
+        sprite(x + 32, y, anim);
+    }
+
+    static void turtle2(byte x, byte y, int t)
+    {
+        byte anim = 50 + ((t / 32) % 3);
+        sprite(x, y, anim);
+        sprite(x + 16, y, anim);
+    }
+
+    void log1(byte x, byte y)
+    {
+        sprite(x, y,      86);
+        sprite(x + 16, y, 87);
+        sprite(x + 32, y, 88);
+    }
+
+    void log(byte length, byte x, byte y)
+    {
+        sprite(x, y,      86);
+        while (length--) {
+            x += 16;
+            sprite(x, y, 87);
+        }
+        sprite(x + 16, y, 88);
+    }
+
+    static int riverat(byte y, uint16_t tt)
+    {
+        switch (y) {
+            case 120: return -tt;
+            case 104: return tt;
+            case 88:  return 5 * tt / 4;
+            case 72:  return -tt / 2;
+            case 56:  return tt / 2;
+        }
+    }
+      
+    static void rotate_around(int x, int y, int a)
+    {
+        GD.cmd_loadidentity();
+        GD.cmd_translate(F16(x),F16(y));
+        GD.cmd_rotate(a);
+        GD.cmd_translate(F16(-x),F16(-y));
+        GD.cmd_setmatrix();
+    }
+end
+
+par/or do
+    _LOAD_ASSETS();
+    _GD.Clear();
+    
+    every GD_REDRAW do
+        
+        _GD.Tag(1);
+        _GD.BitmapHandle(_SPRITES_HANDLE);
+        _GD.SaveContext();
+        _GD.ScissorSize(224, 256);
+        _GD.Begin(_BITMAPS);
+        _GD.Vertex2ii(0, 0, _BACKGROUND_HANDLE, 0);   // Background bitmap
+        //_GD.Tag(CONTROL_DOWN);
+        //_GD.Vertex2ii(384, 224, _ARROW_HANDLE, 0);
+    end
+    
+    await FOREVER; 
+with
+    
+    var Frog frog;
+    var int t = 0;
+    every GD_REDRAW do
+        _GD.RestoreContext();
+        _GD.ScissorSize(224, 256);
+        _GD.Tag(2);
+        _GD.AlphaFunc(_GREATER, 0); // on road, don't tag transparent pixels
+        // Yellow cars
+        
+        _sprite(-t,       216, 3);
+        _sprite(-t + 128, 216, 3);
+
+        // Dozers
+        _sprite(t, 200, 4);
+        _sprite(t + 50, 200, 4);
+        _sprite(t + 150, 200, 4);
+
+        // Purple cars
+        _sprite(-t,       184, 7);
+        _sprite(-t + 75,  184, 7);
+        _sprite(-t + 150, 184, 7);
+
+        // Green and white racecars
+        _sprite(2 * t,    168, 8);
+
+        // Trucks
+        _sprite(-t/2,       152, 5);
+        _sprite(-t/2 + 16,  152, 6);
+        _sprite(-t/2 + 100, 152, 5);
+        _sprite(-t/2 + 116, 152, 6);
+        
+        _GD.AlphaFunc(_GREATER, 0); // on river, tag transparent pixels
+
+        // Turtles
+        loop  i in 4 do
+            _turtle3(_riverat(120, t) + (i * 64), 120, t);
+        end
+        
+        // Short logs
+        loop i in 3 do
+            _log(1, _riverat(104, t) + ( i * 80), 104);
+        end
+
+        // Long logs
+        loop i in 2 do
+            _log(5, _riverat(88, t) + ( i * 128 ), 88);
+        end
+
+        // Turtles again, but slower
+        loop i in 5 do
+            _turtle2( _riverat(72, t) + ( i * 50), 72,t);
+        end
+
+        // Top logs
+        loop i in 3 do
+            _log(2, _riverat(56, t) + ( i * 70 ), 56);
+        end
+        
+        t = t + 1;
+    end
+    await FOREVER;
+with
+    every GD_REDRAW do
+        _GD.swap();
+        _GD.Clear();
+    end
+end

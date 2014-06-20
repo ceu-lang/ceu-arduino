@@ -1,0 +1,53 @@
+#define NBLOBS 40
+
+/*
+ * The program handles "touch" and "redrawing" events:
+ */
+
+input void      GD_REDRAW;
+input (int,int) GD_TOUCH;
+
+/*
+ * The "blob" class:
+ */
+
+class Blob with
+    var int i;              // each blob has a different incremental "i"
+    var int x, y;           // and a position (where the user clicked)
+do
+    var int diam  =  10;   // blobs are circles with a diam
+    var int alpha = 255;   // and no transparency initially
+
+    var byte r = i *  17;  // each blob has a different color
+    var byte g = i *  23;  // based on its "i"
+    var byte b = i * 147;
+
+    // make the blob disappear gradually
+    loop j in 30 do          // 30 times is arbitrary (based on visual tests)
+        await GD_REDRAW;
+        diam  = diam  + 2;   // increment the diameter a little bit
+        alpha = alpha - 5;   // and also the transparency
+        _GD.Begin(_POINTS);
+        _GD.ColorA(alpha);
+        _GD.PointSize(diam << 4);
+        _GD.ColorRGB(r, g, b);
+        _GD.Vertex2f(this.x, this.y);
+    end
+end
+
+pool Blob[NBLOBS] blobs;    // Pool to hold dynamic instances of "blobs"
+
+/*
+ * Spawn a new "blob" on every screen touch:
+ */
+
+var int i = 0;
+var int x, y;
+every (x,y) in GD_TOUCH do
+    spawn Blob in blobs with
+        this.i = i+1;  // a new blob
+        this.x = x;    // in the touch position
+        this.y = y;
+    end;
+    i = (i + 1) % NBLOBS;
+end

@@ -1,0 +1,6 @@
+input void GD_REDRAW;
+
+loop i do
+    _GD.cmd_text(i%400, 136, 31, _OPT_CENTER, "Hello world");
+    await GD_REDRAW;
+end

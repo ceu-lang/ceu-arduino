@@ -16,7 +16,7 @@ ceu:
 	ceu $(CEUFILE) --out-c _ceu_app.src
 
 ino:
-	touch poll.ino async.ino
+	touch poll.ino async.ino gd.ino
 
 clean: _clean
 	find . -name "*.exe"  | xargs rm -f

@@ -1,7 +1,7 @@
 #define NCLOUD  6
 #define NHEART  6
 #define NPLAYER 2
-#define NTRAIL  0
+#define NTRAIL  5
 
 input void GD_REDRAW;
 
@@ -43,8 +43,6 @@ end
 
 #if NHEART > 0
 class Heart with
-    var int i;          /// is "i" needed after randomization?
-    var int x,y;        /// why in the interface?
 do
     await 7s;
     var int x = _random(16 * 480);
@@ -109,13 +107,12 @@ end
 #if NPLAYER > 0
 
 #if NTRAIL > 0
-/// NOT WORKING
 class Trail with
     var int tx,ty;
     var u32 color;
 do
     var int size = 192;
-    loop j in 30 do
+    loop j in 15 do
         await GD_REDRAW;
         _GD.BlendFunc(_SRC_ALPHA, _ONE_MINUS_SRC_ALPHA);
         _GD.Begin(_POINTS);
@@ -131,41 +128,63 @@ end
 
 class Player with
     var int i;
-    var int x,y;        /// why in the interface?
 do
+    var int x, y;
     var int tmp = 0;
+    pool Trail[NTRAIL] trails;
     every GD_REDRAW do
-      var u16 a = tmp * 100;
+        var u16 a = tmp * 100;
 
-      var u16 a2 = a << 1;
-      var u16 a3 = a2 << 1;
+        var u16 a2 = a << 1;
+        var u16 a3 = a2 << 1;
       
-      if(i==0) then
-          x = 16 * 240 + _GD.rsin(16 * 120, a) + _GD.rsin(16 * 120, a2);
-          y = 16 * 136 + _GD.rsin(16 * 70, a3);
+        if(i==0) then
+            x = 16 * 240 + _GD.rsin(16 * 120, a) + _GD.rsin(16 * 120, a2);
+            y = 16 * 136 + _GD.rsin(16 * 70, a3);
+            if ((tmp & 3) == 0) then
+                spawn Trail in trails with
+                    this.tx = x;
+                    this.ty = y;
+                    this.color = 0x8bcfba;
+                end;        
+            end
         else/if (i==1) then
-          x = 16 * 240 + _GD.rsin(16 * 240, a);
-          y = 16 * 100 + _GD.rsin(16 * 36, a2);
-      else
-          x = 16 * 240 + _GD.rsin(16 * 240, a2);
-          y = 16 * 135 + _GD.rsin(16 * 10, a) + _GD.rsin(16 * 18, a3);
-      end
+            x = 16 * 240 + _GD.rsin(16 * 240, a);
+            y = 16 * 100 + _GD.rsin(16 * 36, a2);
+            if ((tmp & 3) == 0) then
+                spawn Trail in trails with
+                    this.tx = x;
+                    this.ty = y;
+                    this.color = 0x8db5e7;
+                end;        
+            end
+        else
+            x = 16 * 240 + _GD.rsin(16 * 240, a2);
+            y = 16 * 135 + _GD.rsin(16 * 10, a) + _GD.rsin(16 * 18, a3);
+            if ((tmp & 3) == 0) then
+                spawn Trail in trails with
+                    this.tx = x;
+                    this.ty = y;
+                    this.color = 0xf19cb7;
+                end;        
+            end
+        end
       
-      _GD.ColorRGB(0xffffff);
-      _GD.ColorA(0xff);
-      _GD.BlendFunc(_ONE, _ONE_MINUS_SRC_ALPHA);
-      _GD.BitmapHandle(_PLAYER1_HANDLE);
-      _GD.Begin(_BITMAPS);
-      _GD.cmd_loadidentity();
-      _GD.cmd_translate(_F16(_PLAYER1_SIZE / 2),_F16(_PLAYER1_SIZE / 2));
-      _GD.cmd_rotate(a + i * 0x7000);
-      _GD.cmd_translate(_F16(-_PLAYER1_WIDTH / 2),_F16(-_PLAYER1_HEIGHT / 2));
-      _GD.cmd_setmatrix();
-      _GD.Cell(i);
-      _GD.Vertex2f(x - (16 * _PLAYER1_SIZE / 2),
+        _GD.ColorRGB(0xffffff);
+        _GD.ColorA(0xff);
+        _GD.BlendFunc(_ONE, _ONE_MINUS_SRC_ALPHA);
+        _GD.BitmapHandle(_PLAYER1_HANDLE);
+        _GD.Begin(_BITMAPS);
+        _GD.cmd_loadidentity();
+        _GD.cmd_translate(_F16(_PLAYER1_SIZE / 2),_F16(_PLAYER1_SIZE / 2));
+        _GD.cmd_rotate(a + i * 0x7000);
+        _GD.cmd_translate(_F16(-_PLAYER1_WIDTH / 2),_F16(-_PLAYER1_HEIGHT / 2));
+        _GD.cmd_setmatrix();
+        _GD.Cell(i);
+        _GD.Vertex2f(x - (16 * _PLAYER1_SIZE / 2),
                   y - (16 * _PLAYER1_SIZE / 2));
-      tmp = tmp + 1;
-  end
+        tmp = tmp + 1;
+    end
 end
 
 #endif
@@ -191,6 +210,7 @@ var Heart[NHEART] hearts;
 var int y = 1648;
 
 every GD_REDRAW do
+    
     _GD.RestoreContext();
     _GD.Begin(_BITMAPS);
     _GD.BlendFunc(_ONE, _ONE_MINUS_SRC_ALPHA);

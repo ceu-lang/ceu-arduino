@@ -1,5 +1,7 @@
-#define NCLOUD 6
-#define NHEART 6
+#define NCLOUD  6
+#define NHEART  6
+#define NPLAYER 2
+#define NTRAIL  0
 
 input void GD_REDRAW;
 
@@ -9,23 +11,26 @@ native do
 end
 _LOAD_ASSETS();
 
+#if NCLOUD > 0
 class Cloud with
-    var int i;		/// is "i" needed after randomization?
-    var int x,y;        /// why in the interface?
 do
-    x = 16 * (_random(480) - (_CLOUD_WIDTH / 2));
-    y = 16 * (_random(240) - (_CLOUD_HEIGHT / 2));
+    var int x = 16 * (_random(480) - (_CLOUD_WIDTH / 2));
+    var int y = 16 * (_random(240) - (_CLOUD_HEIGHT / 2));
+    var byte vel = _random(20);
+    var byte lum = 128 + 5 * vel;
 
     every GD_REDRAW do
         _GD.Begin(_BITMAPS);
         _GD.BlendFunc(_ONE, _ONE_MINUS_SRC_ALPHA);
         _GD.BitmapHandle(_CLOUD_HANDLE);
         _GD.Cell(0);
+        _GD.ColorA(lum);
+        _GD.ColorRGB(lum, lum, lum);
         _GD.Vertex2f(x, y);
-        y = y + (4 + (i >> 3));
+        y = y + (4 + (vel >> 3));
         
         if (y > (16 * 272)) then
-            if(i%2==0) then
+            if(vel%2==0) then
                 x = 16 * (_random(240) - (_CLOUD_WIDTH / 2));
             else
                 x = 16 * (_random(240, 480) - (_CLOUD_WIDTH / 2));
@@ -34,14 +39,18 @@ do
         end
     end
 end
+#endif
 
+#if NHEART > 0
 class Heart with
     var int i;          /// is "i" needed after randomization?
     var int x,y;        /// why in the interface?
 do
-    x = _random(16 * 480);
-    y = 16 * _random(240);
-    var int deg = i * 8;
+    await 7s;
+    var int x = _random(16 * 480);
+    var int y = 16 * _random(240);
+    var int deg = _random(5) * 8;
+    var byte dir = _random(0,1);
     every GD_REDRAW do
         _GD.BlendFunc(_SRC_ALPHA, _ONE_MINUS_SRC_ALPHA);
         _GD.ColorA(200);
@@ -50,7 +59,7 @@ do
         _GD.Cell(0);
         _GD.cmd_loadidentity();
         _GD.cmd_translate(_F16(_HEART_SZ/2), _F16(_HEART_SZ/2));
-        if( i%2 == 0 ) then
+        if( dir%2 == 0 ) then
             _GD.cmd_rotate(_DEGREES(deg));
         else
             _GD.cmd_rotate(_DEGREES(-deg));
@@ -59,16 +68,16 @@ do
         _GD.cmd_translate(_F16(-_HEART_WIDTH/2), _F16(-_HEART_HEIGHT/2));
         _GD.cmd_setmatrix();
         _GD.Vertex2f(x - (16 * _HEART_SZ / 2), y);
-        y = y + 30 + (i << 2);
+        y = y + 30 + (deg << 2);
         if(y > (16 * 272)) then
             x = _random(16 * 480);
             y = y - 16 * (272 + _HEART_SZ);
         end
     end
 end
+#endif
 
 class Sun with
-    var int i;      /// unused? (no problem to have an empty interface)
 do
     await 5s;       /// moved this to the class (see below)
     var int size;   /// "size" is a much better name
@@ -97,6 +106,28 @@ do
     end
 end
 
+#if NPLAYER > 0
+
+#if NTRAIL > 0
+/// NOT WORKING
+class Trail with
+    var int tx,ty;
+    var u32 color;
+do
+    var int size = 192;
+    loop j in 30 do
+        await GD_REDRAW;
+        _GD.BlendFunc(_SRC_ALPHA, _ONE_MINUS_SRC_ALPHA);
+        _GD.Begin(_POINTS);
+        _GD.ColorA(0x90);
+        _GD.ColorRGB(color);
+        _GD.PointSize(size);
+        _GD.Vertex2f(tx, ty);
+        size = size - 1;
+        ty = ty + 12;
+    end
+end
+#endif
 
 class Player with
     var int i;
@@ -111,8 +142,8 @@ do
       
       if(i==0) then
           x = 16 * 240 + _GD.rsin(16 * 120, a) + _GD.rsin(16 * 120, a2);
-          y = 16 * 136 + _GD.rsin(16 * 70, a3);         
-      else/if (i==1) then
+          y = 16 * 136 + _GD.rsin(16 * 70, a3);
+        else/if (i==1) then
           x = 16 * 240 + _GD.rsin(16 * 240, a);
           y = 16 * 100 + _GD.rsin(16 * 36, a2);
       else
@@ -137,54 +168,46 @@ do
   end
 end
 
+#endif
 
-par do
-    var Sun sun;
-    
-    var int i = 0;
-    var Cloud[NCLOUD] clouds with
-        this.i = i;
-        i = i + 1;
-    end;
-    
-    i = 0;
-    var Player[2] player with
-        this.i = i;
-        i = i + 1;
-    end;
+var Sun sun;
 
-    await 2s;
+#if NCLOUD > 0
+var Cloud[NCLOUD] clouds;
+#endif
 
-    i = 0;
-    var Heart[NHEART] hearts with
-        this.i = i;
-        i = i + 1;
-    end;
+#if NPLAYER > 0
+var int i = 0;
+var Player[NPLAYER] player with
+    this.i = i;
+    i = i + 1;
+end;
+#endif
+
+#if NHEART > 0
+var Heart[NHEART] hearts;
+#endif
+
+var int y = 1648;
+
+every GD_REDRAW do
+    _GD.RestoreContext();
+    _GD.Begin(_BITMAPS);
+    _GD.BlendFunc(_ONE, _ONE_MINUS_SRC_ALPHA);
+    _GD.BitmapHandle(_TILES_HANDLE);
+    var int tmp = (y >> 5) * 15;
     
-    await FOREVER;
-with
-    
-    var int y = 1648;
-    
-    every GD_REDRAW do
-        _GD.RestoreContext();
-        _GD.Begin(_BITMAPS);
-        _GD.BlendFunc(_ONE, _ONE_MINUS_SRC_ALPHA);
-        _GD.BitmapHandle(_TILES_HANDLE);
-        var int tmp = (y >> 5) * 15;
-        
-        var byte yo = y & 31;
-        var byte ctr = 0;
-        loop j in 10 do
-            loop i in 15 do
-                var byte t = _pgm_read_byte_near(_layer1_map + tmp + ctr);
-                ctr = ctr + 1;
-                if  (t != 0) then
-                    _GD.Cell(t - 1);
-                    _GD.Vertex2f(16*32*(i), 16 * ((32*(j))-yo));
-                end
+    var byte yo = y & 31;
+    var byte ctr = 0;
+    loop j in 10 do
+        loop i in 15 do
+            var byte t = _pgm_read_byte_near(_layer1_map + tmp + ctr);
+            ctr = ctr + 1;
+            if  (t != 0) then
+                _GD.Cell(t - 1);
+                _GD.Vertex2f(16*32*(i), 16 * ((32*(j))-yo));
             end
         end
-        y = y - 1;
     end
+    y = y - 1;
 end

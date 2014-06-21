@@ -219,9 +219,4 @@ with
         t = t + 1;
     end
     await FOREVER;
-with
-    every GD_REDRAW do
-        _GD.swap();
-        _GD.Clear();
-    end
 end

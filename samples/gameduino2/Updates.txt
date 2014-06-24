@@ -1,6 +1,17 @@
 ﻿Google Summer of Code 2014
 Weekly Updates
 
+25.06.14
+* What I was supposed to do in the previous week.
+  Work on Frogger game. 
+  
+* What I did in the previous week.
+  Worked on the frogger game. Did map, frog, keyboard, score. Working on the game logic and code refactoring based on mentor's comments.
+
+* What I'll do this week.
+  Finish the frogger game.
+  Start invaders game.
+_______________________________________________________________________________________________________
 
 17.06.14
 * What I was supposed to do in the previous week.

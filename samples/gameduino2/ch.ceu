@@ -1,0 +1,11 @@
+input int GD_TOUCH_TAG;
+
+var int x,y;
+every x in GD_TOUCH_TAG do
+    _GD.Clear();
+    _GD.cmd_text( 20, 20, 31, _OPT_CENTER,"Hi");
+    _GD.swap();
+    _GD.Clear();
+    _GD.cmd_text( 20, 20, 31, _OPT_CENTER,"Hello");
+    _GD.swap();
+end

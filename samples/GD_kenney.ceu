@@ -1,24 +1,20 @@
-#define NCLOUD  6
-#define NHEART  6
-#define NPLAYER 2
-#define NTRAIL  5
+#define NCLOUD 0
+#define NHEART 0
+#define NTRAIL 5
 
 input void GD_REDRAW;
 
 native do
     #define HEART_SZ  (HEART_HEIGHT + 14)
-    #include "kenney_assets.h"
 end
-_LOAD_ASSETS();
 
-#if NCLOUD > 0
+/*
 class Cloud with
 do
     var int x = 16 * (_random(480) - (_CLOUD_WIDTH / 2));
     var int y = 16 * (_random(240) - (_CLOUD_HEIGHT / 2));
     var byte vel = _random(20);
     var byte lum = 128 + 5 * vel;
-
     every GD_REDRAW do
         _GD.Begin(_BITMAPS);
         _GD.BlendFunc(_ONE, _ONE_MINUS_SRC_ALPHA);
@@ -26,6 +22,7 @@ do
         _GD.Cell(0);
         _GD.ColorA(lum);
         _GD.ColorRGB(lum, lum, lum);
+        
         _GD.Vertex2f(x, y);
         y = y + (4 + (vel >> 3));
         
@@ -39,15 +36,13 @@ do
         end
     end
 end
-#endif
 
-#if NHEART > 0
 class Heart with
 do
     await 7s;
     var int x = _random(16 * 480);
     var int y = 16 * _random(240);
-    var int deg = _random(5) * 8;
+    var int deg = _random(20) * 8;
     var byte dir = _random(0,1);
     every GD_REDRAW do
         _GD.BlendFunc(_SRC_ALPHA, _ONE_MINUS_SRC_ALPHA);
@@ -66,20 +61,19 @@ do
         _GD.cmd_translate(_F16(-_HEART_WIDTH/2), _F16(-_HEART_HEIGHT/2));
         _GD.cmd_setmatrix();
         _GD.Vertex2f(x - (16 * _HEART_SZ / 2), y);
-        y = y + 30 + (deg << 2);
+        y = y + 30 + (deg << 4);
         if(y > (16 * 272)) then
             x = _random(16 * 480);
             y = y - 16 * (272 + _HEART_SZ);
         end
     end
 end
-#endif
 
 class Sun with
 do
-    await 5s;       /// moved this to the class (see below)
-    var int size;   /// "size" is a much better name
-
+    await 5s;     
+    var int size;   
+    
     par do
         loop j in 30 do
             size = j * 20;
@@ -104,14 +98,13 @@ do
     end
 end
 
-#if NPLAYER > 0
-
-#if NTRAIL > 0
+*/
 class Trail with
     var int tx,ty;
     var u32 color;
 do
     var int size = 192;
+    var int sy = 1648;
     loop j in 15 do
         await GD_REDRAW;
         _GD.BlendFunc(_SRC_ALPHA, _ONE_MINUS_SRC_ALPHA);
@@ -121,27 +114,32 @@ do
         _GD.PointSize(size);
         _GD.Vertex2f(tx, ty);
         size = size - 1;
+        sy = sy - 1;
         ty = ty + 12;
     end
 end
-#endif
+
 
 class Player with
     var int i;
     var int x,y;        /// why in the interface?
 do
-    var int tmp = 0;
+    var int cntr = 0;
     pool Trail[NTRAIL] trails;
+    //pool Trail[NTRAIL] second;
+    //pool Trail[NTRAIL] third;
     every GD_REDRAW do
-        var u16 a = tmp * 100;
+      /// TODO: block indentation?
+      /// the variables names have no sense
+        var u16 a = cntr * 100;
 
         var u16 a2 = a << 1;
         var u16 a3 = a2 << 1;
       
         if(i==0) then
             x = 16 * 240 + _GD.rsin(16 * 120, a) + _GD.rsin(16 * 120, a2);
-            y = 16 * 136 + _GD.rsin(16 * 70, a3);
-            if ((tmp & 3) == 0) then
+            y = 16 * 136 + _GD.rsin(16 * 70, a3); 
+            if ((cntr & 3) == 0) then
                 spawn Trail in trails with
                     this.tx = x;
                     this.ty = y;
@@ -151,7 +149,7 @@ do
         else/if (i==1) then
             x = 16 * 240 + _GD.rsin(16 * 240, a);
             y = 16 * 100 + _GD.rsin(16 * 36, a2);
-            if ((tmp & 3) == 0) then
+            if ((cntr & 3) == 0) then
                 spawn Trail in trails with
                     this.tx = x;
                     this.ty = y;
@@ -161,7 +159,7 @@ do
         else
             x = 16 * 240 + _GD.rsin(16 * 240, a2);
             y = 16 * 135 + _GD.rsin(16 * 10, a) + _GD.rsin(16 * 18, a3);
-            if ((tmp & 3) == 0) then
+            if ((cntr & 3) == 0) then
                 spawn Trail in trails with
                     this.tx = x;
                     this.ty = y;
@@ -182,52 +180,80 @@ do
         _GD.cmd_setmatrix();
         _GD.Cell(i);
         _GD.Vertex2f(x - (16 * _PLAYER1_SIZE / 2),
-                  y - (16 * _PLAYER1_SIZE / 2));
-        tmp = tmp + 1;
+                     y - (16 * _PLAYER1_SIZE / 2));
+        cntr = cntr + 1;
+
     end
 end
 
-#endif
 
-var Sun sun;
+par/or do
+    #include "gd.ceu"
+with
+    _GD.Clear();
+    native do
+        #include "kenney_assets.h"
+    end
+    _LOAD_ASSETS();
 
-#if NCLOUD > 0
-var Cloud[NCLOUD] clouds;
-#endif
-
-#if NPLAYER > 0
-var int i = 0;
-var Player[NPLAYER] player with
-    this.i = i;
-    i = i + 1;
-end;
-#endif
-
-#if NHEART > 0
-var Heart[NHEART] hearts;
-#endif
-
-var int y = 1648;
-
-every GD_REDRAW do
+    /// Sun, Clouds, Players, Hearts
+    /// The declaration order is important: Sun redraws first (behind all others)
+    /*
+    var Sun sun;
     
-    _GD.RestoreContext();
-    _GD.Begin(_BITMAPS);
-    _GD.BlendFunc(_ONE, _ONE_MINUS_SRC_ALPHA);
-    _GD.BitmapHandle(_TILES_HANDLE);
-    var int tmp = (y >> 5) * 15;
+    var int i = 0;
+    var Cloud[NCLOUD] clouds;
+    */
+    var int i = 0;
+    var Player[3] player with
+        this.i = i;
+        i = i + 1;
+    end;
+    /*
+    await 2s;
+
+    i = 0;
+    var Heart[NHEART] hearts with
+        _.i = i;
+        i = i + 1;
+    end;
+    */
+    await FOREVER;
+with
     
-    var byte yo = y & 31;
-    var byte ctr = 0;
-    loop j in 10 do
-        loop i in 15 do
-            var byte t = _pgm_read_byte_near(_layer1_map + tmp + ctr);
-            ctr = ctr + 1;
-            if  (t != 0) then
-                _GD.Cell(t - 1);
-                _GD.Vertex2f(16*32*(i), 16 * ((32*(j))-yo));
+    var int y = 1648;
+    
+    every GD_REDRAW do
+        /*
+        _GD.RestoreContext();
+        _GD.Begin(_BITMAPS);
+        _GD.BlendFunc(_ONE, _ONE_MINUS_SRC_ALPHA);
+        _GD.BitmapHandle(_TILES_HANDLE);
+        var int tmp = (y >> 5) * 15;
+        
+        var byte yo = y & 31;
+        var byte ctr = 0;
+        loop j in 10 do
+            loop i in 15 do
+                var byte t = _pgm_read_byte_near(_layer1_map + tmp + ctr);
+                ctr = ctr + 1;
+                if  (t != 0) then
+                    _GD.Cell(t - 1);
+                    _GD.Vertex2f(16 * 32 * i, 16 * ((32 * j) - yo));
+                end
             end
         end
+        y = y - 1;
+        
+        if(y == 928) then
+            break;    /// why?
+        end
+        */
+        _GD.swap();
+        _GD.Clear();
+        _GD.cmd_gradient(0,   0, 0xa0a4f7,
+                         0, 272, 0xd0f4f7);
     end
-    y = y - 1;
+    
+    await FOREVER;
 end

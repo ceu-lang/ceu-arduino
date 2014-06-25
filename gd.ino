@@ -46,6 +46,14 @@ void loop()
     ceu_sys_go(&CEU_APP, CEU_IN__ASYNC, CEU_EVTP((void*)NULL));
 #endif
 
+#ifdef CEU_IN_GD_TOUCH_TAG
+    GD.get_inputs();
+    if (GD.inputs.tag != 0) {
+        int v = GD.inputs.tag;
+        ceu_sys_go(&CEU_APP, CEU_IN_GD_TOUCH_TAG, CEU_EVTP((void*)&v));
+    }
+#endif
+
 #ifdef CEU_IN_GD_TOUCH
     GD.get_inputs();
     if (GD.inputs.x != -32768) {
@@ -56,7 +64,7 @@ void loop()
 #endif
 
 #ifdef CEU_IN_GD_REDRAW
-    GD.ClearColorRGB(0xe0e0e0);
+    //GD.ClearColorRGB(0xe0e0e0);
     GD.Clear();
     //GD.cmd_gradient(0, 0, 0xa0a4f7, 0, 272, 0xd0f4f7);
     ceu_sys_go(&CEU_APP, CEU_IN_GD_REDRAW, CEU_EVTP((void*)NULL));

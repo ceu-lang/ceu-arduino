@@ -1,0 +1,262 @@
+input void GD_REDRAW;
+
+#define CONTROL_LEFT  1
+#define CONTROL_RIGHT 2
+#define CONTROL_UP    4
+#define CONTROL_DOWN  8
+
+class Keyboard with
+do
+    #define PADX(x) (480 + (x - 3) * 48)
+    #define PADY(y) (272 + (y - 3) * 48)
+    every GD_REDRAW do
+    
+        _GD.Begin(_BITMAPS);
+        /*
+        _GD.Tag(CONTROL_RIGHT);
+        _GD.Vertex2ii(PADX(2), PADY(1), _ARROW_HANDLE, 0);
+        _rotate_around(24, 24, 3 * 0x4000);
+
+        _GD.Tag(CONTROL_UP);
+        _GD.Vertex2ii(PADX(1), PADY(0), _ARROW_HANDLE, 0);
+        _rotate_around(24, 24, 2 * 0x4000);
+
+        _GD.Tag(CONTROL_LEFT);
+        _GD.Vertex2ii(PADX(0), PADY(1), _ARROW_HANDLE, 0);
+        _rotate_around(24, 24, 1 * 0x4000);
+        */
+        _GD.Tag(CONTROL_DOWN);
+        _GD.Vertex2ii(384, 224, _ARROW_HANDLE, 0);
+        //GD.RestoreContext();
+    
+    end
+end
+
+class Frog with
+do
+    var int x,y,leaping, frogdir, frogface;
+    x = 120;
+    y = 232;
+    leaping = 0;
+    frogdir = 0;
+    frogface = 0x0000;
+    every GD_REDRAW do
+        native do
+            static byte frog_anim[] = {2, 1, 0, 0, 2};
+        end
+        _sprite(x, y, _frog_anim[leaping / 2], frogface);
+    end
+end
+
+class Sprite with
+    var byte add, y, anim;
+    var float mult;
+do
+    var u16 cntr = 0;
+    var byte x;
+    y = y - 8;
+    par/or do
+        every GD_REDRAW do
+            x = cntr * mult + add - 16;
+            cntr = cntr + 1;
+        end
+    with
+        every GD_REDRAW do
+            if (x > 224) then
+                _GD.Cell(anim);
+                _GD.BitmapHandle(_SPRITES_HANDLE);
+                _GD.Vertex2f(16 * (x - 256), 16 * y);
+            else
+                _GD.Begin(_BITMAPS);
+                _GD.Vertex2ii(x, y, _SPRITES_HANDLE, anim);
+            end
+        end
+    end
+end
+
+par/or do
+    #include "gd.ceu"
+with
+    native do
+        #include "frogger_assets.h"
+    end
+    native do
+        static void sprite(byte x, byte y, byte anim, uint16_t rot = 0xffff)
+        {
+            x -= 16;
+            y -= 8;
+            if (rot != 0xffff) {
+                GD.cmd_loadidentity();
+                GD.cmd_translate(F16(8),F16(8));
+                GD.cmd_rotate(rot);
+                GD.cmd_translate(F16(-8),F16(-8));
+                GD.cmd_setmatrix();
+            }
+            if (x > 224) {
+                GD.Cell(anim);
+                GD.Vertex2f(16 * (x - 256), 16 * y);
+            } else {
+                GD.Vertex2ii(x, y, SPRITES_HANDLE, anim);
+            }
+        }
+        
+        static void rotate_around(int x, int y, int a)
+        {
+            GD.cmd_loadidentity();
+            GD.cmd_translate(F16(x),F16(y));
+            GD.cmd_rotate(a);
+            GD.cmd_translate(F16(-x),F16(-y));
+            GD.cmd_setmatrix();
+        }
+    end
+    _LOAD_ASSETS();
+    _GD.Clear();
+    
+    every GD_REDRAW do
+        
+        _GD.Tag(1);
+        _GD.BitmapHandle(_SPRITES_HANDLE);
+        _GD.SaveContext();
+        _GD.ScissorSize(224, 256);
+        _GD.Begin(_BITMAPS);
+        _GD.Vertex2ii(0, 0, _BACKGROUND_HANDLE, 0);   // Background bitmap
+        //_GD.Tag(CONTROL_DOWN);
+        _GD.Vertex2ii(384, 224, _ARROW_HANDLE, 0);
+    end
+    
+    await FOREVER; 
+with
+    /*
+    var Sprite car1 with
+        _.mult = -1;
+        _.add = 0;
+        _.anim = 3;
+        _.y = 216;
+    end;
+    
+    var Sprite car2 with
+        _.mult = -1;
+        _.add = 128;
+        _.anim = 3;
+        _.y = 216;
+    end;
+    
+    var Sprite dozer1 with
+        _.mult = 1;
+        _.add = 0;
+        _.anim = 4;
+        _.y = 200;
+    end;
+    
+    var Sprite dozer2 with
+        _.mult = 1;
+        _.add = 50;
+        _.anim = 4;
+        _.y = 200;
+    end;
+    
+    var Sprite dozer3 with
+        _.mult = 1;
+        _.add = 150;
+        _.anim = 4;
+        _.y = 200;
+    end;
+    
+    var Sprite purple1 with
+        _.mult = -1;
+        _.add = 0;
+        _.anim = 7;
+        _.y = 184;
+    end;
+    
+    var Sprite purple2 with
+        _.mult = -1;
+        _.add = 75;
+        _.anim = 7;
+        _.y = 184;
+    end;
+    
+    var Sprite purple3 with
+        _.mult = -1;
+        _.add = 150;
+        _.anim = 7;
+        _.y = 184;
+    end;
+    
+     var Sprite race1 with
+        _.mult = 2;
+        _.add = 0;
+        _.anim = 8;
+        _.y = 168;
+    end;
+    
+     var Sprite truck1 with
+        _.mult = -1;
+        _.add = 0;
+        _.anim = 5;
+        _.y = 152;
+    end;
+    
+    var Sprite truck2 with
+        _.mult = -1;
+        _.add = 16;
+        _.anim = 6;
+        _.y = 152;
+    end;
+    
+    var Sprite truck3 with
+        _.mult = -1;
+        _.add = 100;
+        _.anim = 5;
+        _.y = 152;
+    end;
+    
+    var Sprite truck4 with
+        _.mult = -1;
+        _.add = 116;
+        _.anim = 6;
+        _.y = 152;
+    end;
+    */
+    var Frog frog;
+    var int t = 0;
+    every GD_REDRAW do
+    
+        _GD.Tag(2);
+        _GD.AlphaFunc(_GREATER, 0); // on road, don't tag transparent pixels
+        // Yellow cars
+        
+        _sprite(-t,       216, 3);
+        _sprite(-t + 128, 216, 3);
+
+        // Dozers
+        _sprite(t, 200, 4);
+        _sprite(t + 50, 200, 4);
+        _sprite(t + 150, 200, 4);
+
+        // Purple cars
+        _sprite(-t,       184, 7);
+        _sprite(-t + 75,  184, 7);
+        _sprite(-t + 150, 184, 7);
+
+        // Green and white racecars
+        _sprite(2 * t,    168, 8);
+
+        // Trucks
+        _sprite(-t/2,       152, 5);
+        _sprite(-t/2 + 16,  152, 6);
+        _sprite(-t/2 + 100, 152, 5);
+        _sprite(-t/2 + 116, 152, 6);
+        
+        t = t + 1;
+    end
+    await FOREVER;
+with
+    var Keyboard kb;
+    await FOREVER;
+with
+    every GD_REDRAW do
+        _GD.swap();
+        _GD.Clear();
+    end
+end

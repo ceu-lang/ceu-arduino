@@ -1,0 +1,63 @@
+#define NBLOBS 16   // you can use define's from Céu as well
+
+input void      GD_REDRAW;
+input (int,int) GD_TOUCH;   // I want (x,y) for touch events
+
+// now the blob class
+class Blob with
+    var int i;        // each blob has a different incremental "i"
+    var int x, y;     // and a position (where the user clicked)
+do
+    var int diam  =  10;   // blobs are circles with a diam
+    var int alpha = 255;   // and no transparency initially
+
+    var byte r = i *  17;  // each blob has a different color
+    var byte g = i *  23;  // based on its "i"
+    var byte b = i * 147;
+
+    // make the blob disappear gradually
+    loop j in 30 do          // 30 times is arbitrary (based on visual tests)
+        await GD_REDRAW;
+        diam  = diam  + 2;   // increment the diameter a little bit
+        alpha = alpha - 5;   // and also the transparency
+        _GD.Begin(_POINTS);
+        _GD.ColorA(alpha);
+        _GD.PointSize(diam << 4);
+        _GD.ColorRGB(r, g, b);
+        _GD.Vertex2f(this.x, this.y);
+    end
+end
+
+//var int i,x,y;
+
+par/or do
+    // let's now handle library initialization and inputs in another file to avoid confusion with the application
+    #include "gd.ceu"
+with
+    // clear the screen every frame
+    every GD_REDRAW do
+        _GD.ClearColorRGB(0xe0e0e0);
+        _GD.Clear();
+    end
+with
+    // I have at most NBLOBS, which are held in this pool
+    pool Blob[NBLOBS] blobs;
+    var int i = 0;   // incremental "i" for blobs
+    //i = 0;
+    var int x, y;
+    // now, I create a blob every time the user touches the screen
+    every (x,y) in GD_TOUCH do
+        spawn Blob in blobs with
+            this.i = i+1;  // a new blob
+            this.x = x;    // in the touch position
+            this.y = y;
+        end;
+        i = (i + 1) % NBLOBS;
+    end
+with
+    // all blobs execute in the other trails
+    // in the end, I need to update the screen (every frame)
+    every GD_REDRAW do
+        _GD.swap();
+    end
+end

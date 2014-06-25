@@ -1,0 +1,62 @@
+#define NSPRITES 35
+#define TIME NSPRITES-i
+
+input void GD_REDRAW;
+
+class Sprite with
+    var byte i;        // each sprite has a different incremental "i"
+do
+    var byte t = i;
+    var u32 v = _pgm_read_dword(_sprites + i);
+    loop j in 2*TIME do          
+        await GD_REDRAW;
+        _GD.Begin(_BITMAPS);
+        var u32 r = _pgm_read_dword(_circle + t);	// move the sprite in a circle
+        _GD.cmd32(v + r);
+        t = t + 1;
+    end
+end
+
+var byte i = 0;
+
+par/or do
+	#include "gd.ceu"
+with
+    native do
+    	#include "sprites_assets.h"
+	end
+	_GD.copy(_sprites_assets, sizeof(_sprites_assets));
+	_GD.Clear();
+	
+	// display number of sprites
+    every GD_REDRAW do
+    	_GD.Clear();
+        _GD.ColorRGB(0x000000);
+        
+		_GD.ColorA(140);
+		_GD.LineWidth(28 * 16);
+		_GD.Begin(_LINES);
+		_GD.Vertex2ii(240 - 110, 136, 0, 0);
+		_GD.Vertex2ii(240 + 110, 136, 0, 0);
+		_GD.RestoreContext();
+
+		_GD.cmd_number(215, 110, 31, _OPT_RIGHTX, i);  
+		_GD.cmd_text(229, 110, 31, 0, "sprites");
+		
+    end
+with
+    pool Sprite[NSPRITES] sprites;
+    
+    // spawn a new sprite with incremental i.
+    every GD_REDRAW do
+        spawn Sprite in sprites with
+            this.i = i;  // a new blob
+        end;
+        i = (i + 1) % NSPRITES; 
+    end
+with
+    every GD_REDRAW do
+        _GD.swap();
+    end
+end
+

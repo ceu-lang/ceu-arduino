@@ -1,3 +1,9 @@
+/*
+ Working copy - 
+ 
+ Frog, Keyboard, Map, Lives, Die on collision
+*/
+
 input void GD_REDRAW;
 input int FR_DONE;
 input void FR_GAMEOVER;
@@ -309,7 +315,6 @@ par/or do
 with
     await FOREVER;
 end
-
 /*
 with
     //await FR_DIE;

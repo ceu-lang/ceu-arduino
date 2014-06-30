@@ -1,0 +1,410 @@
+
+
+#include "frogger_assets.h"
+_LOAD_ASSETS();
+input int KEY;
+
+native const _KEY_NONE, _KEY_RIGHT, _KEY_UP, _KEY_DOWN,
+             _KEY_LEFT, _KEY_SELECT;
+
+native _analogRead(), _map_generate(), _redraw(),
+       _MAP, _END;
+native nohold _math_randomSeed();
+
+native pure _analog2key();
+
+safe _analogRead with _map_generate, _redraw;
+
+native do
+
+    enum {
+        KEY_NONE,
+        KEY_RIGHT,
+        KEY_UP,
+        KEY_DOWN,
+        KEY_LEFT,
+        KEY_SELECT,
+    };
+
+    ##define END 22
+    char MAP[2][END] = {
+        { ' ', '|', ' ', '*', ' ', ' ', ' ', '*', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '*', ' ', ' ', '*', ' ', ' ', '|' },
+        { ' ', '|', ' ', ' ', ' ', '*', ' ', ' ', ' ', ' ', '*', ' ', ' ', '*', ' ', ' ', '*', ' ', ' ', '*', ' ', '|' },
+    };
+
+    void map_generate (int n) {
+        int i;
+        for (i=3; i<END-1; i++) {
+            if (math_random(0,n) < 10) {
+                int j = math_random(0,2);
+                MAP[j]  [i] = '*';
+                MAP[1-j][i] = ' ';
+            } else {
+                MAP[0][i] = ' ';
+                MAP[1][i] = ' ';
+            }
+        }
+    }
+    
+    static void sprite(byte x, byte y, byte anim, uint16_t rot = 0xffff)
+    {
+        x -= 16;
+        y -= 8;
+        if (rot != 0xffff) {
+            GD.cmd_loadidentity();
+            GD.cmd_translate(F16(8),F16(8));
+            GD.cmd_rotate(rot);
+            GD.cmd_translate(F16(-8),F16(-8));
+            GD.cmd_setmatrix();
+        }
+        if (x > 224) {
+            GD.Cell(anim);
+            GD.Vertex2f(16 * (x - 256), 16 * y);
+        } else {
+            GD.Vertex2ii(x, y, SPRITES_HANDLE, anim);
+        }
+    }
+    
+    static void turtle3(byte x, byte y, int t)
+    {
+        byte anim = 50 + ((t / 32) % 3);
+        sprite(x, y, anim);
+        sprite(x + 16, y, anim);
+        sprite(x + 32, y, anim);
+    }
+
+    static void turtle2(byte x, byte y, int t)
+    {
+        byte anim = 50 + ((t / 32) % 3);
+        sprite(x, y, anim);
+        sprite(x + 16, y, anim);
+    }
+
+    void log1(byte x, byte y)
+    {
+        sprite(x, y,      86);
+        sprite(x + 16, y, 87);
+        sprite(x + 32, y, 88);
+    }
+
+    void log(byte length, byte x, byte y)
+    {
+        sprite(x, y,      86);
+        while (length--) {
+            x += 16;
+            sprite(x, y, 87);
+        }
+        sprite(x + 16, y, 88);
+    }
+
+    static int riverat(byte y, uint16_t tt)
+    {
+        switch (y) {
+            case 120: return -tt;
+            case 104: return tt;
+            case 88:  return 5 * tt / 4;
+            case 72:  return -tt / 2;
+            case 56:  return tt / 2;
+        }
+    }
+      
+    static void rotate_around(int x, int y, int a)
+    {
+        GD.cmd_loadidentity();
+        GD.cmd_translate(F16(x),F16(y));
+        GD.cmd_rotate(a);
+        GD.cmd_translate(F16(-x),F16(-y));
+        GD.cmd_setmatrix();
+    }
+    
+    static void draw_score(byte x, byte y, long n)
+    {
+      GD.cmd_number(8 * x, 8 * y, FONT_HANDLE, 5, n);
+    }
+
+    void redraw (int t, int done[5], int score, int hiscore, int lives) {     
+          GD.Clear();
+          GD.Tag(1);
+          GD.BitmapHandle(SPRITES_HANDLE);
+          GD.SaveContext();
+          GD.ScissorSize(224, 256);
+          GD.Begin(BITMAPS);
+          GD.Vertex2ii(0, 0, BACKGROUND_HANDLE, 0);   // Background bitmap
+
+          GD.Tag(2);
+          GD.AlphaFunc(GREATER, 0); // on road, don't tag transparent pixels
+
+          // Completed homes
+          for (byte i = 0; i < 5; i++) {
+            if (done[i])
+              sprite(homes[i], 40, 63);
+          }
+
+          // Yellow cars
+          sprite(-t,       216, 3);
+          sprite(-t + 128, 216, 3);
+
+          // Dozers
+          sprite(t, 200, 4);
+          sprite(t + 50, 200, 4);
+          sprite(t + 150, 200, 4);
+
+          // Purple cars
+          sprite(-t,       184, 7);
+          sprite(-t + 75,  184, 7);
+          sprite(-t + 150, 184, 7);
+
+          // Green and white racecars
+          sprite(2 * t,    168, 8);
+
+          // Trucks
+          sprite(-t/2,       152, 5);
+          sprite(-t/2 + 16,  152, 6);
+          sprite(-t/2 + 100, 152, 5);
+          sprite(-t/2 + 116, 152, 6);
+
+          GD.AlphaFunc(GREATER, 0); // on river, tag transparent pixels
+
+          // Turtles
+          for (int i = 0; i < 256; i += 64)
+            turtle3(riverat(120, t) + i, 120);
+
+          // Short logs
+          for (int i = 0; i < 240; i += 80)
+            log(1, riverat(104, t) + i, 104);
+
+          // Long logs
+          for (int i = 0; i < 256; i += 128)
+            log(5, riverat(88, t) + i, 88);
+
+          // Turtles again, but slower
+          for (int i = 0; i < 250; i += 50)
+            turtle2(riverat(72, t) + i, 72);
+
+          // Top logs
+          for (int i = 0; i < 210; i += 70)
+            log(2, riverat(56, t) + i, 56);
+            
+          GD.ColorRGB(255, 85, 0);
+            draw_score(3, 1, score);
+            draw_score(11, 1, hiscore);
+            
+          GD.ColorRGB(255, 255, 255);
+          for (byte i = 0; i < lives; i++)
+            GD.Vertex2ii(8 * i, 30 * 8, LIFE_HANDLE, 0);
+    }
+
+    int analog2key (u16 analog) {
+        if (analog < 30)
+            return KEY_RIGHT;
+        if (analog < 150)
+            return KEY_UP;
+        if (analog < 360)
+            return KEY_DOWN;
+        if (analog < 535)
+            return KEY_LEFT;
+        if (analog < 760)
+            return KEY_SELECT;
+        return KEY_NONE;
+    }
+end
+
+class Keyboard with
+    event int touch;
+do
+    #define PADX(x) (480 + (x - 3) * 48)
+    #define PADY(y) (272 + (y - 3) * 48)
+    
+    par/or do
+        loop do
+            _GD.get_inputs();
+            var byte r = _GD.inputs.tag;
+            if( r != 0 ) then
+                async (r) do
+                    emit GD_TOUCH_TAGR => r;
+                end
+            end
+        end
+    with
+        every GD_REDRAW do
+            _GD.Begin(_BITMAPS);
+            
+            _GD.Tag(CONTROL_RIGHT);
+            _GD.Vertex2ii(PADX(2), PADY(1), _ARROW_HANDLE, 0);
+            _rotate_around(24, 24, 3 * 0x4000);
+
+            _GD.Tag(CONTROL_UP);
+            _GD.Vertex2ii(PADX(1), PADY(0), _ARROW_HANDLE, 0);
+            _rotate_around(24, 24, 2 * 0x4000);
+
+            _GD.Tag(CONTROL_LEFT);
+            _GD.Vertex2ii(PADX(0), PADY(1), _ARROW_HANDLE, 0);
+            _rotate_around(24, 24, 1 * 0x4000);
+            
+            _GD.Tag(CONTROL_DOWN);
+            _GD.Vertex2ii(384, 224, _ARROW_HANDLE, 0);
+            _GD.RestoreContext();
+        
+        end
+     with
+         await FR_DIE;
+     end
+end
+
+class Frog with
+do
+    var int x,y,leaping, frogdir, frogface;
+    x = 120;
+    y = 232;
+    leaping = 0;
+    frogdir = 0;
+    frogface = 0x0000;
+    par/or do
+         every GD_REDRAW do
+             _GD.wr(_REG_TAG_X, x - 8);
+             _GD.wr(_REG_TAG_Y, y);
+             _GD.get_inputs();
+             var byte tag = _GD.rd(_REG_TAG);
+             if(tag == 2) then
+                 async do
+                     emit FR_DIE;
+                 end
+             end
+             var byte r = _GD.inputs.tag;  //& (CONTROL_LEFT | CONTROL_RIGHT | CONTROL_UP | CONTROL_DOWN);
+             if(r == CONTROL_LEFT and leaping==0) then
+                  frogdir = r;
+                  leaping = leaping + 1;
+            
+             else/if(r == CONTROL_RIGHT and leaping==0) then
+                  frogdir = r;
+                  leaping = leaping + 1;
+             else/if (r == CONTROL_UP and leaping==0 ) then
+                 frogdir = r;
+                 leaping = leaping + 1;
+             else/if (r == CONTROL_DOWN and leaping==0 ) then
+                 frogdir = r;
+                 leaping = leaping + 1;
+             else/if (leaping>0 and leaping<=8) then
+                 if (frogdir == CONTROL_LEFT) then
+                     x = x - 2;
+                     frogface = 0xc000;
+                 else/if (frogdir == CONTROL_RIGHT) then
+                    x = x + 2;
+                    frogface = 0x4000;
+                 else/if (frogdir == CONTROL_UP) then
+                    y = y - 2;
+                    frogface = 0x0000;
+                 else/if (frogdir == CONTROL_DOWN) then
+                    y = y + 2;
+                    frogface = 0x8000;
+                 end
+                 leaping = leaping + 1;
+             else
+                 leaping = 0;
+             end
+         end
+    with
+        every GD_REDRAW do
+            native do
+                static byte frog_anim[] = {2, 1, 0, 0, 2};
+            end
+            _sprite(x, y, _frog_anim[leaping / 2], frogface);
+        end
+    with
+        await FR_DIE;
+    end
+end
+
+
+par do
+    var int pct, dt, step, ship, points;
+    var int win = 0;
+
+    loop do
+        if win then
+            // next phase (faster, harder, keep points)
+            step = 0;
+            ship = 0;
+            if dt > 100 then
+                dt = dt - 50;
+            end
+            if pct > 10 then
+                pct = pct - 1;
+            end
+        else
+            // restart
+            pct    = 35;    // map generator (10 out of 35 for a '*')
+            dt     = 500;   // game speed (500ms/step)
+            step   = 0;     // current step
+            ship   = 0;     // ship position (0=up, 1=down)
+            points = 0;     // number of steps alive
+        end
+
+        _map_generate(pct);
+        _redraw(step, ship, points);
+        await KEY;
+        win =
+            par do
+                loop do
+                    await (dt)ms;
+                    step = step + 1;
+                    _redraw(step, ship, points);
+
+                    if _MAP[ship][step] == '*' then
+                        escape 0;           // a collision
+                    end
+
+                    if step == _END-1 then
+                        escape 1;           // finish line
+                    end
+
+                    points = points + 1;
+                end
+            with
+                loop do
+                    var int key = await KEY;
+                    if key == _KEY_UP then
+                        ship = 0;
+                    end
+                    if key == _KEY_DOWN then
+                        ship = 1;
+                    end
+                end
+            end;
+
+        par/or do
+            await 1s;
+            await KEY;
+        with
+            if not win then
+                loop do
+                    await 100ms;
+                    _lcd_setCursor(0, ship);
+                    _lcd_write('<');
+                    await 100ms;
+                    _lcd_setCursor(0, ship);
+                    _lcd_write('>');
+                end
+            end
+        end
+    end
+
+with
+
+    var int key = _KEY_NONE;
+    loop do
+        var int read1 = _analogRead(0);
+                read1 = _analog2key(read1);
+        await 50ms;
+        var int read2 = _analogRead(0);
+                read2 = _analog2key(read2);
+        if read1==read2 and key!=read1 then
+            key = read1;
+            if key != _KEY_NONE then
+                async (read1) do
+                    emit KEY => read1;
+                end
+            end
+        end
+    end
+end

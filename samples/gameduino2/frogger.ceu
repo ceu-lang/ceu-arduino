@@ -1,5 +1,8 @@
 input void GD_REDRAW;
+<<<<<<< HEAD
 input int GD_TOUCH_TAGR;
+=======
+>>>>>>> 189a5d390e663a6cc393d956b56d46c26a0dac52
 input int FR_DONE;
 input void FR_GAMEOVER;
 input void FR_DIE;
@@ -13,11 +16,15 @@ input void FR_DIE;
 var int score=0, lives, hiscore = 0;
 
 class Keyboard with
+<<<<<<< HEAD
     event int touch;
+=======
+>>>>>>> 189a5d390e663a6cc393d956b56d46c26a0dac52
 do
     #define PADX(x) (480 + (x - 3) * 48)
     #define PADY(y) (272 + (y - 3) * 48)
     
+<<<<<<< HEAD
     par/or do
         loop do
             _GD.get_inputs();
@@ -55,6 +62,31 @@ end
 
 class Frog with
     event void dead;
+=======
+    every GD_REDRAW do
+        _GD.Begin(_BITMAPS);
+        
+        _GD.Tag(CONTROL_RIGHT);
+        _GD.Vertex2ii(PADX(2), PADY(1), _ARROW_HANDLE, 0);
+        _rotate_around(24, 24, 3 * 0x4000);
+
+        _GD.Tag(CONTROL_UP);
+        _GD.Vertex2ii(PADX(1), PADY(0), _ARROW_HANDLE, 0);
+        _rotate_around(24, 24, 2 * 0x4000);
+
+        _GD.Tag(CONTROL_LEFT);
+        _GD.Vertex2ii(PADX(0), PADY(1), _ARROW_HANDLE, 0);
+        _rotate_around(24, 24, 1 * 0x4000);
+        
+        _GD.Tag(CONTROL_DOWN);
+        _GD.Vertex2ii(384, 224, _ARROW_HANDLE, 0);
+        _GD.RestoreContext();
+    
+    end
+end
+
+class Frog with
+>>>>>>> 189a5d390e663a6cc393d956b56d46c26a0dac52
 do
     var int x,y,leaping, frogdir, frogface;
     x = 120;
@@ -63,6 +95,7 @@ do
     frogdir = 0;
     frogface = 0x0000;
     par/or do
+<<<<<<< HEAD
         loop do
             var int dir  = await GD_TOUCH_TAGR;
             if(dir) then
@@ -87,6 +120,51 @@ do
                 leaping = 0;
             end
         end
+=======
+         every GD_REDRAW do
+             _GD.wr(_REG_TAG_X, x - 8);
+             _GD.wr(_REG_TAG_Y, y);
+             _GD.get_inputs();
+             var byte tag = _GD.rd(_REG_TAG);
+             if(tag == 2) then
+                 async do
+                     emit FR_DIE;
+                 end
+             end
+             var byte r = _GD.inputs.tag;  //& (CONTROL_LEFT | CONTROL_RIGHT | CONTROL_UP | CONTROL_DOWN);
+             if(r == CONTROL_LEFT and leaping==0) then
+                  frogdir = r;
+                  leaping = leaping + 1;
+            
+             else/if(r == CONTROL_RIGHT and leaping==0) then
+                  frogdir = r;
+                  leaping = leaping + 1;
+             else/if (r == CONTROL_UP and leaping==0 ) then
+                 frogdir = r;
+                 leaping = leaping + 1;
+             else/if (r == CONTROL_DOWN and leaping==0 ) then
+                 frogdir = r;
+                 leaping = leaping + 1;
+             else/if (leaping>0 and leaping<=8) then
+                 if (frogdir == CONTROL_LEFT) then
+                     x = x - 2;
+                     frogface = 0xc000;
+                 else/if (frogdir == CONTROL_RIGHT) then
+                    x = x + 2;
+                    frogface = 0x4000;
+                 else/if (frogdir == CONTROL_UP) then
+                    y = y - 2;
+                    frogface = 0x0000;
+                 else/if (frogdir == CONTROL_DOWN) then
+                    y = y + 2;
+                    frogface = 0x8000;
+                 end
+                 leaping = leaping + 1;
+             else
+                 leaping = 0;
+             end
+         end
+>>>>>>> 189a5d390e663a6cc393d956b56d46c26a0dac52
     with
         every GD_REDRAW do
             native do
@@ -94,6 +172,7 @@ do
             end
             _sprite(x, y, _frog_anim[leaping / 2], frogface);
         end
+<<<<<<< HEAD
     with
         every GD_REDRAW do
             _GD.wr(_REG_TAG_X, x - 8);
@@ -114,6 +193,12 @@ do
 end
 
 
+=======
+    end
+end
+
+var Keyboard kb;
+>>>>>>> 189a5d390e663a6cc393d956b56d46c26a0dac52
 
 native do
     #include "frogger_assets.h"
@@ -192,10 +277,17 @@ end
 
 _LOAD_ASSETS();
 
+<<<<<<< HEAD
 var Keyboard kb;
 lives = 4;
 par/or do
     par/or do
+=======
+lives = 4;
+par/or do
+    par/or do
+
+>>>>>>> 189a5d390e663a6cc393d956b56d46c26a0dac52
         _GD.Clear();
         
         every GD_REDRAW do
@@ -206,13 +298,25 @@ par/or do
             _GD.ScissorSize(224, 256);
             _GD.Begin(_BITMAPS);
             _GD.Vertex2ii(0, 0, _BACKGROUND_HANDLE, 0);   // Background bitmap
+<<<<<<< HEAD
         end
+=======
+            //_GD.Tag(CONTROL_DOWN);
+            //_GD.Vertex2ii(384, 224, _ARROW_HANDLE, 0);
+        end
+        
+        await FOREVER; 
+>>>>>>> 189a5d390e663a6cc393d956b56d46c26a0dac52
     with 
         var Frog frog;
         var int t = 0;
         var int time = 66;
         var byte tw = 0;
         every GD_REDRAW do
+<<<<<<< HEAD
+=======
+            //_GD.RestoreContext();
+>>>>>>> 189a5d390e663a6cc393d956b56d46c26a0dac52
             _GD.SaveContext();
             _GD.Begin(_RECTS);
             _GD.ColorRGB(0x000000);
@@ -227,6 +331,10 @@ par/or do
                 end
             end
             tw = tw + 1;
+<<<<<<< HEAD
+=======
+            //_GD.Clear();
+>>>>>>> 189a5d390e663a6cc393d956b56d46c26a0dac52
             
             _GD.RestoreContext();
             
@@ -237,6 +345,10 @@ par/or do
             _GD.Tag(2);
             _GD.AlphaFunc(_GREATER, 0); // on road, don't tag transparent pixels
             
+<<<<<<< HEAD
+=======
+            
+>>>>>>> 189a5d390e663a6cc393d956b56d46c26a0dac52
             // Yellow cars
             
             _sprite(-t,       216, 3);
@@ -294,6 +406,10 @@ par/or do
             
             t = t + 1;
         end
+<<<<<<< HEAD
+=======
+        await FOREVER;
+>>>>>>> 189a5d390e663a6cc393d956b56d46c26a0dac52
     with
         await FR_DIE;
     end
@@ -317,7 +433,10 @@ with
     _GD.cmd_text(240, 136, _FONT_HANDLE, _OPT_CENTER, "GAME OVER");
     _GD.cmd_text(240, 200, _FONT_HANDLE, _OPT_CENTER, "PRESS TO PLAY");
     _GD.swap();
+<<<<<<< HEAD
     
+=======
+>>>>>>> 189a5d390e663a6cc393d956b56d46c26a0dac52
     loop do
         _GD.get_inputs();
         if _GD.inputs.x != -32768 then
@@ -327,4 +446,8 @@ with
     _GD.Clear();
     _GD.cmd_text(240, 136, _FONT_HANDLE, _OPT_CENTER, "OKAY");
     _GD.swap();
+<<<<<<< HEAD
 end
+=======
+end
+>>>>>>> 189a5d390e663a6cc393d956b56d46c26a0dac52

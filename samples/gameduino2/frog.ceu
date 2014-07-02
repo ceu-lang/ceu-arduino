@@ -58,19 +58,9 @@ do
                  end
              end
              var byte r = _GD.inputs.tag;  //& (CONTROL_LEFT | CONTROL_RIGHT | CONTROL_UP | CONTROL_DOWN);
-             if(r == CONTROL_LEFT and leaping==0) then
+             if(r != 0 and leaping==0) then
                   frogdir = r;
-                  leaping = leaping + 1;
-            
-             else/if(r == CONTROL_RIGHT and leaping==0) then
-                  frogdir = r;
-                  leaping = leaping + 1;
-             else/if (r == CONTROL_UP and leaping==0 ) then
-                 frogdir = r;
-                 leaping = leaping + 1;
-             else/if (r == CONTROL_DOWN and leaping==0 ) then
-                 frogdir = r;
-                 leaping = leaping + 1;
+                  leaping = 1;
              else/if (leaping>0 and leaping<=8) then
                  if (frogdir == CONTROL_LEFT) then
                      x = x - 2;

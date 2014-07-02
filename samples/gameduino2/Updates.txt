@@ -1,6 +1,20 @@
 ﻿Google Summer of Code 2014
 Weekly Updates
 
+01.07.14
+* What I was supposed to do in the previous week.
+  Finish the Frogger game. 
+  Start invaders.
+  
+* What I did in the previous week.
+  Faced certain environment issues. Have been trying out various structures for the main logic.
+  Havent been able to start with new game.
+
+* What I'll do this week.
+  Finish the frogger game.
+  Start invader game or try to finish jnr program, which seems simpler.
+_______________________________________________________________________________________________________
+
 25.06.14
 * What I was supposed to do in the previous week.
   Work on Frogger game. 

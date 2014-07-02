@@ -1,19 +1,17 @@
-
-
-#include "frogger_assets.h"
+native do
+    #include "frogger_assets.h"
+end
 _LOAD_ASSETS();
-input int KEY;
 
-native const _KEY_NONE, _KEY_RIGHT, _KEY_UP, _KEY_DOWN,
-             _KEY_LEFT, _KEY_SELECT;
+#define CONTROL_LEFT  1
+#define CONTROL_RIGHT 2
+#define CONTROL_UP    4
+#define CONTROL_DOWN  8
 
-native _analogRead(), _map_generate(), _redraw(),
-       _MAP, _END;
-native nohold _math_randomSeed();
-
-native pure _analog2key();
-
-safe _analogRead with _map_generate, _redraw;
+input void GD_REDRAW;
+input (int, int) GD_TOUCH;
+input void FR_DIE;
+input int GD_TOUCH_TAGR;
 
 native do
 
@@ -25,26 +23,6 @@ native do
         KEY_LEFT,
         KEY_SELECT,
     };
-
-    ##define END 22
-    char MAP[2][END] = {
-        { ' ', '|', ' ', '*', ' ', ' ', ' ', '*', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '*', ' ', ' ', '*', ' ', ' ', '|' },
-        { ' ', '|', ' ', ' ', ' ', '*', ' ', ' ', ' ', ' ', '*', ' ', ' ', '*', ' ', ' ', '*', ' ', ' ', '*', ' ', '|' },
-    };
-
-    void map_generate (int n) {
-        int i;
-        for (i=3; i<END-1; i++) {
-            if (math_random(0,n) < 10) {
-                int j = math_random(0,2);
-                MAP[j]  [i] = '*';
-                MAP[1-j][i] = ' ';
-            } else {
-                MAP[0][i] = ' ';
-                MAP[1][i] = ' ';
-            }
-        }
-    }
     
     static void sprite(byte x, byte y, byte anim, uint16_t rot = 0xffff)
     {
@@ -121,8 +99,11 @@ native do
     {
       GD.cmd_number(8 * x, 8 * y, FONT_HANDLE, 5, n);
     }
+    
+    static byte homes[5] = { 24, 72, 120, 168, 216 };
 
     void redraw (int t, int done[5], int score, int hiscore, int lives) {     
+          GD.RestoreContext();
           GD.Clear();
           GD.Tag(1);
           GD.BitmapHandle(SPRITES_HANDLE);
@@ -131,6 +112,10 @@ native do
           GD.Begin(BITMAPS);
           GD.Vertex2ii(0, 0, BACKGROUND_HANDLE, 0);   // Background bitmap
 
+          GD.ColorRGB(255, 255, 255);
+          for (byte i = 0; i < lives; i++)
+            GD.Vertex2ii(8 * i, 30 * 8, LIFE_HANDLE, 0);
+            
           GD.Tag(2);
           GD.AlphaFunc(GREATER, 0); // on road, don't tag transparent pixels
 
@@ -167,7 +152,7 @@ native do
 
           // Turtles
           for (int i = 0; i < 256; i += 64)
-            turtle3(riverat(120, t) + i, 120);
+            turtle3(riverat(120, t) + i, 120,t);
 
           // Short logs
           for (int i = 0; i < 240; i += 80)
@@ -179,7 +164,7 @@ native do
 
           // Turtles again, but slower
           for (int i = 0; i < 250; i += 50)
-            turtle2(riverat(72, t) + i, 72);
+            turtle2(riverat(72, t) + i, 72,t);
 
           // Top logs
           for (int i = 0; i < 210; i += 70)
@@ -189,9 +174,7 @@ native do
             draw_score(3, 1, score);
             draw_score(11, 1, hiscore);
             
-          GD.ColorRGB(255, 255, 255);
-          for (byte i = 0; i < lives; i++)
-            GD.Vertex2ii(8 * i, 30 * 8, LIFE_HANDLE, 0);
+          
     }
 
     int analog2key (u16 analog) {
@@ -210,11 +193,11 @@ native do
 end
 
 class Keyboard with
-    event int touch;
+    //event int touch;
 do
     #define PADX(x) (480 + (x - 3) * 48)
     #define PADY(y) (272 + (y - 3) * 48)
-    
+    /*
     par/or do
         loop do
             _GD.get_inputs();
@@ -226,7 +209,9 @@ do
             end
         end
     with
+    */
         every GD_REDRAW do
+            //_GD.RestoreContext();
             _GD.Begin(_BITMAPS);
             
             _GD.Tag(CONTROL_RIGHT);
@@ -246,10 +231,9 @@ do
             _GD.RestoreContext();
         
         end
-     with
-         await FR_DIE;
-     end
+     //end
 end
+
 
 class Frog with
 do
@@ -270,21 +254,17 @@ do
                      emit FR_DIE;
                  end
              end
-             var byte r = _GD.inputs.tag;  //& (CONTROL_LEFT | CONTROL_RIGHT | CONTROL_UP | CONTROL_DOWN);
-             if(r == CONTROL_LEFT and leaping==0) then
+         end
+     with
+         loop do
+             var byte r = await GD_TOUCH_TAGR;    //_GD.inputs.tag;  //& (CONTROL_LEFT | CONTROL_RIGHT | CONTROL_UP | CONTROL_DOWN);
+             
+             if(r != 0 and leaping==0) then
                   frogdir = r;
-                  leaping = leaping + 1;
-            
-             else/if(r == CONTROL_RIGHT and leaping==0) then
-                  frogdir = r;
-                  leaping = leaping + 1;
-             else/if (r == CONTROL_UP and leaping==0 ) then
-                 frogdir = r;
-                 leaping = leaping + 1;
-             else/if (r == CONTROL_DOWN and leaping==0 ) then
-                 frogdir = r;
-                 leaping = leaping + 1;
+                  leaping = 1;
+                  
              else/if (leaping>0 and leaping<=8) then
+                 await GD_REDRAW;
                  if (frogdir == CONTROL_LEFT) then
                      x = x - 2;
                      frogface = 0xc000;
@@ -314,9 +294,71 @@ do
         await FR_DIE;
     end
 end
+var int hiscore = 0;
 
 
-par do
+var int lives = 1;
+var int score = 0;
+var int[5] done; 
+var Keyboard kb;
+var Frog fg;
+
+
+par/or do
+    var int t = 0;
+    every GD_REDRAW do
+        _redraw(t, done, score, hiscore, lives);
+        hiscore = _max(score, hiscore);
+        t = t + 1;
+    end
+with
+    //var Keyboard kb;
+    loop do
+        await 20s;
+        async do
+            emit FR_DIE;
+        end
+    end
+    await FOREVER;
+with
+    every FR_DIE do
+        lives = lives - 1;
+        if(lives == 0) then
+            break;
+        end
+    end
+end
+
+par/or do
+            //await 1s;
+            var int x,y;
+            (x,y) = await GD_TOUCH;
+        with
+            //if not win then
+                loop do
+                    _GD.Clear();
+
+                    // Draw "F R O G G E R" using the sprites 90-94
+
+                    var int x = 160, y = 50, space = 24;
+                    _GD.Begin(_BITMAPS);
+                    _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 90); x = x + space;   // F
+                    _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 91); x = x + space;   // R
+                    _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 92); x = x + space;   // O
+                    _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 93); x = x + space;   // G
+                    _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 93); x = x + space;   // G
+                    _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 94); x = x + space;   // E
+                    _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 91); x = x + space;   // R
+                    _GD.cmd_text(240, 136, _FONT_HANDLE, _OPT_CENTER, "GAME OVER");
+                    _GD.cmd_text(240, 200, _FONT_HANDLE, _OPT_CENTER, "PRESS TO PLAY");
+                    _GD.swap();
+                end
+            //end
+        end
+
+
+
+/*
     var int pct, dt, step, ship, points;
     var int win = 0;
 
@@ -374,37 +416,30 @@ par do
 
         par/or do
             await 1s;
-            await KEY;
+            var int x,y;
+            (x,y) = await GD_TOUCH;
         with
             if not win then
                 loop do
-                    await 100ms;
-                    _lcd_setCursor(0, ship);
-                    _lcd_write('<');
-                    await 100ms;
-                    _lcd_setCursor(0, ship);
-                    _lcd_write('>');
+                    _GD.Clear();
+
+                    // Draw "F R O G G E R" using the sprites 90-94
+
+                    var int x = 160, y = 50, space = 24;
+                    _GD.Begin(_BITMAPS);
+                    _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 90); x = x + space;   // F
+                    _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 91); x = x + space;   // R
+                    _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 92); x = x + space;   // O
+                    _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 93); x = x + space;   // G
+                    _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 93); x = x + space;   // G
+                    _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 94); x = x + space;   // E
+                    _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 91); x = x + space;   // R
+                    _GD.cmd_text(240, 136, _FONT_HANDLE, _OPT_CENTER, "GAME OVER");
+                    _GD.cmd_text(240, 200, _FONT_HANDLE, _OPT_CENTER, "PRESS TO PLAY");
+                    _GD.swap();
                 end
             end
         end
     end
-
-with
-
-    var int key = _KEY_NONE;
-    loop do
-        var int read1 = _analogRead(0);
-                read1 = _analog2key(read1);
-        await 50ms;
-        var int read2 = _analogRead(0);
-                read2 = _analog2key(read2);
-        if read1==read2 and key!=read1 then
-            key = read1;
-            if key != _KEY_NONE then
-                async (read1) do
-                    emit KEY => read1;
-                end
-            end
-        end
-    end
-end
+    
+    */

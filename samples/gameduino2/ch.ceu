@@ -1,11 +1,35 @@
-input int GD_TOUCH_TAG;
+input void GD_REDRAW;
 
-var int x,y;
-every x in GD_TOUCH_TAG do
-    _GD.Clear();
-    _GD.cmd_text( 20, 20, 31, _OPT_CENTER,"Hi");
-    _GD.swap();
-    _GD.Clear();
-    _GD.cmd_text( 20, 20, 31, _OPT_CENTER,"Hello");
-    _GD.swap();
+native do
+    #include "frogger_assets.h"
 end
+_LOAD_ASSETS();
+
+class Keyboard with
+do
+    #define PADX(x) (480 + (x - 3) * 48)
+    #define PADY(y) (272 + (y - 3) * 48)
+    
+    every GD_REDRAW do
+        _GD.Begin(_BITMAPS);
+        
+        //_GD.Tag(CONTROL_RIGHT);
+        _GD.Vertex2ii(PADX(2), PADY(1), _ARROW_HANDLE, 0);
+        //_rotate_around(24, 24, 3 * 0x4000);
+
+        //_GD.Tag(CONTROL_UP);
+        _GD.Vertex2ii(PADX(1), PADY(0), _ARROW_HANDLE, 0);
+        //_rotate_around(24, 24, 2 * 0x4000);
+
+        //_GD.Tag(CONTROL_LEFT);
+        _GD.Vertex2ii(PADX(0), PADY(1), _ARROW_HANDLE, 0);
+        //_rotate_around(24, 24, 1 * 0x4000);
+        
+        //_GD.Tag(CONTROL_DOWN);
+        _GD.Vertex2ii(384, 224, _ARROW_HANDLE, 0);
+        //_GD.RestoreContext();
+    
+    end
+end
+
+var Keyboard kb;

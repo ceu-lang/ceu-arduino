@@ -88,7 +88,10 @@ do
             _sprite(x, y, _frog_anim[leaping / 2], frogface);
         end
     with
-        await FR_DIE;
+        await 41s;
+        async do
+            emit FR_DIE;
+        end
     end
 end
 
@@ -206,11 +209,13 @@ par/or do
                 if(tw % 20 == 0) then
                     time = time + 1;
                 end
+                /*
                 if(time == 190) then
                     async do
                         emit FR_DIE;
                     end
                 end
+                */
                 tw = tw + 1;
                 //_GD.Clear();
                 

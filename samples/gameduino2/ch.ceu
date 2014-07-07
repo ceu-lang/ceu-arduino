@@ -1,35 +1,19 @@
+input (int,int,int) GD_TOUCH;
 input void GD_REDRAW;
+var int x;
 
-native do
-    #include "frogger_assets.h"
-end
-_LOAD_ASSETS();
-
-class Keyboard with
-do
-    #define PADX(x) (480 + (x - 3) * 48)
-    #define PADY(y) (272 + (y - 3) * 48)
-    
-    every GD_REDRAW do
-        _GD.Begin(_BITMAPS);
-        
-        //_GD.Tag(CONTROL_RIGHT);
-        _GD.Vertex2ii(PADX(2), PADY(1), _ARROW_HANDLE, 0);
-        //_rotate_around(24, 24, 3 * 0x4000);
-
-        //_GD.Tag(CONTROL_UP);
-        _GD.Vertex2ii(PADX(1), PADY(0), _ARROW_HANDLE, 0);
-        //_rotate_around(24, 24, 2 * 0x4000);
-
-        //_GD.Tag(CONTROL_LEFT);
-        _GD.Vertex2ii(PADX(0), PADY(1), _ARROW_HANDLE, 0);
-        //_rotate_around(24, 24, 1 * 0x4000);
-        
-        //_GD.Tag(CONTROL_DOWN);
-        _GD.Vertex2ii(384, 224, _ARROW_HANDLE, 0);
-        //_GD.RestoreContext();
-    
+loop do
+    var int x,y,tag;
+    var int x1,y1,tag1;
+    par/or do
+        (x,y,tag) = await GD_TOUCH;
+    with
+        (x1,y1,tag1) = await GD_TOUCH;
+    end
+    await GD_REDRAW;
+    if(x==x1 and y==y1 and tag==tag1) then
+        _GD.cmd_text(10,10,31,_OPT_CENTER,"Yo");
+    else
+        _GD.cmd_text(10,10,31,_OPT_CENTER,"No");
     end
 end
-
-var Keyboard kb;

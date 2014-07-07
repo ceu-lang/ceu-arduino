@@ -5,7 +5,7 @@
  */
 
 input void      GD_REDRAW;
-input (int,int) GD_TOUCH;
+input (int,int,int) GD_TOUCH;
 
 /*
  * The "blob" class:
@@ -42,8 +42,8 @@ pool Blob[NBLOBS] blobs;    // Pool to hold dynamic instances of "blobs"
  */
 
 var int i = 0;
-var int x, y;
-every (x,y) in GD_TOUCH do
+var int x, y, tag;
+every (x,y,tag) in GD_TOUCH do
     spawn Blob in blobs with
         this.i = i+1;  // a new blob
         this.x = x;    // in the touch position

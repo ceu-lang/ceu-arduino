@@ -52,9 +52,17 @@ do
              _GD.wr(_REG_TAG_Y, y);
              _GD.get_inputs();
              var byte tag = _GD.rd(_REG_TAG);
-             if(tag == 2) then
-                 async do
-                     emit FR_DIE;
+             if(y >= 136 ) then
+                 if (tag == 2) then
+                     async do
+                         emit FR_DIE;
+                     end
+                 end
+             else/if ( y>40 ) then
+                 if ( leaping == 0 and tag == 1 ) then
+                     async do
+                         emit FR_DIE;
+                     end
                  end
              end
              var byte r = _GD.inputs.tag;  //& (CONTROL_LEFT | CONTROL_RIGHT | CONTROL_UP | CONTROL_DOWN);

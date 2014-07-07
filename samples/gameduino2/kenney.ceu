@@ -130,55 +130,18 @@ class Player with
     var int i;
 do
     var int tmp = 0;
-<<<<<<< HEAD
-=======
-    var u32 color; /// TODO BUG IN CEU (could be in the same scope of x,y below)
->>>>>>> 189a5d390e663a6cc393d956b56d46c26a0dac52
+    var u32 color;
     pool Trail[NTRAIL] trails;
     every GD_REDRAW do
         var u16 a = tmp * 100;
 
-<<<<<<< HEAD
-=======
         var int x, y;
->>>>>>> 189a5d390e663a6cc393d956b56d46c26a0dac52
         var u16 a2 = a << 1;
         var u16 a3 = a2 << 1;
       
         if(i==0) then
             x = 16 * 240 + _GD.rsin(16 * 120, a) + _GD.rsin(16 * 120, a2);
             y = 16 * 136 + _GD.rsin(16 * 70, a3);
-<<<<<<< HEAD
-            if ((tmp & 3) == 0) then
-                spawn Trail in trails with
-                    this.tx = x;
-                    this.ty = y;
-                    this.color = 0x8bcfba;
-                end;        
-            end
-        else/if (i==1) then
-            x = 16 * 240 + _GD.rsin(16 * 240, a);
-            y = 16 * 100 + _GD.rsin(16 * 36, a2);
-            if ((tmp & 3) == 0) then
-                spawn Trail in trails with
-                    this.tx = x;
-                    this.ty = y;
-                    this.color = 0x8db5e7;
-                end;        
-            end
-        else
-            x = 16 * 240 + _GD.rsin(16 * 240, a2);
-            y = 16 * 135 + _GD.rsin(16 * 10, a) + _GD.rsin(16 * 18, a3);
-            if ((tmp & 3) == 0) then
-                spawn Trail in trails with
-                    this.tx = x;
-                    this.ty = y;
-                    this.color = 0xf19cb7;
-                end;        
-            end
-        end
-      
-=======
             color = 0x8bcfba;
         else/if (i==1) then
             x = 16 * 240 + _GD.rsin(16 * 240, a);
@@ -189,16 +152,15 @@ do
             y = 16 * 135 + _GD.rsin(16 * 10, a) + _GD.rsin(16 * 18, a3);
             color = 0xf19cb7;
         end
-      
+        
         if ((tmp & 3) == 0) then
-            spawn Trail in trails with
-                this.tx = x;
-                this.ty = y;
-                this.color = color;
-            end;
-        end
-
->>>>>>> 189a5d390e663a6cc393d956b56d46c26a0dac52
+                spawn Trail in trails with
+                    this.tx = x;
+                    this.ty = y;
+                    
+                end;        
+            end
+        
         _GD.ColorRGB(0xffffff);
         _GD.ColorA(0xff);
         _GD.BlendFunc(_ONE, _ONE_MINUS_SRC_ALPHA);

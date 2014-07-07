@@ -46,19 +46,11 @@ void loop()
     ceu_sys_go(&CEU_APP, CEU_IN__ASYNC, CEU_EVTP((void*)NULL));
 #endif
 
-#ifdef CEU_IN_GD_TOUCH_TAG
-    GD.get_inputs();
-    if (GD.inputs.tag != 0) {
-        int v = GD.inputs.tag;
-        ceu_sys_go(&CEU_APP, CEU_IN_GD_TOUCH_TAG, CEU_EVTP((void*)&v));
-    }
-#endif
-
 #ifdef CEU_IN_GD_TOUCH
     GD.get_inputs();
     if (GD.inputs.x != -32768) {
         // only generate touch events if the user clicked on screen
-        tceu__int__int v = { GD.inputs.x<<4, GD.inputs.y<<4 };
+        tceu__int__int__int v = { GD.inputs.x<<4, GD.inputs.y<<4, GD.inputs.tag };
         ceu_sys_go(&CEU_APP, CEU_IN_GD_TOUCH, CEU_EVTP((void*)&v));
     }
 #endif

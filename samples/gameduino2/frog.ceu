@@ -200,7 +200,14 @@ par/or do
                 //_GD.Tag(CONTROL_DOWN);
                 //_GD.Vertex2ii(384, 224, _ARROW_HANDLE, 0);
             end
-            
+        with
+            await FOREVER;
+        end
+    end
+with
+    await FOREVER;
+end
+            /*
             //await FOREVER; 
         with 
             var Frog frog;
@@ -217,6 +224,7 @@ par/or do
                 if(tw % 20 == 0) then
                     time = time + 1;
                 end
+                */
                 /*
                 if(time == 190) then
                     async do
@@ -224,6 +232,8 @@ par/or do
                     end
                 end
                 */
+                
+                /*
                 tw = tw + 1;
                 //_GD.Clear();
                 
@@ -313,7 +323,7 @@ par/or do
 with
     await FOREVER;
 end
-
+*/
 /*
 with
     //await FR_DIE;

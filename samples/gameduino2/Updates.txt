@@ -1,6 +1,18 @@
 ﻿Google Summer of Code 2014
 Weekly Updates
 
+15.07.14
+* What I was supposed to do in the previous week.
+  Start the abstract program. Finish jnr.
+  
+* What I did in the previous week.
+  Finished jnr. Need to test for bugs. Made some structural modifications on frogger.
+
+* What I'll do this week.
+  Start one of the hard programs. 
+_______________________________________________________________________________________________________
+
+
 08.07.14
 * What I was supposed to do in the previous week.
   Finish the Frogger game. 

@@ -91,9 +91,12 @@ native do
     }
     
     static byte homes[5] = { 24, 72, 120, 168, 216 };
+    static int time = 66;
 
     void redraw (int t, int done[5], int score, int hiscore, int lives) {     
-
+    
+          
+          
           GD.ColorRGB(255, 255, 255);
           for (byte i = 0; i < lives; i++)
             GD.Vertex2ii(8 * i, 30 * 8, LIFE_HANDLE, 0);
@@ -156,7 +159,17 @@ native do
             draw_score(3, 1, score);
             draw_score(11, 1, hiscore);
             
+          GD.SaveContext();
+          GD.ColorRGB(255, 255, 255);
+          GD.Begin(RECTS);
+          GD.ColorRGB(0x000000);
+          GD.Vertex2ii(72,248);
+          GD.Vertex2ii(time,255);
           
+          if(t % 20 == 0)
+              time++;
+              
+          GD.RestoreContext();
     }
 end
 
@@ -203,9 +216,7 @@ do
              _GD.get_inputs();
              var byte tag = _GD.rd(_REG_TAG);
              if(tag == 2) then
-                 async do
-                     emit FR_DIE;
-                 end
+                 emit this.dead;
              end
          end
      with
@@ -261,6 +272,7 @@ loop do
     var int score = 0, win = 1;
     var int[5] done; 
     var Keyboard kb;
+    _time = 66;
 
 
     par/or do
@@ -292,6 +304,7 @@ loop do
             with
                 await fg.dead;
                 lives = lives - 1;
+                _time = 66;
             end
         end
     end

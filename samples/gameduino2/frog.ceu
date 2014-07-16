@@ -1,8 +1,6 @@
 input void GD_REDRAW;
 input int FR_DONE;
-input void FR_GAMEOVER;
-input void FR_DIE;
-
+//input (int,int,int) GD_TOUCH;
 
 #define CONTROL_LEFT  1
 #define CONTROL_RIGHT 2
@@ -39,6 +37,7 @@ do
 end
 
 class Frog with
+    event void dead;
 do
     var int x,y,leaping, frogdir, frogface;
     x = 120;
@@ -54,15 +53,11 @@ do
              var byte tag = _GD.rd(_REG_TAG);
              if(y >= 136 ) then
                  if (tag == 2) then
-                     async do
-                         emit FR_DIE;
-                     end
+                     emit this.dead;
                  end
              else/if ( y>40 ) then
                  if ( leaping == 0 and tag == 1 ) then
-                     async do
-                         emit FR_DIE;
-                     end
+                     emit this.dead;
                  end
              end
              var byte r = _GD.inputs.tag;  //& (CONTROL_LEFT | CONTROL_RIGHT | CONTROL_UP | CONTROL_DOWN);
@@ -97,13 +92,9 @@ do
         end
     with
         await 41s;
-        async do
-            emit FR_DIE;
-        end
+        emit this.dead;
     end
 end
-
-var Keyboard kb;
 
 native do
     #include "frogger_assets.h"
@@ -184,175 +175,145 @@ _LOAD_ASSETS();
 
 
 lives = 4;
-par/or do
-    loop do
-        par/or do
-            _GD.Clear();
-            
-            every GD_REDRAW do
-                
-                _GD.Tag(1);
-                _GD.BitmapHandle(_SPRITES_HANDLE);
-                _GD.SaveContext();
-                _GD.ScissorSize(224, 256);
-                _GD.Begin(_BITMAPS);
-                _GD.Vertex2ii(0, 0, _BACKGROUND_HANDLE, 0);   // Background bitmap
-                //_GD.Tag(CONTROL_DOWN);
-                //_GD.Vertex2ii(384, 224, _ARROW_HANDLE, 0);
-            end
-        with
-            await FOREVER;
+loop do
+    lives = 4;
+    var int win = 1;
+    var Keyboard kb;
+    par/or do
+        _GD.Clear();    
+        every GD_REDRAW do 
+            _GD.Tag(1);
+            _GD.BitmapHandle(_SPRITES_HANDLE);
+            _GD.SaveContext();
+            _GD.ScissorSize(224, 256);
+            _GD.Begin(_BITMAPS);
+            _GD.Vertex2ii(0, 0, _BACKGROUND_HANDLE, 0);   // Background bitmap
         end
-    end
-with
-    await FOREVER;
-end
-            /*
-            //await FOREVER; 
-        with 
+    with 
+        loop do    
+            if(lives == 0) then
+                win = 0;
+                break;
+            end
             var Frog frog;
-            var int t = 0;
-            var int time = 66;
-            var byte tw = 0;
-            every GD_REDRAW do
-                //_GD.RestoreContext();
-                _GD.SaveContext();
-                _GD.Begin(_RECTS);
-                _GD.ColorRGB(0x000000);
-                _GD.Vertex2ii(72,248);
-                _GD.Vertex2ii(time,255);
-                if(tw % 20 == 0) then
-                    time = time + 1;
-                end
-                */
-                /*
-                if(time == 190) then
-                    async do
-                        emit FR_DIE;
+            par/or do
+                var int t = 0;
+                var int time = 66;
+                var byte tw = 0;
+                every GD_REDRAW do
+                    _GD.SaveContext();
+                    _GD.Begin(_RECTS);
+                    _GD.ColorRGB(0x000000);
+                    _GD.Vertex2ii(72,248);
+                    _GD.Vertex2ii(time,255);
+                    if(tw % 20 == 0) then
+                        time = time + 1;
                     end
+                    
+                    tw = tw + 1;
+                    //_GD.Clear();
+                    
+                    _GD.RestoreContext();
+                    
+                    _GD.Begin(_BITMAPS);
+                    
+                    _GD.RestoreContext();
+                    _GD.ScissorSize(224, 256);
+                    _GD.Tag(2);
+                    _GD.AlphaFunc(_GREATER, 0); // on road, don't tag transparent pixels
+                    
+                    
+                    // Yellow cars
+                    
+                    _sprite(-t,       216, 3);
+                    _sprite(-t + 128, 216, 3);
+
+                    // Dozers
+                    _sprite(t, 200, 4);
+                    _sprite(t + 50, 200, 4);
+                    _sprite(t + 150, 200, 4);
+
+                    // Purple cars
+                    _sprite(-t,       184, 7);
+                    _sprite(-t + 75,  184, 7);
+                    _sprite(-t + 150, 184, 7);
+
+                    // Green and white racecars
+                    _sprite(2 * t,    168, 8);
+
+                    // Trucks
+                    _sprite(-t/2,       152, 5);
+                    _sprite(-t/2 + 16,  152, 6);
+                    _sprite(-t/2 + 100, 152, 5);
+                    _sprite(-t/2 + 116, 152, 6);
+                    
+                    _GD.AlphaFunc(_GREATER, 0); // on river, tag transparent pixels
+
+                    // Turtles
+                    loop  i in 4 do
+                        _turtle3(_riverat(120, t) + (i * 64), 120, t);
+                    end
+                    
+                    // Short logs
+                    loop i in 3 do
+                        _log(1, _riverat(104, t) + ( i * 80), 104);
+                    end
+
+                    // Long logs
+                    loop i in 2 do
+                        _log(5, _riverat(88, t) + ( i * 128 ), 88);
+                    end
+
+                    // Turtles again, but slower
+                    loop i in 5 do
+                        _turtle2( _riverat(72, t) + ( i * 50), 72,t);
+                    end
+
+                    // Top logs
+                    loop i in 3 do
+                        _log(2, _riverat(56, t) + ( i * 70 ), 56);
+                    end
+                    
+                    _GD.ColorRGB(255, 85, 0);
+                    _GD.cmd_number( 3 * 8, 1 * 8, _FONT_HANDLE, 5, score);
+                    _GD.cmd_number(11 * 8, 1 * 8, _FONT_HANDLE, 5, hiscore);
+                    
+                    _GD.ColorRGB(255, 255, 255);
+                    loop j in lives do
+                        _GD.Vertex2ii(8 * j, 30 * 8, _LIFE_HANDLE, 0);
+                    end
+                    
+                    t = t + 1;
                 end
-                */
-                
-                /*
-                tw = tw + 1;
-                //_GD.Clear();
-                
-                _GD.RestoreContext();
-                
-                _GD.Begin(_BITMAPS);
-                
-                _GD.RestoreContext();
-                _GD.ScissorSize(224, 256);
-                _GD.Tag(2);
-                _GD.AlphaFunc(_GREATER, 0); // on road, don't tag transparent pixels
-                
-                
-                // Yellow cars
-                
-                _sprite(-t,       216, 3);
-                _sprite(-t + 128, 216, 3);
-
-                // Dozers
-                _sprite(t, 200, 4);
-                _sprite(t + 50, 200, 4);
-                _sprite(t + 150, 200, 4);
-
-                // Purple cars
-                _sprite(-t,       184, 7);
-                _sprite(-t + 75,  184, 7);
-                _sprite(-t + 150, 184, 7);
-
-                // Green and white racecars
-                _sprite(2 * t,    168, 8);
-
-                // Trucks
-                _sprite(-t/2,       152, 5);
-                _sprite(-t/2 + 16,  152, 6);
-                _sprite(-t/2 + 100, 152, 5);
-                _sprite(-t/2 + 116, 152, 6);
-                
-                _GD.AlphaFunc(_GREATER, 0); // on river, tag transparent pixels
-
-                // Turtles
-                loop  i in 4 do
-                    _turtle3(_riverat(120, t) + (i * 64), 120, t);
-                end
-                
-                // Short logs
-                loop i in 3 do
-                    _log(1, _riverat(104, t) + ( i * 80), 104);
-                end
-
-                // Long logs
-                loop i in 2 do
-                    _log(5, _riverat(88, t) + ( i * 128 ), 88);
-                end
-
-                // Turtles again, but slower
-                loop i in 5 do
-                    _turtle2( _riverat(72, t) + ( i * 50), 72,t);
-                end
-
-                // Top logs
-                loop i in 3 do
-                    _log(2, _riverat(56, t) + ( i * 70 ), 56);
-                end
-                
-                _GD.ColorRGB(255, 85, 0);
-                _GD.cmd_number( 3 * 8, 1 * 8, _FONT_HANDLE, 5, score);
-                _GD.cmd_number(11 * 8, 1 * 8, _FONT_HANDLE, 5, hiscore);
-                
-                t = t + 1;
+            with    
+                await frog.dead;
+                lives = lives - 1;
             end
-            //await FOREVER;
-        with
-            every GD_REDRAW do
-                _GD.ColorRGB(255, 255, 255);
-                loop j in lives do
-                    _GD.Vertex2ii(8 * j, 30 * 8, _LIFE_HANDLE, 0);
-                end
-            end
-        with
-            await FR_DIE;
-        end
-        lives = lives - 1;
-        if(lives == 0) then
-            break;
         end
     end
-with
-    await FOREVER;
-end
-*/
-/*
-with
-    //await FR_DIE;
-    //every GD_REDRAW do
-    //await FOREVER;
-    _GD.Clear();
-
-    // Draw "F R O G G E R" using the sprites 90-94
-
-    var int x = 160, y = 50, space = 24;
-    _GD.Begin(_BITMAPS);
-    _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 90); x = x + space;   // F
-    _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 91); x = x + space;   // R
-    _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 92); x = x + space;   // O
-    _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 93); x = x + space;   // G
-    _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 93); x = x + space;   // G
-    _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 94); x = x + space;   // E
-    _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 91); x = x + space;   // R
-    _GD.cmd_text(240, 136, _FONT_HANDLE, _OPT_CENTER, "GAME OVER");
-    _GD.cmd_text(240, 200, _FONT_HANDLE, _OPT_CENTER, "PRESS TO PLAY");
-    _GD.swap();
-    loop do
-        _GD.get_inputs();
-        if _GD.inputs.x != -32768 then
-            break;
-        end
+    
+    par/or do
+        //var int x,y,r;
+        //(x,y,r) = await GD_TOUCH;
+        await 5s;
+    with
+         if not win then
+             every GD_REDRAW do
+                 // Draw "F R O G G E R" using the sprites 90-94
+                 _GD.Clear();
+                  var int x = 160, y = 50, space = 24;
+                  _GD.Begin(_BITMAPS);
+                  _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 90); x = x + space;   // F
+                  _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 91); x = x + space;   // R
+                  _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 92); x = x + space;   // O
+                  _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 93); x = x + space;   // G
+                  _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 93); x = x + space;   // G
+                  _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 94); x = x + space;   // E
+                  _GD.Vertex2ii(x, y, _SPRITES_HANDLE, 91); x = x + space;   // R
+                  _GD.cmd_text(240, 136, _FONT_HANDLE, _OPT_CENTER, "GAME OVER");
+                  _GD.cmd_text(240, 200, _FONT_HANDLE, _OPT_CENTER, "PRESS TO PLAY");
+                  
+             end
+         end
     end
-    _GD.Clear();
-    _GD.cmd_text(240, 136, _FONT_HANDLE, _OPT_CENTER, "OKAY");
-    _GD.swap();
 end
-*/

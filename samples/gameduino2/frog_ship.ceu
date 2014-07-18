@@ -10,7 +10,6 @@ _LOAD_ASSETS();
 
 input void GD_REDRAW;
 input (int, int,int) GD_TOUCH;
-input void FR_DIE;
 
 native do
     
@@ -259,9 +258,6 @@ do
         end
     with
         await 5s;
-        //async do
-        //    emit FR_DIE;
-        //end
         emit this.dead;
     end
 end

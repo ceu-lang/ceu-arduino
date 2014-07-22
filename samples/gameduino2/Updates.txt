@@ -1,6 +1,17 @@
 ﻿Google Summer of Code 2014
 Weekly Updates
 
+22.07.14
+* What I was supposed to do in the previous week.
+  Start one of the hard programs
+  
+* What I did in the previous week.
+  Frogger implemented multiple lives, home completion, game completion. 
+  
+* What I'll do this week.
+  Rework the main frogger logic to remove state variables. Will work on nightstrike game.
+_______________________________________________________________________________________________________
+
 15.07.14
 * What I was supposed to do in the previous week.
   Start the abstract program. Finish jnr.
@@ -11,7 +22,6 @@ Weekly Updates
 * What I'll do this week.
   Start one of the hard programs. 
 _______________________________________________________________________________________________________
-
 
 08.07.14
 * What I was supposed to do in the previous week.

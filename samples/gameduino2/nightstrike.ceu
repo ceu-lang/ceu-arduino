@@ -1,0 +1,44 @@
+input void GD_REDRAW;
+
+/*
+ALGORITHM
+
+par/or do
+    Every frame, draw background
+with
+    Points, lives in topleft corner
+    loop do
+        var int on? = true;
+        par/or do
+            await 1s;
+            await GD_TOUCH;
+        with
+            every 500ms do
+                on? = not on?;
+            end
+        with
+            every GD_REDRAW do
+                if on? then
+                    // Display "START"
+                end
+            end
+        end
+    end
+    
+    // Game starts here
+    loop i do
+        // Display "LEVEL i+1"
+        par/or do
+            await 5*(i+1) s; // More time as level number increases
+        with
+            //spawn helicopters, soldiers, missiles randomly
+            // Detect collision
+        with
+            // every GD_TOUCH
+            move tank pointer, update power,
+            on touch leave, launch missile
+        end
+    end
+end
+
+*/

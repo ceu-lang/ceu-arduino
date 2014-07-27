@@ -36,6 +36,7 @@ do
     end
 end
 
+/*
 class Frog with
     event void dead,die,finish;
 do
@@ -162,6 +163,149 @@ do
         emit this.dead;
     end
 end
+*/
+
+
+class Frog_new with
+    event void dead,die,finish;
+do
+    var int x,y,leaping, frogdir, frogface,t=0,dying = 0, landed = 0,tag,win;
+    var int[5] done;
+    var byte[5] homes;
+    homes[0] = 24;
+    homes[1] = 72;
+    homes[2] = 120;
+    homes[3] = 168;
+    homes[4] = 216;
+    done[0] = 0;
+    done[1] = 0;
+    done[2] = 0;
+    done[3] = 0;
+    done[4] = 0;
+    x = 120;
+    y = 232;
+    leaping = 0;
+    frogdir = 0;
+    frogface = 0x0000;
+    
+    win = 0;
+    
+    // Alive sequence. Win = 1 if frog has completed all homes successfully.
+    win = 
+        par do
+            // Get touch input, Change frog position.
+            every GD_REDRAW do
+                _GD.wr(_REG_TAG_X, x - 8);
+                _GD.wr(_REG_TAG_Y, y);
+                _GD.get_inputs();
+                tag = _GD.rd(_REG_TAG);
+                var byte r = _GD.inputs.tag;  //& (CONTROL_LEFT | CONTROL_RIGHT | CONTROL_UP | CONTROL_DOWN);
+                if(r != 0 and leaping==0) then
+                    frogdir = r;
+                    leaping = 1;
+                else/if (leaping>0 and leaping<=8) then
+                    if (frogdir == CONTROL_LEFT) then
+                        x = x - 2;
+                        frogface = 0xc000;
+                    else/if (frogdir == CONTROL_RIGHT) then
+                        x = x + 2;
+                        frogface = 0x4000;
+                    else/if (frogdir == CONTROL_UP) then
+                        y = y - 2;
+                        frogface = 0x0000;
+                    else/if (frogdir == CONTROL_DOWN) then
+                        y = y + 2;
+                        frogface = 0x8000;
+                    end
+                    leaping = leaping + 1;
+                 else
+                     leaping = 0;
+                 end
+            end
+        /*
+        with
+            // Check if frog has collided
+            loop do
+                if( not leaping ) then
+                    if(y >= 136 ) then     // road section
+                        if (tag == 2) then
+                            escape 0;
+                        end
+                    else/if ( y>40 ) then  // river section
+                        if ( tag == 1 ) then
+                            escape 0;
+                        end
+                        var int oldx = _riverat(y, t - 1);
+                        var int newx = _riverat(y, t);
+                        var int river_velocity = newx - oldx;
+                        x = x + river_velocity;
+                    else                   // river bank
+                        loop i in 5 do
+                            if( not done[i] and _abs(homes[i] - x) < 4 ) then
+                                done[i] = 1;
+                                landed = 1;
+                            end
+                        end
+                        if (landed) then
+                            x = 120;
+                            y = 232;
+                            t = 0;
+                            dying = 0;
+                            leaping = 0;
+                            frogdir = 0;
+                            frogface = 0x0000;
+                            landed = 0;
+                            if( done[0] and done[1] and done[2] and done[3] and done[4] ) then
+                                escape 1;
+                            end
+                        else
+                            escape 0;
+                        end
+                    end
+                end
+            end
+            */
+        with
+            // Draw the frog on every frame.
+            every GD_REDRAW do
+                native do
+                    static byte frog_anim[] = {2, 1, 0, 0, 2};
+                end
+                loop i in 5 do
+                    if( done[i] ) then
+                        _sprite( homes[i], 40, 63);
+                    end
+                end
+                _sprite(x, y, _frog_anim[leaping / 2], frogface);
+                t = t + 1;
+            end
+        with
+            await 41s;
+            escape 0;
+        end;
+    
+    if(not win) then
+        // if dead, perform dying sequence
+        par/or do
+            dying = 1;
+            loop i in 63 do
+                await GD_REDRAW;
+                dying = dying + 1;
+            end
+        with
+            every GD_REDRAW do
+                native do
+                    static byte die_anim[] = {31, 32, 33, 30};
+                end
+                _sprite(x, y, _die_anim[dying / 16], frogface);
+            end
+        end
+        emit this.dead;
+    else
+        emit this.finish;
+    end
+end
+
 
 native do
     #include "frogger_assets.h"
@@ -262,7 +406,7 @@ loop do
                 win = 0;
                 break;
             end
-            var Frog frog;
+            var Frog_new frog;
             par/or do
                 var int t = 0;
                 var int time = 66;

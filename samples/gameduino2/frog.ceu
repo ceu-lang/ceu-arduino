@@ -222,10 +222,10 @@ do
                      leaping = 0;
                  end
             end
-        /*
         with
             // Check if frog has collided
             loop do
+                await GD_REDRAW;
                 if( not leaping ) then
                     if(y >= 136 ) then     // road section
                         if (tag == 2) then
@@ -249,7 +249,6 @@ do
                         if (landed) then
                             x = 120;
                             y = 232;
-                            t = 0;
                             dying = 0;
                             leaping = 0;
                             frogdir = 0;
@@ -264,7 +263,7 @@ do
                     end
                 end
             end
-            */
+            
         with
             // Draw the frog on every frame.
             every GD_REDRAW do
@@ -280,7 +279,7 @@ do
                 t = t + 1;
             end
         with
-            await 41s;
+            await 123s;
             escape 0;
         end;
     
@@ -417,7 +416,7 @@ loop do
                     _GD.ColorRGB(0x000000);
                     _GD.Vertex2ii(72,248);
                     _GD.Vertex2ii(time,255);
-                    if(tw % 20 == 0) then
+                    if(tw % 60 == 0) then
                         time = time + 1;
                     end
                     

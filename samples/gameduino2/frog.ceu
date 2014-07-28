@@ -7,7 +7,7 @@ input int FR_DONE;
 #define CONTROL_UP    4
 #define CONTROL_DOWN  8
 
-var int score=0, lives, hiscore = 0;
+var int lives, hiscore = 0;
 
 class Keyboard with
 do
@@ -168,6 +168,7 @@ end
 
 class Frog_new with
     event void dead,die,finish;
+    var int score;
 do
     var int x,y,leaping, frogdir, frogface,t=0,dying = 0, landed = 0,tag,win;
     var int[5] done;
@@ -187,6 +188,7 @@ do
     leaping = 0;
     frogdir = 0;
     frogface = 0x0000;
+    score = 0;
     
     win = 0;
     
@@ -202,6 +204,7 @@ do
                 var byte r = _GD.inputs.tag;  //& (CONTROL_LEFT | CONTROL_RIGHT | CONTROL_UP | CONTROL_DOWN);
                 if(r != 0 and leaping==0) then
                     frogdir = r;
+                    score = score + 10;
                     leaping = 1;
                 else/if (leaping>0 and leaping<=8) then
                     if (frogdir == CONTROL_LEFT) then
@@ -485,7 +488,8 @@ loop do
                     end
                     
                     _GD.ColorRGB(255, 85, 0);
-                    _GD.cmd_number( 3 * 8, 1 * 8, _FONT_HANDLE, 5, score);
+                    hiscore = _max(frog.score,hiscore);
+                    _GD.cmd_number( 3 * 8, 1 * 8, _FONT_HANDLE, 5, frog.score);
                     _GD.cmd_number(11 * 8, 1 * 8, _FONT_HANDLE, 5, hiscore);
                     
                     _GD.ColorRGB(255, 255, 255);

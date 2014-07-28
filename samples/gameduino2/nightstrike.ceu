@@ -1,44 +1,80 @@
 input void GD_REDRAW;
+input (int,int,int) GD_TOUCH;
 
-/*
-ALGORITHM
+native do
+    #include "nightstrike_welcome_assets.h"
+    #include "nightstrike_1_assets.h"
+    Streamer stream;
+    static void blocktext(int x, int y, byte font, const char *s)
+    {
+      GD.SaveContext();
+      GD.ColorRGB(0x000000);
+      GD.cmd_text(x-1, y-1, font, 0, s);
+      GD.cmd_text(x+1, y-1, font, 0, s);
+      GD.cmd_text(x-1, y+1, font, 0, s);
+      GD.cmd_text(x+1, y+1, font, 0, s);
+      GD.RestoreContext();
 
+      GD.cmd_text(x, y, font, 0, s);
+    }
+    
+    void draw_dxt1(byte color_handle, byte bit_handle)
+    {
+      GD.Begin(BITMAPS);
+
+      GD.BlendFunc(ONE, ZERO);
+      GD.ColorA(0x55);
+      GD.Vertex2ii(0, 0, bit_handle, 0);
+
+      GD.BlendFunc(ONE, ONE);
+      GD.ColorA(0xaa);
+      GD.Vertex2ii(0, 0, bit_handle, 1);
+
+      GD.ColorMask(1,1,1,0);
+      GD.cmd_scale(F16(4), F16(4));
+      GD.cmd_setmatrix();
+
+      GD.BlendFunc(DST_ALPHA, ZERO);
+      GD.Vertex2ii(0, 0, color_handle, 1);
+
+      GD.BlendFunc(ONE_MINUS_DST_ALPHA, ONE);
+      GD.Vertex2ii(0, 0, color_handle, 0);
+
+      GD.RestoreContext();
+    }
+    
+end
+
+_GD.load("nightw.gd2");
+
+
+/// THE OPENING SEQUENCE
+
+var int on? = true;
 par/or do
-    Every frame, draw background
+    every 500ms do
+        on? = not on?;
+    end
 with
-    Points, lives in topleft corner
-    loop do
-        var int on? = true;
-        par/or do
-            await 1s;
-            await GD_TOUCH;
-        with
-            every 500ms do
-                on? = not on?;
-            end
-        with
-            every GD_REDRAW do
-                if on? then
-                    // Display "START"
-                end
-            end
+    every GD_REDRAW do
+        _draw_dxt1(BACKGROUND_COLOR_HANDLE, BACKGROUND_BITS_HANDLE);
+        _GD.ColorRGB(0xd7f2fd);
+        _blocktext(25, 16, WELCOME_DISPLAYFONT_HANDLE, "NIGHTSTRIKE");
+        _GD.Tag(100);
+        if(on?) then
+            _blocktext(51, 114, WELCOME_DISPLAYFONT_HANDLE, "START");
         end
     end
-    
-    // Game starts here
-    loop i do
-        // Display "LEVEL i+1"
-        par/or do
-            await 5*(i+1) s; // More time as level number increases
-        with
-            //spawn helicopters, soldiers, missiles randomly
-            // Detect collision
-        with
-            // every GD_TOUCH
-            move tank pointer, update power,
-            on touch leave, launch missile
+with
+    var int x,y,tag;
+    loop do
+        (x,y,tag) = await GD_TOUCH;
+        if(tag == 100) then
+            break;
         end
     end
 end
 
-*/
+/// END OF OPENING SEQUENCE
+
+loop i in 5 do

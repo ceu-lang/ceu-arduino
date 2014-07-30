@@ -75,12 +75,17 @@ native do
         GD.load(filename);
       }
     
+    void drawtemp(const shape_t *shape){
+          GD.cmd_translate(F16(shape->w / 2), F16(shape->h / 2));
+          GD.cmd_scale(F16(-1), F16(1));
+          GD.cmd_translate(F16(-(shape->w / 2)), F16(-(shape->h / 2)));
+          GD.cmd_setmatrix();
+    }
 end
 
 _GD.load("nightw.gd2");
 
 
-/*
 /// THE OPENING SEQUENCE
 
 var int on? = true;
@@ -109,39 +114,54 @@ with
 end
 
 /// END OF OPENING SEQUENCE
-*/
+
 
 class Soldier with
 do
+    /*every GD_REDRAW do
+        _draw_dxt1(BACKGROUND_COLOR_HANDLE, BACKGROUND_BITS_HANDLE);
+        _GD.ColorRGB(0xd7f2fd);
+        _blocktext(25, 16, WELCOME_DISPLAYFONT_HANDLE, "NIGHTSTRIKE");
+    end
+    */
     var int x,y;
     native do
-        const shape_t *shape;
+         const shape_t *shape;
     end
     _shape = &_SOLDIER_RUN_SHAPE;
     x = _SOLDIER_RIGHT - 100;
-    y = 272 - SOLDIER_RUN_HEIGHT;
+    y = 272 - _SOLDIER_RUN_HEIGHT / 2;
     var int t = 0;
-    every GD_REDRAW do
-        _GD.Tag(1);
-        _draw_dxt1(BACKGROUND_COLOR_HANDLE, BACKGROUND_BITS_HANDLE);
-        _GD.ColorRGB(0xd7f2fd);
-        _GD.TagMask(0);
-        _GD.Begin(_BITMAPS);
-        _vertex(_pgm_read_byte(_soldier_a), -1, _shape, x,y);
-        t = t + 1;
+    var byte a = 0;
+    par/or do
+        loop do
+            _GD.Clear();
+            _GD.Tag(1);
+            _draw_dxt1(BACKGROUND_COLOR_HANDLE, BACKGROUND_BITS_HANDLE);
+            _GD.TagMask(0);
+            
+            _GD.Begin(_BITMAPS);
+            
+            //_GD.SaveContext();
+            //_GD.cmd_loadidentity();
+            
+            //_drawtemp(_shape);
+            
+            _vertex(_pgm_read_byte(_soldier_a + a), 1, _shape, x,y);
+            //_GD.RestoreContext();
+            x = x - 1;
+            t = t + 1;
+            if (t % 2 == 0) then
+                a = (a + 1) % _sizeof(_soldier_a);
+            end
+            _GD.swap();
+        end
+    with
+        await FOREVER;
     end
 end
 
+_GD.cmd_track(240, 271, 1, 1, 0x01);
 _load_level(0);
 
 var Soldier s;
-
-/*
-class Stack with
-    var int n;
-    vat int *s;
-do
-    _memset(s,0,n);
-    
-end
-*/

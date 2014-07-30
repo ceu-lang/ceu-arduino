@@ -1,6 +1,17 @@
 ﻿Google Summer of Code 2014
 Weekly Updates
 
+29.07.14
+* What I was supposed to do in the previous week.
+  Rework the main frogger logic to remove state variables. Will work on nightstrike game.
+  
+* What I did in the previous week.
+  Completed frogger game. ALl state variables removed. Testing done. Started nightstrike game
+  
+* What I'll do this week.
+  Work on the nightstrike game objects namely soldiers, helicopters, missiles, and the tank. 
+_______________________________________________________________________________________________________
+
 22.07.14
 * What I was supposed to do in the previous week.
   Start one of the hard programs

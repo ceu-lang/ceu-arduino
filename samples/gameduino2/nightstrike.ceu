@@ -4,7 +4,13 @@ input (int,int,int) GD_TOUCH;
 native do
     #include "nightstrike_welcome_assets.h"
     #include "nightstrike_1_assets.h"
+    
     Streamer stream;
+    
+    static PROGMEM prog_uchar soldier_a[] = {0,0,0,1,1,2,2,3,3,4,4,4,5,5,6,6,7,7};
+    
+    #define SOLDIER_LEFT   (-SOLDIER_RUN_WIDTH / 2)
+    #define SOLDIER_RIGHT  (480 + (SOLDIER_RUN_WIDTH / 2))
     static void blocktext(int x, int y, byte font, const char *s)
     {
       GD.SaveContext();
@@ -43,11 +49,38 @@ native do
       GD.RestoreContext();
     }
     
+    void vertex(byte cell, byte scale, const shape_t *shape, int x, int y) {
+        int x0, y0;
+        x0 = x - (shape->w >> 1) * scale;
+        y0 = y - (shape->h >> 1) * scale;
+        if (((x0 | y0) & 511) == 0) {
+          GD.Vertex2ii(x0, y0, shape->handle, cell);
+        } else {
+          GD.BitmapHandle(shape->handle);
+          GD.Cell(cell);
+          GD.Vertex2f(x0 << 4, y0 << 4);
+        }
+      }
+      
+      void load_level(int n){
+
+        GD.Clear();
+        GD.cmd_text(240, 110, 29, OPT_CENTER, "LEVEL");
+        GD.cmd_number(240, 145, 31, OPT_CENTER, n + 1);
+        GD.swap();
+        GD.finish();
+
+        char filename[] = "night#.gd2";
+        filename[5] = '0' + (n % 5);
+        GD.load(filename);
+      }
+    
 end
 
 _GD.load("nightw.gd2");
 
 
+/*
 /// THE OPENING SEQUENCE
 
 var int on? = true;
@@ -76,5 +109,39 @@ with
 end
 
 /// END OF OPENING SEQUENCE
+*/
 
-loop i in 5 do
+class Soldier with
+do
+    var int x,y;
+    native do
+        const shape_t *shape;
+    end
+    _shape = &_SOLDIER_RUN_SHAPE;
+    x = _SOLDIER_RIGHT - 100;
+    y = 272 - SOLDIER_RUN_HEIGHT;
+    var int t = 0;
+    every GD_REDRAW do
+        _GD.Tag(1);
+        _draw_dxt1(BACKGROUND_COLOR_HANDLE, BACKGROUND_BITS_HANDLE);
+        _GD.ColorRGB(0xd7f2fd);
+        _GD.TagMask(0);
+        _GD.Begin(_BITMAPS);
+        _vertex(_pgm_read_byte(_soldier_a), -1, _shape, x,y);
+        t = t + 1;
+    end
+end
+
+_load_level(0);
+
+var Soldier s;
+
+/*
+class Stack with
+    var int n;
+    vat int *s;
+do
+    _memset(s,0,n);
+    
+end
+*/

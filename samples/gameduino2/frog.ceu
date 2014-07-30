@@ -31,7 +31,6 @@ do
         _GD.Tag(CONTROL_DOWN);
         _GD.Vertex2ii(384, 224, _ARROW_HANDLE, 0);
         _GD.RestoreContext();
-    
     end
 end
 
@@ -250,6 +249,59 @@ native do
         GD.cmd_translate(F16(-x),F16(-y));
         GD.cmd_setmatrix();
     }
+    
+    void redraw(int t)
+    {
+        GD.Tag(2);
+        GD.AlphaFunc(GREATER, 0); // on road, don't tag transparent pixels
+        
+        // Yellow cars
+        sprite(-t,       216, 3);
+        sprite(-t + 128, 216, 3);
+
+        // Dozers
+        sprite(t, 200, 4);
+        sprite(t + 50, 200, 4);
+        sprite(t + 150, 200, 4);
+
+        // Purple cars
+        sprite(-t,       184, 7);
+        sprite(-t + 75,  184, 7);
+        sprite(-t + 150, 184, 7);
+
+        // Green and white racecars
+        sprite(2 * t,    168, 8);
+
+        // Trucks
+        sprite(-t/2,       152, 5);
+        sprite(-t/2 + 16,  152, 6);
+        sprite(-t/2 + 100, 152, 5);
+        sprite(-t/2 + 116, 152, 6);
+
+        GD.AlphaFunc(GREATER, 0); // on river, tag transparent pixels
+
+        // Turtles
+        for (int i = 0; i < 256; i += 64)
+          turtle3(riverat(120, t) + i, 120,t);
+
+        // Short logs
+        for (int i = 0; i < 240; i += 80)
+          log(1, riverat(104, t) + i, 104);
+
+        // Long logs
+        for (int i = 0; i < 256; i += 128)
+          log(5, riverat(88, t) + i, 88);
+
+        // Turtles again, but slower
+        for (int i = 0; i < 250; i += 50)
+          turtle2(riverat(72, t) + i, 72,t);
+
+        // Top logs
+        for (int i = 0; i < 210; i += 70)
+          log(2, riverat(56, t) + i, 56);
+        
+        GD.TagMask(0);
+    }
 end
 
 _LOAD_ASSETS();
@@ -261,7 +313,8 @@ loop do
     var int win = 1;
     var Keyboard kb;
     par/or do
-        _GD.Clear();    
+        _GD.Clear();
+        var int t = 0;    
         every GD_REDRAW do 
             _GD.Tag(1);
             _GD.BitmapHandle(_SPRITES_HANDLE);
@@ -269,6 +322,8 @@ loop do
             _GD.ScissorSize(224, 256);
             _GD.Begin(_BITMAPS);
             _GD.Vertex2ii(0, 0, _BACKGROUND_HANDLE, 0);   // Background bitmap
+            _redraw(t);
+            t = t + 1;
         end
     with 
         loop do    
@@ -278,7 +333,6 @@ loop do
             end
             var Frog frog;
             par/or do
-                var int t = 0;
                 var int time = 66;
                 var byte tw = 0;
                 every GD_REDRAW do
@@ -290,9 +344,7 @@ loop do
                     if(tw % 60 == 0) then
                         time = time + 1;
                     end
-                    
                     tw = tw + 1;
-                    //_GD.Clear();
                     
                     _GD.RestoreContext();
                     
@@ -300,60 +352,6 @@ loop do
                     
                     _GD.RestoreContext();
                     _GD.ScissorSize(224, 256);
-                    _GD.Tag(2);
-                    _GD.AlphaFunc(_GREATER, 0); // on road, don't tag transparent pixels
-                    
-                    
-                    // Yellow cars
-                    
-                    _sprite(-t,       216, 3);
-                    _sprite(-t + 128, 216, 3);
-
-                    // Dozers
-                    _sprite(t, 200, 4);
-                    _sprite(t + 50, 200, 4);
-                    _sprite(t + 150, 200, 4);
-
-                    // Purple cars
-                    _sprite(-t,       184, 7);
-                    _sprite(-t + 75,  184, 7);
-                    _sprite(-t + 150, 184, 7);
-
-                    // Green and white racecars
-                    _sprite(2 * t,    168, 8);
-
-                    // Trucks
-                    _sprite(-t/2,       152, 5);
-                    _sprite(-t/2 + 16,  152, 6);
-                    _sprite(-t/2 + 100, 152, 5);
-                    _sprite(-t/2 + 116, 152, 6);
-                    
-                    _GD.AlphaFunc(_GREATER, 0); // on river, tag transparent pixels
-
-                    // Turtles
-                    loop  i in 4 do
-                        _turtle3(_riverat(120, t) + (i * 64), 120, t);
-                    end
-                    
-                    // Short logs
-                    loop i in 3 do
-                        _log(1, _riverat(104, t) + ( i * 80), 104);
-                    end
-
-                    // Long logs
-                    loop i in 2 do
-                        _log(5, _riverat(88, t) + ( i * 128 ), 88);
-                    end
-
-                    // Turtles again, but slower
-                    loop i in 5 do
-                        _turtle2( _riverat(72, t) + ( i * 50), 72,t);
-                    end
-
-                    // Top logs
-                    loop i in 3 do
-                        _log(2, _riverat(56, t) + ( i * 70 ), 56);
-                    end
                     
                     _GD.ColorRGB(255, 85, 0);
                     hiscore = _max(frog.score,hiscore);
@@ -364,8 +362,6 @@ loop do
                     loop j in lives do
                         _GD.Vertex2ii(8 * j, 30 * 8, _LIFE_HANDLE, 0);
                     end
-                    
-                    t = t + 1;
                 end
             with    
                 await frog.dead;
@@ -378,7 +374,13 @@ loop do
     end
     
     par/or do
-        await 5s;
+        loop do
+            await GD_REDRAW;
+            _GD.get_inputs();
+            if(_GD.inputs.x != -32768) then
+                break;
+            end
+        end
     with
          if not win then
              every GD_REDRAW do

@@ -11,6 +11,9 @@ native do
     
     #define SOLDIER_LEFT   (-SOLDIER_RUN_WIDTH / 2)
     #define SOLDIER_RIGHT  (480 + (SOLDIER_RUN_WIDTH / 2))
+    
+    #define HELI_LEFT (-HELI_WIDTH / 2)
+    #define HELI_RIGHT (480 + HELI_WIDTH / 2)
     static void blocktext(int x, int y, byte font, const char *s)
     {
       GD.SaveContext();
@@ -105,12 +108,8 @@ with
     end
 with
     var int x,y,tag;
-    loop do
-        (x,y,tag) = await GD_TOUCH;
-        if(tag == 100) then
-            break;
-        end
-    end
+    (x,y,tag) = await GD_TOUCH
+                    until tag == 100;
 end
 
 /// END OF OPENING SEQUENCE
@@ -118,50 +117,95 @@ end
 
 class Soldier with
 do
-    /*every GD_REDRAW do
-        _draw_dxt1(BACKGROUND_COLOR_HANDLE, BACKGROUND_BITS_HANDLE);
-        _GD.ColorRGB(0xd7f2fd);
-        _blocktext(25, 16, WELCOME_DISPLAYFONT_HANDLE, "NIGHTSTRIKE");
-    end
-    */
     var int x,y;
     native do
          const shape_t *shape;
     end
     _shape = &_SOLDIER_RUN_SHAPE;
-    x = _SOLDIER_RIGHT - 100;
     y = 272 - _SOLDIER_RUN_HEIGHT / 2;
     var int t = 0;
     var byte a = 0;
-    par/or do
-        loop do
-            _GD.Clear();
-            _GD.Tag(1);
-            _draw_dxt1(BACKGROUND_COLOR_HANDLE, BACKGROUND_BITS_HANDLE);
-            _GD.TagMask(0);
+    /*
+    x = _SOLDIER_RIGHT;
+    every GD_REDRAW do            
+        _GD.Begin(_BITMAPS);
             
-            _GD.Begin(_BITMAPS);
-            
-            //_GD.SaveContext();
-            //_GD.cmd_loadidentity();
-            
-            //_drawtemp(_shape);
-            
-            _vertex(_pgm_read_byte(_soldier_a + a), 1, _shape, x,y);
-            //_GD.RestoreContext();
-            x = x - 1;
-            t = t + 1;
-            if (t % 2 == 0) then
-                a = (a + 1) % _sizeof(_soldier_a);
-            end
-            _GD.swap();
+        x = x - 1;
+        t = t + 1;
+        if (t % 2 == 0) then
+            a = (a + 1) % _sizeof(_soldier_a);
         end
-    with
-        await FOREVER;
+    end
+    */
+    x = _SOLDIER_LEFT;   
+    every GD_REDRAW do
+                        
+        _GD.Begin(_BITMAPS);
+        _GD.SaveContext();
+        _GD.cmd_loadidentity();
+            
+        _drawtemp(_shape);
+            
+        _vertex(_pgm_read_byte(_soldier_a + a), 1, _shape, x,y);
+        _GD.RestoreContext();
+        x = x + 1;
+        t = t + 1;
+        if (t % 2 == 0) then
+            a = (a + 1) % _sizeof(_soldier_a);
+        end
     end
 end
+
+class Heli with
+do
+    var int x,y;
+    native do
+         const shape_t *shape1;
+    end
+    _shape1 = &_HELI_SHAPE;
+    y = (_HELI_HEIGHT / 2 ) + _GD.random(100);
+    var int t = 0;
+    
+    x = _HELI_RIGHT;
+    every GD_REDRAW do
+        _GD.Begin(_BITMAPS);
+        _vertex( (t>>2 & 1),1,_shape1,x,y);
+        t = t  + 1;
+        x = x - 1;
+    end
+    
+    /*
+    x = _HELI_LEFT;
+    every GD_REDRAW do
+        _GD.Begin(_BITMAPS);
+        _GD.SaveContext();
+        _GD.cmd_loadidentity();
+            
+        _drawtemp(_shape1);
+        _vertex( (t>>2 & 1),1,_shape1,x,y);
+        _GD.RestoreContext();
+        
+        t = t + 1;
+        x = x + 1;
+    end
+    */
+end
+
 
 _GD.cmd_track(240, 271, 1, 1, 0x01);
 _load_level(0);
 
-var Soldier s;
+par/or do
+    every GD_REDRAW do
+        _GD.Tag(1);
+        _draw_dxt1(BACKGROUND_COLOR_HANDLE, BACKGROUND_BITS_HANDLE);
+        _GD.TagMask(0);
+        _GD.Begin(_BITMAPS);
+    end
+with
+    var Soldier s;
+    var Heli h;
+    await FOREVER;
+end
+
+await FOREVER;

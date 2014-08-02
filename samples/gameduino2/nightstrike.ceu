@@ -8,12 +8,16 @@ native do
     Streamer stream;
     
     static PROGMEM prog_uchar soldier_a[] = {0,0,0,1,1,2,2,3,3,4,4,4,5,5,6,6,7,7};
+    static PROGMEM prog_uchar fire_a[] = {0,1,2,3,4,5,6,7,8, 9,9, 10,10, 11,11, 12,12, 13,13, 14,14, 15,15, 16,16};
     
     #define SOLDIER_LEFT   (-SOLDIER_RUN_WIDTH / 2)
     #define SOLDIER_RIGHT  (480 + (SOLDIER_RUN_WIDTH / 2))
     
     #define HELI_LEFT (-HELI_WIDTH / 2)
     #define HELI_RIGHT (480 + HELI_WIDTH / 2)
+    
+    #define HOMING_SPEED  32
+    #define HOMING_SLEW  400
     static void blocktext(int x, int y, byte font, const char *s)
     {
       GD.SaveContext();
@@ -84,6 +88,21 @@ native do
           GD.cmd_translate(F16(-(shape->w / 2)), F16(-(shape->h / 2)));
           GD.cmd_setmatrix();
     }
+    
+    void drawmissile(const shape_t *shape, uint16_t angle, int x, int y){
+        GD.cmd_loadidentity();
+        GD.cmd_translate(F16(shape->size / 2), F16(shape->size / 2));
+        GD.cmd_rotate(angle);
+        GD.cmd_translate(F16(-(shape->w / 2)), F16(-(shape->h / 2)));
+        GD.cmd_setmatrix();
+        
+        int x0, y0;
+        x0 = x - (shape->size << 3);
+        y0 = y - (shape->size << 3);
+        GD.BitmapHandle(shape->handle);
+        GD.Cell(0);
+        GD.Vertex2f(x0, y0);
+    }
 end
 
 _GD.load("nightw.gd2");
@@ -114,6 +133,84 @@ end
 
 /// END OF OPENING SEQUENCE
 
+class Fires with
+    var int x, y;
+do
+    var int t = 0;
+    
+    x = x >> 4;
+    y = y >> 4;
+    native do
+        const shape_t *shape3;
+    end
+    _shape3 = &_FIRE_SHAPE;
+    var int anim = 0;
+    every GD_REDRAW do
+        if( anim == 24) then
+            break;
+        end
+        _vertex( _pgm_read_byte(_fire_a + anim), 1, _shape3, x, y );
+        if( t % 2 == 0 ) then
+            anim = anim + 1;
+        end
+        t = t + 1;
+    end
+end
+
+class Missile with
+    var int x,y;
+do
+    var int dir;
+    var s8 th, ts;
+    var s16 vx,vy;
+    native do
+         const shape_t *shape2;
+    end
+    var u16 angle = 0x4000,a;
+    vx = -_GD.rsin(10, angle);
+    vy =  _GD.rcos(10, angle);
+    th = 0;
+    ts = -1;
+    _shape2 = &_MISSILE_C_SHAPE;
+    var int t = 0;
+    if (angle == 0xc000) then
+        dir = 1;
+    else
+        dir = -1;
+    end
+    pool Fires[6] f;
+    
+    every GD_REDRAW do
+        _GD.Begin(_BITMAPS);
+        vx = -_GD.rsin(_HOMING_SPEED, angle);
+        vy = _GD.rcos(_HOMING_SPEED, angle);
+        var s16 dy = (16 * 272) - y;
+        var s16 dx = (16 * 240) - x;
+        var u16 seek = _GD.atan2(dy, dx);
+        var s16 steer = seek - angle;
+        if (_abs(steer) > _HOMING_SLEW) then
+            angle = angle - (dir * _HOMING_SLEW);
+        else
+            dir = 0;
+        end
+        
+        x = x + vx;
+        y = y + vy;
+        _GD.SaveContext();
+        _drawmissile(_shape2, angle, x, y);
+        _GD.RestoreContext();
+        
+        if( (t & 7) == 0) then
+            a = 0x8000 + angle; 
+            spawn Fires in f with
+                this.x = x - _GD.rsin(22 * 16, a);
+                this.y = y + _GD.rcos(22 * 16, a);
+            end;
+        end
+  
+        t = t  + 1;
+    end
+end
 
 class Soldier with
 do
@@ -166,11 +263,19 @@ do
     y = (_HELI_HEIGHT / 2 ) + _GD.random(100);
     var int t = 0;
     
+    pool Missile[1] m;
+    
     x = _HELI_RIGHT;
     every GD_REDRAW do
         _GD.Begin(_BITMAPS);
         _vertex( (t>>2 & 1),1,_shape1,x,y);
         t = t  + 1;
+        if(t == 200) then
+            spawn Missile in m with
+                this.x = x << 4;
+                this.y = y << 4;
+            end;
+        end
         x = x - 1;
     end
     
@@ -192,6 +297,43 @@ do
 end
 
 
+
+class MissileBase with
+do
+    var int x,y;
+    var u16 vel = 60;
+    var s8 th, ts;
+    var s16 vx,vy;
+    native do
+         const shape_t *shape4;
+    end
+    var u16 angle = 0x6000,a;
+    x = 16 * 240 - _GD.rsin( 16 * 110, angle);
+    y = 16 * 265 + _GD.rcos( 16 * 110, angle);
+
+    vx = -_GD.rsin(vel, angle);
+    vy =  _GD.rcos(vel, angle);
+    th = 0;
+    ts = 0;
+    _shape4 = &_MISSILE_A_SHAPE;
+    var int t = 0;
+    
+    every GD_REDRAW do
+        _GD.ColorA(255);
+        _GD.Begin(_BITMAPS);
+        angle = _GD.atan2(vy, vx);
+        vy = vy + 4;
+
+        x = x + vx;
+        y = y + vy;
+        _GD.SaveContext();
+        _drawmissile(_shape4, angle, x, y);
+        _GD.RestoreContext();
+
+        t = t  + 1;
+    end
+end
+
 _GD.cmd_track(240, 271, 1, 1, 0x01);
 _load_level(0);
 
@@ -205,7 +347,12 @@ par/or do
 with
     var Soldier s;
     var Heli h;
+    //var Missile m;
+    var MissileBase m1;
+    //var Fires f;
     await FOREVER;
+with
+    await 10s;
 end
 
 await FOREVER;

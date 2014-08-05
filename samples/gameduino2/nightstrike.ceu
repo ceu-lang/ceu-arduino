@@ -1,5 +1,5 @@
 input void GD_REDRAW;
-input (int,int,int) GD_TOUCH;
+//input (int,int,int) GD_TOUCH;
 
 native do
     #include "nightstrike_welcome_assets.h"
@@ -9,6 +9,7 @@ native do
     
     static PROGMEM prog_uchar soldier_a[] = {0,0,0,1,1,2,2,3,3,4,4,4,5,5,6,6,7,7};
     static PROGMEM prog_uchar fire_a[] = {0,1,2,3,4,5,6,7,8, 9,9, 10,10, 11,11, 12,12, 13,13, 14,14, 15,15, 16,16};
+    byte aframes[] = {0x00, 0x01, 0x02, 0x81, 0x80, 0x03, 0x83};
     
     #define SOLDIER_LEFT   (-SOLDIER_RUN_WIDTH / 2)
     #define SOLDIER_RIGHT  (480 + (SOLDIER_RUN_WIDTH / 2))
@@ -82,9 +83,9 @@ native do
         GD.load(filename);
       }
     
-    void drawtemp(const shape_t *shape){
+    void drawtemp(const shape_t *shape, byte scale = 1){
           GD.cmd_translate(F16(shape->w / 2), F16(shape->h / 2));
-          GD.cmd_scale(F16(-1), F16(1));
+          GD.cmd_scale(F16(-scale), F16(scale));
           GD.cmd_translate(F16(-(shape->w / 2)), F16(-(shape->h / 2)));
           GD.cmd_setmatrix();
     }
@@ -103,11 +104,47 @@ native do
         GD.Cell(0);
         GD.Vertex2f(x0, y0);
     }
+    
+    void draw_status(int power) {
+        GD.SaveContext();
+        GD.Begin(LINES);
+
+        GD.ColorA(0x70);
+
+        GD.ColorRGB(0x000000);
+        GD.LineWidth(5 * 16);
+        GD.Vertex2ii(10, 10);
+        GD.Vertex2ii(10 + 460, 10);
+
+        if (power > 20) {
+          int x0 = (240 - power);
+          int x1 = (240 + power);
+
+          GD.ColorRGB(0xff6040);
+          GD.Vertex2ii(x0, 10);
+          GD.Vertex2ii(x1, 10);
+
+          GD.ColorA(0xff);
+          GD.ColorRGB(0xffd0a0);
+          GD.LineWidth(2 * 16);
+          GD.Vertex2ii(x0, 10);
+          GD.Vertex2ii(x1, 10);
+        }
+        GD.RestoreContext();
+        GD.ColorA(0xf0);
+        GD.ColorRGB(0xd7f2fd);
+        GD.Begin(BITMAPS);
+        GD.cmd_text(3, 16, INFOFONT_HANDLE, 0, "$");
+        //GD.cmd_number(15, 16, INFOFONT_HANDLE, 0, cash);
+
+        //GD.cmd_number(30, 32, INFOFONT_HANDLE, OPT_RIGHTX, life);
+        GD.cmd_text(30, 32, INFOFONT_HANDLE, 0, "/100");
+      }
 end
 
 _GD.load("nightw.gd2");
 
-
+/*
 /// THE OPENING SEQUENCE
 
 var int on? = true;
@@ -132,6 +169,7 @@ with
 end
 
 /// END OF OPENING SEQUENCE
+*/
 
 class Fires with
     var int x, y;
@@ -258,6 +296,7 @@ do
     var int x,y;
     native do
          const shape_t *shape1;
+         const shape_t *shape1die;
     end
     _shape1 = &_HELI_SHAPE;
     y = (_HELI_HEIGHT / 2 ) + _GD.random(100);
@@ -266,19 +305,53 @@ do
     pool Missile[1] m;
     
     x = _HELI_RIGHT;
-    every GD_REDRAW do
-        _GD.Begin(_BITMAPS);
-        _vertex( (t>>2 & 1),1,_shape1,x,y);
-        t = t  + 1;
-        if(t == 200) then
-            spawn Missile in m with
-                this.x = x << 4;
-                this.y = y << 4;
-            end;
+    
+    par/or do
+        every GD_REDRAW do
+            _GD.Begin(_BITMAPS);
+            _vertex( (t>>2 & 1),1,_shape1,x,y);
+            t = t  + 1;
+            
+            x = x - 1;
         end
-        x = x - 1;
+    with
+        await 4s;
+        spawn Missile in m with
+            this.x = x << 4;
+            this.y = y << 4;
+        end;
     end
     
+    //Helicopter dying sequence:
+    
+    _shape1die = &_COPTER_FALL_SHAPE;
+    var byte vy = 4;
+
+    par/or do
+        var byte frame = 0, aframe, a;
+        every GD_REDRAW do
+            a = _aframes[(frame >> 1) % _sizeof(_aframes)];
+            
+            _GD.Begin(_BITMAPS);
+            _GD.SaveContext();
+            _GD.cmd_loadidentity();
+                
+            _drawtemp(_shape1die, 2);
+            _vertex( a & 0x7f , 2,_shape1die,x,y);
+            _GD.RestoreContext();
+            y = y + vy;
+            vy = _min(vy + 1, 6);
+            frame = frame + 1;
+        end
+    with
+        every GD_REDRAW do
+            if( y > 252) then
+                break;
+            end
+        end
+    end
+    
+    await FOREVER;
     /*
     x = _HELI_LEFT;
     every GD_REDRAW do
@@ -299,15 +372,16 @@ end
 
 
 class MissileBase with
+    var u16 angle, vel;
 do
     var int x,y;
-    var u16 vel = 60;
+    //var u16 vel = 60;
     var s8 th, ts;
     var s16 vx,vy;
     native do
          const shape_t *shape4;
     end
-    var u16 angle = 0x6000,a;
+    var u16 a;
     x = 16 * 240 - _GD.rsin( 16 * 110, angle);
     y = 16 * 265 + _GD.rcos( 16 * 110, angle);
 
@@ -323,6 +397,10 @@ do
         _GD.Begin(_BITMAPS);
         angle = _GD.atan2(vy, vx);
         vy = vy + 4;
+        
+        if (y > 4245) then
+            break;
+        end
 
         x = x + vx;
         y = y + vy;
@@ -331,6 +409,76 @@ do
         _GD.RestoreContext();
 
         t = t  + 1;
+    end
+end
+
+class Turret with
+do
+    native do
+        const shape_t *shape6;
+    end
+    var int x, y;
+    _shape6 = &_DEFENSOR_TURRET_SHAPE;
+    var u16 angle = 0x7000;
+    pool MissileBase[4] m;
+    
+    var byte touching = 0, power = 0;
+    par/or do
+        every GD_REDRAW do
+            x = 16*240 - _GD.rsin(16*77, angle);
+            y = 16*265 + _GD.rcos(16*77, angle);
+            _GD.SaveContext();
+            _drawmissile(_shape6, angle, x, y);
+            _GD.RestoreContext();
+        end
+    with
+        loop do
+            await GD_REDRAW;
+            _GD.get_inputs();
+            var int tch = _GD.inputs.x;
+            if ((_GD.inputs.track_tag & 0xff) == 1) then
+                angle = _GD.inputs.track_val;
+            end
+            if(tch == -32768 and touching == 1) then
+                if (power > 20) then
+                    spawn MissileBase in m with
+                        this.angle = angle;
+                        this.vel = power;
+                    end;
+                end
+                power = 0;
+                touching = 0;
+            else/if (tch != -32768 and touching == 0) then
+                touching = 1;
+                power = 30;
+            else/if (tch != -32768 and touching == 1) then
+                power = _min(230, power + 3);
+            end
+            _draw_status(power);
+        end
+    end
+    
+end
+
+class Base with
+do
+    native do
+        const shape_t *shape5;
+    end
+    _shape5 = &_DEFENSOR_FRONT_SHAPE;
+    var int x, y;
+    x = 240;
+    y = 242;
+    var byte power = 0;
+    var u32 cash = 0;
+    var byte life = 100;
+    var Turret t;
+    every GD_REDRAW do
+        _GD.ColorRGB(0x000000);
+        _vertex(0, 1, _shape5, x, y);
+        _GD.ColorRGB(0xffffff);
+        _vertex(1, 1, _shape5, x, y);
+        _GD.ColorRGB(0xffffff);
     end
 end
 
@@ -345,14 +493,17 @@ par/or do
         _GD.Begin(_BITMAPS);
     end
 with
+    var Base b;
     var Soldier s;
     var Heli h;
+    //var Heli h1;
     //var Missile m;
-    var MissileBase m1;
+    //var MissileBase m1;
     //var Fires f;
+    
     await FOREVER;
 with
-    await 10s;
+    await 20s;
 end
 
 await FOREVER;

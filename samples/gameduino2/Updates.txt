@@ -1,6 +1,18 @@
 ﻿Google Summer of Code 2014
 Weekly Updates
 
+05.08.14
+* What I was supposed to do in the previous week.
+  Work on the nightstrike game.
+  
+* What I did in the previous week.
+  Worked on the nightstrike game. Implemented player, player turret, soldier, helicopter, Player missile, AI missile, 
+  touch inputs power indicator.
+  
+* What I'll do this week.
+  Finish the nightstrike game. Todo: Implement collision, points and music and integrate the whole game.
+________________________________________________________________________________________________
+
 29.07.14
 * What I was supposed to do in the previous week.
   Rework the main frogger logic to remove state variables. Will work on nightstrike game.

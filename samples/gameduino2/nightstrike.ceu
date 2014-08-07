@@ -1,9 +1,41 @@
 input void GD_REDRAW;
 //input (int,int,int) GD_TOUCH;
 
+//#include "c.ceu";
 native do
     #include "nightstrike_welcome_assets.h"
     #include "nightstrike_1_assets.h"
+    
+    #define OBJ_N 25
+    void* OBJS[OBJ_N];
+    int   OBJS_N = 0;
+    
+    enum {
+        OBJ_NULL = 0,       // not used
+        OBJ_TANK,           // base item
+        OBJ_HELI,           // helicopter
+        OBJ_MISSILE1,       // missile from base
+        OBJ_MISSILE2,       // missile from helicopter
+        OBJ_SOLDIER,        // soldier
+        OBJ_MAX             // not used
+    };
+
+    /*
+     * An NxN matix with collision information, e.g.:
+     * SHIP1 does not collide with FIRE1 (idVSid[1][2]),
+     *           but collides with FIRE2 (idVSid[1][4]).
+     * An explosion (OBJ_EXPLOSION) collides with all objects (id[12][*]).
+     */
+    char idVSid[OBJ_MAX][OBJ_MAX] = {
+        { 0, 0, 0, 0, 0, 0 },    // [00] NULL
+        { 0, 0, 0, 0, 1, 0 },    // [01] BASE
+        { 0, 0, 0, 0, 0, 1 },    // [02] HELI
+        { 0, 0, 0, 0, 0, 1 },    // [03] SOLDIER
+        { 0, 1, 0, 0, 0, 0 },    // [04] MISSILEH
+        { 0, 0, 1, 1, 0, 0 },    // [05] MISSILEBASE
+        
+    //   00 01 02 03 04 05 06 07 08 09 10 11 12
+    };
     
     Streamer stream;
     
@@ -168,8 +200,15 @@ with
                     until tag == 100;
 end
 
+ 
+
 /// END OF OPENING SEQUENCE
 */
+
+interface Collidable with
+    var int cid, cx, cy;
+    event void hit;
+end
 
 class Fires with
     var int x, y;
@@ -197,6 +236,7 @@ end
 
 class Missile with
     var int x,y;
+    interface Collidable;
 do
     var int dir;
     var s8 th, ts;
@@ -217,6 +257,9 @@ do
         dir = -1;
     end
     pool Fires[6] f;
+    this.cid = _OBJ_MISSILE2;
+    this.cx = x;
+    this.cy = y;
     
     every GD_REDRAW do
         _GD.Begin(_BITMAPS);
@@ -238,6 +281,10 @@ do
         _drawmissile(_shape2, angle, x, y);
         _GD.RestoreContext();
         
+        this.cid = 0;
+        this.cx = x;
+        this.cy = y;
+        
         if( (t & 7) == 0) then
             a = 0x8000 + angle; 
             spawn Fires in f with
@@ -251,8 +298,10 @@ do
 end
 
 class Soldier with
+    interface Collidable;
 do
     var int x,y;
+    var s8 vx;
     native do
          const shape_t *shape;
     end
@@ -272,28 +321,42 @@ do
         end
     end
     */
-    x = _SOLDIER_LEFT;   
+    if (_rand() %2 ) then
+        x = _SOLDIER_LEFT;
+        vx = 1;
+    else
+        x = _SOLDIER_RIGHT;
+        vx = -1;
+    end
+    this.cid = _OBJ_SOLDIER;
+    this.cx = x;
+    this.cy = y;  
     every GD_REDRAW do
                         
         _GD.Begin(_BITMAPS);
-        _GD.SaveContext();
-        _GD.cmd_loadidentity();
-            
-        _drawtemp(_shape);
+        
+        if (vx == 1) then
+            _GD.SaveContext();
+            _GD.cmd_loadidentity();
+            _drawtemp(_shape);
+        end
             
         _vertex(_pgm_read_byte(_soldier_a + a), 1, _shape, x,y);
         _GD.RestoreContext();
-        x = x + 1;
+        x = x + vx;
         t = t + 1;
         if (t % 2 == 0) then
             a = (a + 1) % _sizeof(_soldier_a);
         end
+        this.cx = x;
     end
 end
 
 class Heli with
+    interface Collidable;
 do
     var int x,y;
+    var s8 vx;
     native do
          const shape_t *shape1;
          const shape_t *shape1die;
@@ -304,15 +367,36 @@ do
     
     pool Missile[1] m;
     
-    x = _HELI_RIGHT;
+    
+    if( _rand() % 2 ) then
+        x = _HELI_RIGHT;
+        vx = -1;
+    else
+        x = _HELI_LEFT;
+        vx = 1;
+    end
+    
+    this.cid = _OBJ_HELI;
+    this.cx = x;
+    this.cy = y;
     
     par/or do
         every GD_REDRAW do
             _GD.Begin(_BITMAPS);
-            _vertex( (t>>2 & 1),1,_shape1,x,y);
+            if (vx == 1) then
+                _GD.SaveContext();
+                _GD.cmd_loadidentity();
+                _drawtemp(_shape1);
+            end
+            _vertex((t>>2 & 1), 1, _shape1, x, y);
+            _GD.RestoreContext();
             t = t  + 1;
-            
-            x = x - 1;
+            x = x + vx;
+            this.cid = _OBJ_HELI;
+            this.cx = x;
+            this.cy = y;
+            //_OBJS[_OBJS_N] := &this;
+            //_OBJS_N = _OBJS_N + 1;
         end
     with
         await 4s;
@@ -320,6 +404,9 @@ do
             this.x = x << 4;
             this.y = y << 4;
         end;
+        await FOREVER;
+    with
+        await hit;
     end
     
     //Helicopter dying sequence:
@@ -352,30 +439,14 @@ do
     end
     
     await FOREVER;
-    /*
-    x = _HELI_LEFT;
-    every GD_REDRAW do
-        _GD.Begin(_BITMAPS);
-        _GD.SaveContext();
-        _GD.cmd_loadidentity();
-            
-        _drawtemp(_shape1);
-        _vertex( (t>>2 & 1),1,_shape1,x,y);
-        _GD.RestoreContext();
-        
-        t = t + 1;
-        x = x + 1;
-    end
-    */
+
 end
 
-
-
 class MissileBase with
+    interface Collidable;
     var u16 angle, vel;
 do
     var int x,y;
-    //var u16 vel = 60;
     var s8 th, ts;
     var s16 vx,vy;
     native do
@@ -391,6 +462,9 @@ do
     ts = 0;
     _shape4 = &_MISSILE_A_SHAPE;
     var int t = 0;
+    this.cid = _OBJ_MISSILE1;
+    this.cx = x;
+    this.cy = y;
     
     every GD_REDRAW do
         _GD.ColorA(255);
@@ -407,7 +481,12 @@ do
         _GD.SaveContext();
         _drawmissile(_shape4, angle, x, y);
         _GD.RestoreContext();
-
+        this.cid = _OBJ_MISSILE1;
+        this.cx = x;
+        this.cy = y;
+        
+        //_OBJS[_OBJS_N] := &this;
+        //_OBJS_N = _OBJS_N + 1;
         t = t  + 1;
     end
 end
@@ -461,6 +540,7 @@ do
 end
 
 class Base with
+    interface Collidable;
 do
     native do
         const shape_t *shape5;
@@ -473,6 +553,9 @@ do
     var u32 cash = 0;
     var byte life = 100;
     var Turret t;
+    this.cid = _OBJ_TANK;
+    this.cx = x;
+    this.cy = 270;
     every GD_REDRAW do
         _GD.ColorRGB(0x000000);
         _vertex(0, 1, _shape5, x, y);
@@ -504,6 +587,61 @@ with
     await FOREVER;
 with
     await 20s;
+with
+    every GD_REDRAW do
+        _OBJS_N = 0;
+    end
+/*
+with
+    every GD_REDRAW do
+        finalize with
+            _OBJS_N = 0;
+        end
+        
+        loop i in _OBJS_N do
+            var Collidable* o1 = (Collidable*) _OBJS[i];
+            if(o1 == null) then
+                break;
+            end
+            //_assert(o1 != null);
+            
+            loop j in _OBJS_N-i-1 do
+                var Collidable* o2 = (Collidable*) _OBJS[i];
+                if (o2 == null) then
+                    break;
+                end
+                //_assert(o2 != null);
+                
+                var int checkx1 = o1:cx;
+                var int checkx2 = o2:cx;
+                var int checky1 = o1:cy;
+                var int checky2 = o2:cy;
+                
+                if ( ( o1:cid != _OBJ_MISSILE1 ) and ( o1:cid != _OBJ_MISSILE2 ) ) then
+                    continue;
+                end
+                var int dx = _abs((checkx1 >> 4) - checkx2);
+                var int dy = _abs((checky1 >> 4) - checky2);
+                var int checkcollide;
+                if (o2:cid == _OBJ_TANK) then
+                    checkcollide = 50;
+                else
+                    checkcollide = 32;
+                end
+                if ( dx >= checkcollide or dy >=checkcollide) then
+                    continue;
+                end
+                
+                var int id1 = o1:cid;
+                var int id2 = o2:cid;
+                if _idVSid[id1][id2] then
+                    emit o2:hit;     
+                end
+                
+            end
+        end
+    end
+*/
 end
 
 await FOREVER;

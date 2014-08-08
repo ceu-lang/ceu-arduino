@@ -1,5 +1,6 @@
 input void GD_REDRAW;
 //input (int,int,int) GD_TOUCH;
+input void DEAD;
 
 //#include "c.ceu";
 native do
@@ -7,8 +8,8 @@ native do
     #include "nightstrike_1_assets.h"
     
     #define OBJ_N 2
-    //void* OBJS[OBJ_N];
-    int   OBJS_N = 0;
+    void* OBJS[OBJ_N];
+    byte   OBJS_N = 0;
     
     enum {
         OBJ_NULL = 0,       // not used
@@ -28,16 +29,16 @@ native do
      */
     char idVSid[OBJ_MAX][OBJ_MAX] = {
         { 0, 0, 0, 0, 0, 0 },    // [00] NULL
-        { 0, 0, 0, 0, 1, 0 },    // [01] BASE
-        { 0, 0, 0, 0, 0, 1 },    // [02] HELI
-        { 0, 0, 0, 0, 0, 1 },    // [03] SOLDIER
-        { 0, 1, 0, 0, 0, 0 },    // [04] MISSILEH
-        { 0, 0, 1, 1, 0, 0 },    // [05] MISSILEBASE
-        
+        { 0, 0, 0, 1, 0, 0 },    // [01] TANK
+        { 0, 0, 0, 0, 1, 0 },    // [02] HELI
+        { 0, 1, 0, 0, 0, 0 },    // [03] MISSILE1
+        { 0, 0, 1, 0, 0, 0 },    // [04] MISSILE2
+        { 0, 0, 0, 1, 0, 0 },    // [05] SOLDIER
+      //  { 0, 0, 0, 0, 0, 0, 0 },    // [06] NOTHING
     //   00 01 02 03 04 05 06 07 08 09 10 11 12
     };
     
-    Streamer stream;
+    
     
     static PROGMEM prog_uchar soldier_a[] = {0,0,0,1,1,2,2,3,3,4,4,4,5,5,6,6,7,7};
     static PROGMEM prog_uchar fire_a[] = {0,1,2,3,4,5,6,7,8, 9,9, 10,10, 11,11, 12,12, 13,13, 14,14, 15,15, 16,16};
@@ -206,7 +207,7 @@ end
 */
 
 interface Collidable with
-    var int cid, cx, cy;
+    var byte cid, cx, cy;
     event void hit;
 end
 
@@ -396,8 +397,8 @@ do
             this.cid = _OBJ_HELI;
             this.cx = x;
             this.cy = y;
-            //_OBJS[_OBJS_N] := &this;
-            //_OBJS_N = _OBJS_N + 1;
+            _OBJS[_OBJS_N] := &this;
+            _OBJS_N = _OBJS_N + 1;
         end
     with
         await 4s;
@@ -408,6 +409,8 @@ do
         await FOREVER;
     with
         await hit;
+    with
+        await DEAD;
     end
     
     //Helicopter dying sequence:
@@ -486,8 +489,8 @@ do
         this.cx = x;
         this.cy = y;
         
-        //_OBJS[_OBJS_N] := &this;
-        //_OBJS_N = _OBJS_N + 1;
+        _OBJS[_OBJS_N] := &this;
+        _OBJS_N = _OBJS_N + 1;
         t = t  + 1;
     end
 end
@@ -566,9 +569,14 @@ do
     end
 end
 
-pool Soldier[] s1;
+//pool Soldier[] s1;
 _GD.cmd_track(240, 271, 1, 1, 0x01);
 var byte level = 0;
+
+native do
+    Streamer stream;
+   // stream.begin("mesmerize.wav");
+end
 
 loop do
     _load_level(level);
@@ -589,7 +597,8 @@ loop do
             await GD_REDRAW;
             //var byte random = _rand();
             if(_rand() % 2) then
-                var Soldier s;
+                //var Soldier s;
+                var Heli h;
                 //spawn Soldier in s1;
                 await 10s;
             end
@@ -606,60 +615,70 @@ loop do
         await (5 + 5 * level)s;         // time for each level
     with
         every GD_REDRAW do
-            _OBJS_N = 0;
-        end
-    /*
-    with
-        every GD_REDRAW do
             finalize with
                 _OBJS_N = 0;
             end
-            
+            var byte temp=0;
+
             loop i in _OBJS_N do
                 var Collidable* o1 = (Collidable*) _OBJS[i];
                 if(o1 == null) then
                     break;
                 end
                 //_assert(o1 != null);
+                if ( ( o1:cid != _OBJ_MISSILE1 ) and ( o1:cid != _OBJ_MISSILE2 ) ) then
+                    continue;
+                end
                 
-                loop j in _OBJS_N-i-1 do
+                loop j in _OBJS_N do
                     var Collidable* o2 = (Collidable*) _OBJS[i];
                     if (o2 == null) then
                         break;
                     end
+                    
                     //_assert(o2 != null);
                     
-                    var int checkx1 = o1:cx;
-                    var int checkx2 = o2:cx;
-                    var int checky1 = o1:cy;
-                    var int checky2 = o2:cy;
+                    var byte checkx1 = o1:cx;
+                    var byte checkx2 = o2:cx;
+                    var byte checky1 = o1:cy;
+                    var byte checky2 = o2:cy;
                     
-                    if ( ( o1:cid != _OBJ_MISSILE1 ) and ( o1:cid != _OBJ_MISSILE2 ) ) then
-                        continue;
-                    end
-                    var int dx = _abs((checkx1 >> 4) - checkx2);
-                    var int dy = _abs((checky1 >> 4) - checky2);
-                    var int checkcollide;
+                    
+                    var byte dx = _abs((checkx1) - checkx2);
+                    var byte dy = _abs((checky1) - checky2);
+                    
+                    var byte checkcollide;
                     if (o2:cid == _OBJ_TANK) then
                         checkcollide = 50;
                     else
                         checkcollide = 32;
                     end
+                    
                     if ( dx >= checkcollide or dy >=checkcollide) then
                         continue;
                     end
                     
-                    var int id1 = o1:cid;
-                    var int id2 = o2:cid;
-                    if _idVSid[id1][id2] then
-                        emit o2:hit;     
+                    var byte id1 = o1:cid;
+                    var byte id2 = o2:cid;
+                    dx = 0;
+                    //var Soldier s4;
+                    if (_idVSid[id1][id2] == 0) then
+                        //emit o2:hit; 
+                        /*async do
+                            emit DEAD;
+                        end;
+                        dx = 1;
+                        */
+                        //var Soldier s4;
+                        //_GD.Clear();
+                        //_GD.cmd_text(240, 136, 31, _OPT_CENTER, "Hit");    
+                        //_GD.swap();
                     end
-                    
-                end
-            end
-        end
-    */
-    end
+                end     // end of loop j
+            end         // end of loop i
+
+        end             // end of GD_REDRAW
+    end                 // end of par/or
 end
 
 await FOREVER;

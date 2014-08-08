@@ -6,8 +6,8 @@ native do
     #include "nightstrike_welcome_assets.h"
     #include "nightstrike_1_assets.h"
     
-    #define OBJ_N 25
-    void* OBJS[OBJ_N];
+    #define OBJ_N 2
+    //void* OBJS[OBJ_N];
     int   OBJS_N = 0;
     
     enum {
@@ -328,6 +328,7 @@ do
         x = _SOLDIER_RIGHT;
         vx = -1;
     end
+
     this.cid = _OBJ_SOLDIER;
     this.cx = x;
     this.cy = y;  
@@ -499,7 +500,7 @@ do
     var int x, y;
     _shape6 = &_DEFENSOR_TURRET_SHAPE;
     var u16 angle = 0x7000;
-    pool MissileBase[4] m;
+    pool MissileBase[2] m;
     
     var byte touching = 0, power = 0;
     par/or do
@@ -565,83 +566,100 @@ do
     end
 end
 
+pool Soldier[] s1;
 _GD.cmd_track(240, 271, 1, 1, 0x01);
-_load_level(0);
+var byte level = 0;
 
-par/or do
-    every GD_REDRAW do
-        _GD.Tag(1);
-        _draw_dxt1(BACKGROUND_COLOR_HANDLE, BACKGROUND_BITS_HANDLE);
-        _GD.TagMask(0);
-        _GD.Begin(_BITMAPS);
-    end
-with
-    var Base b;
-    var Soldier s;
-    var Heli h;
-    //var Heli h1;
-    //var Missile m;
-    //var MissileBase m1;
-    //var Fires f;
-    
-    await FOREVER;
-with
-    await 20s;
-with
-    every GD_REDRAW do
-        _OBJS_N = 0;
-    end
-/*
-with
-    every GD_REDRAW do
-        finalize with
+loop do
+    _load_level(level);
+    level = level + 1;
+
+    par/or do
+        every GD_REDRAW do
+            _GD.RestoreContext();
+            _GD.Tag(1);
+            _draw_dxt1(BACKGROUND_COLOR_HANDLE, BACKGROUND_BITS_HANDLE);
+            _GD.TagMask(0);
+            _GD.Begin(_BITMAPS);
+        end
+    with
+        var Base b;
+        //var Soldier s;
+        loop do
+            await GD_REDRAW;
+            //var byte random = _rand();
+            if(_rand() % 2) then
+                var Soldier s;
+                //spawn Soldier in s1;
+                await 10s;
+            end
+        end
+        //var Soldier s;
+        //var Heli h;
+        //var Heli h1;
+        //var Missile m;
+        //var MissileBase m1;
+        //var Fires f;
+        
+        await FOREVER;
+    with
+        await (5 + 5 * level)s;         // time for each level
+    with
+        every GD_REDRAW do
             _OBJS_N = 0;
         end
-        
-        loop i in _OBJS_N do
-            var Collidable* o1 = (Collidable*) _OBJS[i];
-            if(o1 == null) then
-                break;
+    /*
+    with
+        every GD_REDRAW do
+            finalize with
+                _OBJS_N = 0;
             end
-            //_assert(o1 != null);
             
-            loop j in _OBJS_N-i-1 do
-                var Collidable* o2 = (Collidable*) _OBJS[i];
-                if (o2 == null) then
+            loop i in _OBJS_N do
+                var Collidable* o1 = (Collidable*) _OBJS[i];
+                if(o1 == null) then
                     break;
                 end
-                //_assert(o2 != null);
+                //_assert(o1 != null);
                 
-                var int checkx1 = o1:cx;
-                var int checkx2 = o2:cx;
-                var int checky1 = o1:cy;
-                var int checky2 = o2:cy;
-                
-                if ( ( o1:cid != _OBJ_MISSILE1 ) and ( o1:cid != _OBJ_MISSILE2 ) ) then
-                    continue;
+                loop j in _OBJS_N-i-1 do
+                    var Collidable* o2 = (Collidable*) _OBJS[i];
+                    if (o2 == null) then
+                        break;
+                    end
+                    //_assert(o2 != null);
+                    
+                    var int checkx1 = o1:cx;
+                    var int checkx2 = o2:cx;
+                    var int checky1 = o1:cy;
+                    var int checky2 = o2:cy;
+                    
+                    if ( ( o1:cid != _OBJ_MISSILE1 ) and ( o1:cid != _OBJ_MISSILE2 ) ) then
+                        continue;
+                    end
+                    var int dx = _abs((checkx1 >> 4) - checkx2);
+                    var int dy = _abs((checky1 >> 4) - checky2);
+                    var int checkcollide;
+                    if (o2:cid == _OBJ_TANK) then
+                        checkcollide = 50;
+                    else
+                        checkcollide = 32;
+                    end
+                    if ( dx >= checkcollide or dy >=checkcollide) then
+                        continue;
+                    end
+                    
+                    var int id1 = o1:cid;
+                    var int id2 = o2:cid;
+                    if _idVSid[id1][id2] then
+                        emit o2:hit;     
+                    end
+                    
                 end
-                var int dx = _abs((checkx1 >> 4) - checkx2);
-                var int dy = _abs((checky1 >> 4) - checky2);
-                var int checkcollide;
-                if (o2:cid == _OBJ_TANK) then
-                    checkcollide = 50;
-                else
-                    checkcollide = 32;
-                end
-                if ( dx >= checkcollide or dy >=checkcollide) then
-                    continue;
-                end
-                
-                var int id1 = o1:cid;
-                var int id2 = o2:cid;
-                if _idVSid[id1][id2] then
-                    emit o2:hit;     
-                end
-                
             end
         end
+    */
     end
-*/
 end
 
 await FOREVER;

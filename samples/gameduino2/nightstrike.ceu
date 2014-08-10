@@ -2,7 +2,6 @@ input void GD_REDRAW;
 //input (int,int,int) GD_TOUCH;
 input void DEAD;
 
-//#include "c.ceu";
 native do
     #include "nightstrike_welcome_assets.h"
     #include "nightstrike_1_assets.h"
@@ -42,6 +41,7 @@ native do
     
     static PROGMEM prog_uchar soldier_a[] = {0,0,0,1,1,2,2,3,3,4,4,4,5,5,6,6,7,7};
     static PROGMEM prog_uchar fire_a[] = {0,1,2,3,4,5,6,7,8, 9,9, 10,10, 11,11, 12,12, 13,13, 14,14, 15,15, 16,16};
+    static PROGMEM prog_uchar explode_a[] = {0,1,2,3,4,5,5,6,6,7,7,8,8,9,9};
     byte aframes[] = {0x00, 0x01, 0x02, 0x81, 0x80, 0x03, 0x83};
     
     #define SOLDIER_LEFT   (-SOLDIER_RUN_WIDTH / 2)
@@ -123,7 +123,7 @@ native do
           GD.cmd_setmatrix();
     }
     
-    void drawmissile(const shape_t *shape, uint16_t angle, int x, int y){
+    void drawmissile(const shape_t *shape, uint16_t angle, int x, int y, int cell = 0){
         GD.cmd_loadidentity();
         GD.cmd_translate(F16(shape->size / 2), F16(shape->size / 2));
         GD.cmd_rotate(angle);
@@ -134,7 +134,7 @@ native do
         x0 = x - (shape->size << 3);
         y0 = y - (shape->size << 3);
         GD.BitmapHandle(shape->handle);
-        GD.Cell(0);
+        GD.Cell(cell);
         GD.Vertex2f(x0, y0);
     }
     
@@ -180,34 +180,35 @@ _GD.load("nightw.gd2");
 /*
 /// THE OPENING SEQUENCE
 
-var int on? = true;
-par/or do
-    every 500ms do
-        on? = not on?;
-    end
-with
-    every GD_REDRAW do
-        _draw_dxt1(BACKGROUND_COLOR_HANDLE, BACKGROUND_BITS_HANDLE);
-        _GD.ColorRGB(0xd7f2fd);
-        _blocktext(25, 16, WELCOME_DISPLAYFONT_HANDLE, "NIGHTSTRIKE");
-        _GD.Tag(100);
-        if(on?) then
-            _blocktext(51, 114, WELCOME_DISPLAYFONT_HANDLE, "START");
+do
+    var int on? = true;
+    par/or do
+        every 500ms do
+            on? = not on?;
         end
+    with
+        every GD_REDRAW do
+            _draw_dxt1(BACKGROUND_COLOR_HANDLE, BACKGROUND_BITS_HANDLE);
+            _GD.ColorRGB(0xd7f2fd);
+            _blocktext(25, 16, WELCOME_DISPLAYFONT_HANDLE, "NIGHTSTRIKE");
+            _GD.Tag(100);
+            if(on?) then
+                _blocktext(51, 114, WELCOME_DISPLAYFONT_HANDLE, "START");
+            end
+        end
+    with
+        var int x,y,tag;
+        (x,y,tag) = await GD_TOUCH
+                        until tag == 100;
     end
-with
-    var int x,y,tag;
-    (x,y,tag) = await GD_TOUCH
-                    until tag == 100;
 end
-
- 
 
 /// END OF OPENING SEQUENCE
 */
 
 interface Collidable with
-    var byte cid, cx, cy;
+    var byte cid;
+    var byte cx, cy;
     event void hit;
 end
 
@@ -298,6 +299,32 @@ do
     end
 end
 
+class Explosion with
+do
+    var int x, y;
+    var u16 angle = 0xc000;
+    native do
+        const shape_t * shape9;
+    end
+    _shape9 = &_EXPLODE_BIG_SHAPE;
+    x = 100 >> 4;
+    y = 100 >> 4;
+    x = 16*240 - _GD.rsin(16*77, angle);
+    y = 16*265 + _GD.rcos(16*77, angle);
+    var byte frame = 0;
+    await 3s;
+    loop i in 29 do
+        await GD_REDRAW;
+        _GD.Begin(_BITMAPS);
+        _GD.SaveContext();
+        _drawmissile(_shape9, angle, x, y, _pgm_read_byte( _explode_a + frame ));
+        _GD.RestoreContext();
+        if(i % 2 == 0) then
+            frame = frame + 1;
+        end
+    end
+end
+
 class Soldier with
     interface Collidable;
 do
@@ -310,18 +337,6 @@ do
     y = 272 - _SOLDIER_RUN_HEIGHT / 2;
     var int t = 0;
     var byte a = 0;
-    /*
-    x = _SOLDIER_RIGHT;
-    every GD_REDRAW do            
-        _GD.Begin(_BITMAPS);
-            
-        x = x - 1;
-        t = t + 1;
-        if (t % 2 == 0) then
-            a = (a + 1) % _sizeof(_soldier_a);
-        end
-    end
-    */
     if (_rand() %2 ) then
         x = _SOLDIER_LEFT;
         vx = 1;
@@ -333,10 +348,9 @@ do
     this.cid = _OBJ_SOLDIER;
     this.cx = x;
     this.cy = y;  
-    every GD_REDRAW do
-                        
+    every GD_REDRAW do                 
         _GD.Begin(_BITMAPS);
-        
+
         if (vx == 1) then
             _GD.SaveContext();
             _GD.cmd_loadidentity();
@@ -365,11 +379,8 @@ do
     end
     _shape1 = &_HELI_SHAPE;
     y = (_HELI_HEIGHT / 2 ) + _GD.random(100);
-    var int t = 0;
-    
+    var int t = 0;    
     pool Missile[1] m;
-    
-    
     if( _rand() % 2 ) then
         x = _HELI_RIGHT;
         vx = -1;
@@ -397,11 +408,11 @@ do
             this.cid = _OBJ_HELI;
             this.cx = x;
             this.cy = y;
-            _OBJS[_OBJS_N] := &this;
-            _OBJS_N = _OBJS_N + 1;
+            //_OBJS[_OBJS_N] := &this;
+            //_OBJS_N = _OBJS_N + 1;
         end
     with
-        await 4s;
+        await 3s;
         spawn Missile in m with
             this.x = x << 4;
             this.y = y << 4;
@@ -441,9 +452,7 @@ do
             end
         end
     end
-    
     await FOREVER;
-
 end
 
 class MissileBase with
@@ -469,30 +478,33 @@ do
     this.cid = _OBJ_MISSILE1;
     this.cx = x;
     this.cy = y;
-    
-    every GD_REDRAW do
-        _GD.ColorA(255);
-        _GD.Begin(_BITMAPS);
-        angle = _GD.atan2(vy, vx);
-        vy = vy + 4;
-        
-        if (y > 4245) then
-            break;
-        end
+        every GD_REDRAW do
+            
+            _GD.ColorA(255);
+            _GD.Begin(_BITMAPS);
+            angle = _GD.atan2(vy, vx);
+            vy = vy + 4;
+            
+            if (y > 4245) then
+                break;
+            end
 
-        x = x + vx;
-        y = y + vy;
-        _GD.SaveContext();
-        _drawmissile(_shape4, angle, x, y);
-        _GD.RestoreContext();
-        this.cid = _OBJ_MISSILE1;
-        this.cx = x;
-        this.cy = y;
-        
-        _OBJS[_OBJS_N] := &this;
-        _OBJS_N = _OBJS_N + 1;
-        t = t  + 1;
-    end
+            x = x + vx;
+            y = y + vy;
+            
+            _GD.SaveContext();
+            _drawmissile(_shape4, angle, x, y);
+            _GD.RestoreContext();
+            
+            
+            this.cid = _OBJ_MISSILE1;
+            this.cx = x;
+            this.cy = y;
+            
+            //_OBJS[_OBJS_N] := &this;
+            //_OBJS_N = _OBJS_N + 1;
+            t = t  + 1;
+        end
 end
 
 class Turret with
@@ -540,7 +552,6 @@ do
             _draw_status(power);
         end
     end
-    
 end
 
 class Base with
@@ -560,12 +571,36 @@ do
     this.cid = _OBJ_TANK;
     this.cx = x;
     this.cy = 270;
-    every GD_REDRAW do
-        _GD.ColorRGB(0x000000);
-        _vertex(0, 1, _shape5, x, y);
-        _GD.ColorRGB(0xffffff);
-        _vertex(1, 1, _shape5, x, y);
-        _GD.ColorRGB(0xffffff);
+    var byte hurt = 0;
+    par/or do
+        loop do
+            await 2s;
+            hurt = 1;
+            loop i in 16 do
+                await GD_REDRAW;
+                _GD.ColorA(255 - (i + 1) * 16);
+                _GD.ColorRGB(0xff0000);
+                _GD.PointSize(50 * 16 + (i + 1) * 99);
+                _GD.Begin(_POINTS);
+                _GD.Vertex2ii(240, 270);
+                _GD.ColorA(255);
+                _GD.ColorRGB(0xffffff);
+                _GD.Begin(_BITMAPS);
+            end
+            hurt = 0;
+        end
+    with
+        every GD_REDRAW do
+            _GD.ColorRGB(0x000000);
+            _vertex(0, 1, _shape5, x, y);
+            if(hurt) then
+                _GD.ColorRGB(0xff0000);
+            else
+                _GD.ColorRGB(0xffffff);
+            end
+            _vertex(1, 1, _shape5, x, y);
+            _GD.ColorRGB(0xffffff);
+        end
     end
 end
 
@@ -573,10 +608,6 @@ end
 _GD.cmd_track(240, 271, 1, 1, 0x01);
 var byte level = 0;
 
-native do
-    Streamer stream;
-   // stream.begin("mesmerize.wav");
-end
 
 loop do
     _load_level(level);
@@ -592,10 +623,9 @@ loop do
         end
     with
         var Base b;
-        //var Soldier s;
+        var Explosion e;
         loop do
             await GD_REDRAW;
-            //var byte random = _rand();
             if(_rand() % 2) then
                 //var Soldier s;
                 var Heli h;
@@ -603,16 +633,11 @@ loop do
                 await 10s;
             end
         end
-        //var Soldier s;
-        //var Heli h;
-        //var Heli h1;
-        //var Missile m;
-        //var MissileBase m1;
-        //var Fires f;
         
         await FOREVER;
     with
         await (5 + 5 * level)s;         // time for each level
+    /*
     with
         every GD_REDRAW do
             finalize with
@@ -625,7 +650,6 @@ loop do
                 if(o1 == null) then
                     break;
                 end
-                //_assert(o1 != null);
                 if ( ( o1:cid != _OBJ_MISSILE1 ) and ( o1:cid != _OBJ_MISSILE2 ) ) then
                     continue;
                 end
@@ -636,14 +660,11 @@ loop do
                         break;
                     end
                     
-                    //_assert(o2 != null);
-                    
                     var byte checkx1 = o1:cx;
                     var byte checkx2 = o2:cx;
                     var byte checky1 = o1:cy;
                     var byte checky2 = o2:cy;
-                    
-                    
+                                      
                     var byte dx = _abs((checkx1) - checkx2);
                     var byte dy = _abs((checky1) - checky2);
                     
@@ -661,23 +682,13 @@ loop do
                     var byte id1 = o1:cid;
                     var byte id2 = o2:cid;
                     dx = 0;
-                    //var Soldier s4;
                     if (_idVSid[id1][id2] == 0) then
-                        //emit o2:hit; 
-                        /*async do
-                            emit DEAD;
-                        end;
-                        dx = 1;
-                        */
-                        //var Soldier s4;
-                        //_GD.Clear();
-                        //_GD.cmd_text(240, 136, 31, _OPT_CENTER, "Hit");    
-                        //_GD.swap();
+                        
                     end
                 end     // end of loop j
             end         // end of loop i
-
         end             // end of GD_REDRAW
+        */
     end                 // end of par/or
 end
 

@@ -1,5 +1,5 @@
 input void GD_REDRAW;
-//input (int,int,int) GD_TOUCH;
+input (int,int,int) GD_TOUCH;
 input void DEAD;
 input void HURT;
 
@@ -27,18 +27,17 @@ native do
      *           but collides with FIRE2 (idVSid[1][4]).
      * An explosion (OBJ_EXPLOSION) collides with all objects (id[12][*]).
      */
-     /*
+     
     char idVSid[OBJ_MAX][OBJ_MAX] = {
         { 0, 0, 0, 0, 0, 0 },    // [00] NULL
-        { 0, 0, 0, 1, 0, 0 },    // [01] TANK
-        { 0, 0, 0, 0, 1, 0 },    // [02] HELI
-        { 0, 1, 0, 0, 0, 0 },    // [03] MISSILE1
-        { 0, 0, 1, 0, 0, 0 },    // [04] MISSILE2
+        { 0, 0, 0, 0, 1, 0 },    // [01] TANK
+        { 0, 0, 0, 1, 0, 0 },    // [02] HELI
+        { 0, 0, 1, 0, 0, 1 },    // [03] MISSILE1
+        { 0, 1, 0, 0, 0, 0 },    // [04] MISSILE2
         { 0, 0, 0, 1, 0, 0 },    // [05] SOLDIER
-      //  { 0, 0, 0, 0, 0, 0, 0 },    // [06] NOTHING
     //   00 01 02 03 04 05 06 07 08 09 10 11 12
     };
-    */
+    
     
     
     static PROGMEM prog_uchar soldier_a[] = {0,0,0,1,1,2,2,3,3,4,4,4,5,5,6,6,7,7};
@@ -183,6 +182,10 @@ _GD.load("nightw.gd2");
 /// THE OPENING SEQUENCE
 
 do
+    native do
+        Streamer stream;
+    end
+    _stream.begin("mesmeriz.ima");
     var int on? = true;
     par/or do
         every 500ms do
@@ -196,6 +199,9 @@ do
             _GD.Tag(100);
             if(on?) then
                 _blocktext(51, 114, WELCOME_DISPLAYFONT_HANDLE, "START");
+            end
+            if (_stream.feed() == 0) then
+                _GD.sample(0, 0, 0, 0);
             end
         end
     with
@@ -242,17 +248,13 @@ class Explosion with
     var int x, y;
     var u16 angle = 0xc000;
 do
-    
     native do
         const shape_t * shape9;
     end
     _shape9 = &_EXPLODE_BIG_SHAPE;
-    //x = 100 >> 4;
-    //y = 100 >> 4;
-    //x = 16*240 - _GD.rsin(16*77, angle);
-    //y = 16*265 + _GD.rcos(16*77, angle);
     var byte frame = 0;
-    //await 3s;
+    _GD.play(_KICKDRUM);
+    var byte i = 0;
     loop i in 29 do
         await GD_REDRAW;
         _GD.Begin(_BITMAPS);
@@ -336,6 +338,8 @@ do
         
         t = t  + 1;
     end
+    _GD.play(_TUBA, 108);
+    await 100ms;
     var Explosion e;
         e.x = x;
         e.y = y;
@@ -365,25 +369,37 @@ do
 
     this.cid = _OBJ_SOLDIER;
     this.cx = x;
-    this.cy = y;  
-    every GD_REDRAW do                 
-        _GD.Begin(_BITMAPS);
+    this.cy = y;
+    par/or do 
+        every GD_REDRAW do                 
+            _GD.Begin(_BITMAPS);
 
-        if (vx == 1) then
-            _GD.SaveContext();
-            _GD.cmd_loadidentity();
-            _drawtemp(_shape);
+            if (vx == 1) then
+                _GD.SaveContext();
+                _GD.cmd_loadidentity();
+                _drawtemp(_shape);
+            end
+                
+            _vertex(_pgm_read_byte(_soldier_a + a), 1, _shape, x,y);
+            _GD.RestoreContext();
+            x = x + vx;
+            t = t + 1;
+            if (t % 2 == 0) then
+                a = (a + 1) % _sizeof(_soldier_a);
+            end
+            this.cid = _OBJ_SOLDIER;
+            this.cx = x;
+            this.cy = y;
+            _OBJS[_OBJS_N] := &this;
+            _OBJS_N = _OBJS_N + 1;
         end
-            
-        _vertex(_pgm_read_byte(_soldier_a + a), 1, _shape, x,y);
-        _GD.RestoreContext();
-        x = x + vx;
-        t = t + 1;
-        if (t % 2 == 0) then
-            a = (a + 1) % _sizeof(_soldier_a);
-        end
-        this.cx = x;
+    with
+        await hit;
     end
+    var Explosion e;
+        e.x = x;
+        e.y = y;
+    await 300ms;
 end
 
 class Heli with
@@ -398,7 +414,7 @@ do
     _shape1 = &_HELI_SHAPE;
     y = (_HELI_HEIGHT / 2 ) + _GD.random(100);
     var int t = 0;    
-    pool Missile[1] m;
+    //pool Missile[1] m;
     if( _rand() % 2 ) then
         x = _HELI_RIGHT;
         vx = -1;
@@ -426,9 +442,10 @@ do
             this.cid = _OBJ_HELI;
             this.cx = x;
             this.cy = y;
-           // _OBJS[_OBJS_N] := &this;
-           // _OBJS_N = _OBJS_N + 1;
+            _OBJS[_OBJS_N] := &this;
+            _OBJS_N = _OBJS_N + 1;
         end
+    /*
     with
         await 3s;
         spawn Missile in m with
@@ -436,6 +453,7 @@ do
             this.y = y << 4;
         end;
         await FOREVER;
+    */
     with
         await hit;
     with
@@ -443,7 +461,7 @@ do
     end
     
     //Helicopter dying sequence:
-    
+    _GD.play(_TUBA, 36);
     _shape1die = &_COPTER_FALL_SHAPE;
     var byte vy = 4;
 
@@ -470,7 +488,15 @@ do
             end
         end
     end
-    await FOREVER;
+    par/or do
+        var Explosion e;
+                e.x = 100;
+                e.y = 100;
+                e.angle = 0xc000;
+        await FOREVER;
+    with
+        await 300ms;
+    end
 end
 
 class MissileBase with
@@ -519,8 +545,8 @@ do
             this.cx = x;
             this.cy = y;
             
-            //_OBJS[_OBJS_N] := &this;
-            //_OBJS_N = _OBJS_N + 1;
+            _OBJS[_OBJS_N] := &this;
+            _OBJS_N = _OBJS_N + 1;
             t = t  + 1;
         end
         par/or do
@@ -545,7 +571,7 @@ do
     pool MissileBase[2] m;
     
     var byte touching = 0, power = 0;
-    par/or do
+    par do
         every GD_REDRAW do
             x = 16*240 - _GD.rsin(16*77, angle);
             y = 16*265 + _GD.rcos(16*77, angle);
@@ -563,6 +589,7 @@ do
             end
             if(tch == -32768 and touching == 1) then
                 if (power > 20) then
+                    _GD.play(_HIHAT);
                     spawn MissileBase in m with
                         this.angle = angle;
                         this.vel = power;
@@ -599,7 +626,7 @@ do
     this.cx = x;
     this.cy = 270;
     var byte hurt = 0;
-    par/or do
+    par do
         loop do
             await HURT;
             hurt = 1;
@@ -653,71 +680,56 @@ loop do
         loop do
             await GD_REDRAW;
             if(_rand() % 2) then
-                //var Soldier s;
-                var Heli h;
+                var Soldier s;
+                //var Heli h;
                 //spawn Soldier in s1;
                 await 10s;
             end
         end
-        
-        await FOREVER;
     with
         await (5 + 5 * level)s;         // time for each level
-        //await 30s;
-    /*
+    
     with
         every GD_REDRAW do
             finalize with
                 _OBJS_N = 0;
             end
-            var byte temp=0;
-
             loop i in _OBJS_N do
                 var Collidable* o1 = (Collidable*) _OBJS[i];
                 if(o1 == null) then
                     break;
                 end
-                if ( ( o1:cid != _OBJ_MISSILE1 ) and ( o1:cid != _OBJ_MISSILE2 ) ) then
+                if(o1:cid != _OBJ_MISSILE1) then
                     continue;
                 end
-                
                 loop j in _OBJS_N do
-                    var Collidable* o2 = (Collidable*) _OBJS[i];
-                    if (o2 == null) then
+                    var Collidable* o2 = (Collidable*) _OBJS[j];
+                    if(o2 == null) then
                         break;
                     end
-                    
-                    var byte checkx1 = o1:cx;
-                    var byte checkx2 = o2:cx;
-                    var byte checky1 = o1:cy;
-                    var byte checky2 = o2:cy;
-                                      
-                    var byte dx = _abs((checkx1) - checkx2);
-                    var byte dy = _abs((checky1) - checky2);
-                    
-                    var byte checkcollide;
-                    if (o2:cid == _OBJ_TANK) then
-                        checkcollide = 50;
-                    else
-                        checkcollide = 32;
-                    end
-                    
-                    if ( dx >= checkcollide or dy >=checkcollide) then
+                    if(o2:cid != _OBJ_HELI and o2:cid != _OBJ_SOLDIER) then
                         continue;
                     end
                     
-                    var byte id1 = o1:cid;
-                    var byte id2 = o2:cid;
-                    dx = 1;
-                    //if (_idVSid[id1][id2] == 0) then
-                    if (dx) then
-                        emit o2:hit;  
+                    var byte dx = _abs((o1:cx >> 4) - o2:cx );
+                    var byte dy = _abs((o1:cy >> 4) - o2:cy );
+                    
+                    emit o2:hit;
+                    if(dx >= 32 or dy >= 32) then
+                        continue;
                     end
-                end     // end of loop j
-            end         // end of loop i
-        end             // end of GD_REDRAW
-        */
+                    
+                    //emit o2:hit;
+                    
+                    if(_idVSid[o1:cid][o2:cid]) then
+                        emit o2:hit;
+                        /*async do
+                            emit DEAD;
+                        end*/
+                    end
+                end         // end of loop j
+            end             // end of loop i
+            _OBJS_N = 0;
+        end                 // end of GD_REDRAW
     end                 // end of par/or
 end
-
-await FOREVER;

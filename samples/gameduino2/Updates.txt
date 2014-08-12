@@ -1,6 +1,17 @@
 ﻿Google Summer of Code 2014
 Weekly Updates
 
+12.08.14
+* What I was supposed to do in the previous week.
+  Finish the nightstrike game.
+  
+* What I did in the previous week.
+  All components of the game implemented. Minor edits to do.
+  
+* What I'll do this week.
+  Comment all my code, wherever required. Test all the codes.
+_______________________________________________________________________________________________________
+
 05.08.14
 * What I was supposed to do in the previous week.
   Work on the nightstrike game.

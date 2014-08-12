@@ -1,5 +1,5 @@
 input void GD_REDRAW;
-input (int,int,int) GD_TOUCH;
+//input (int,int,int) GD_TOUCH;
 input void DEAD;
 input void HURT;
 
@@ -7,10 +7,17 @@ native do
     #include "nightstrike_welcome_assets.h"
     #include "nightstrike_1_assets.h"
     
+    /*
+     * Active objects in the scene, used for collision detection.
+     * OBJ_N only 2 because of memory restrictions. // Issue To be fixed.
+     */
     #define OBJ_N 2
     void* OBJS[OBJ_N];
     byte   OBJS_N = 0;
     
+    /*
+     * Identification for each type of graphical object in the game.
+     */
     enum {
         OBJ_NULL = 0,       // not used
         OBJ_TANK,           // base item
@@ -22,10 +29,7 @@ native do
     };
 
     /*
-     * An NxN matix with collision information, e.g.:
-     * SHIP1 does not collide with FIRE1 (idVSid[1][2]),
-     *           but collides with FIRE2 (idVSid[1][4]).
-     * An explosion (OBJ_EXPLOSION) collides with all objects (id[12][*]).
+     * An NxN matix with collision information.
      */
      
     char idVSid[OBJ_MAX][OBJ_MAX] = {
@@ -35,11 +39,8 @@ native do
         { 0, 0, 1, 0, 0, 1 },    // [03] MISSILE1
         { 0, 1, 0, 0, 0, 0 },    // [04] MISSILE2
         { 0, 0, 0, 1, 0, 0 },    // [05] SOLDIER
-    //   00 01 02 03 04 05 06 07 08 09 10 11 12
     };
-    
-    
-    
+        
     static PROGMEM prog_uchar soldier_a[] = {0,0,0,1,1,2,2,3,3,4,4,4,5,5,6,6,7,7};
     static PROGMEM prog_uchar fire_a[] = {0,1,2,3,4,5,6,7,8, 9,9, 10,10, 11,11, 12,12, 13,13, 14,14, 15,15, 16,16};
     static PROGMEM prog_uchar explode_a[] = {0,1,2,3,4,5,5,6,6,7,7,8,8,9,9};
@@ -53,42 +54,34 @@ native do
     
     #define HOMING_SPEED  32
     #define HOMING_SLEW  400
-    static void blocktext(int x, int y, byte font, const char *s)
-    {
-      GD.SaveContext();
-      GD.ColorRGB(0x000000);
-      GD.cmd_text(x-1, y-1, font, 0, s);
-      GD.cmd_text(x+1, y-1, font, 0, s);
-      GD.cmd_text(x-1, y+1, font, 0, s);
-      GD.cmd_text(x+1, y+1, font, 0, s);
-      GD.RestoreContext();
-
-      GD.cmd_text(x, y, font, 0, s);
+    
+    static void blocktext(int x, int y, byte font, const char *s){
+        GD.SaveContext();
+        GD.ColorRGB(0x000000);
+        GD.cmd_text(x-1, y-1, font, 0, s);
+        GD.cmd_text(x+1, y-1, font, 0, s);
+        GD.cmd_text(x-1, y+1, font, 0, s);
+        GD.cmd_text(x+1, y+1, font, 0, s);
+        GD.RestoreContext();
+        GD.cmd_text(x, y, font, 0, s);
     }
     
-    void draw_dxt1(byte color_handle, byte bit_handle)
-    {
-      GD.Begin(BITMAPS);
-
-      GD.BlendFunc(ONE, ZERO);
-      GD.ColorA(0x55);
-      GD.Vertex2ii(0, 0, bit_handle, 0);
-
-      GD.BlendFunc(ONE, ONE);
-      GD.ColorA(0xaa);
-      GD.Vertex2ii(0, 0, bit_handle, 1);
-
-      GD.ColorMask(1,1,1,0);
-      GD.cmd_scale(F16(4), F16(4));
-      GD.cmd_setmatrix();
-
-      GD.BlendFunc(DST_ALPHA, ZERO);
-      GD.Vertex2ii(0, 0, color_handle, 1);
-
-      GD.BlendFunc(ONE_MINUS_DST_ALPHA, ONE);
-      GD.Vertex2ii(0, 0, color_handle, 0);
-
-      GD.RestoreContext();
+    void draw_dxt1(byte color_handle, byte bit_handle){
+        GD.Begin(BITMAPS);
+        GD.BlendFunc(ONE, ZERO);
+        GD.ColorA(0x55);
+        GD.Vertex2ii(0, 0, bit_handle, 0);
+        GD.BlendFunc(ONE, ONE);
+        GD.ColorA(0xaa);
+        GD.Vertex2ii(0, 0, bit_handle, 1);
+        GD.ColorMask(1,1,1,0);
+        GD.cmd_scale(F16(4), F16(4));
+        GD.cmd_setmatrix();
+        GD.BlendFunc(DST_ALPHA, ZERO);
+        GD.Vertex2ii(0, 0, color_handle, 1);
+        GD.BlendFunc(ONE_MINUS_DST_ALPHA, ONE);
+        GD.Vertex2ii(0, 0, color_handle, 0);
+        GD.RestoreContext();
     }
     
     void vertex(byte cell, byte scale, const shape_t *shape, int x, int y) {
@@ -96,32 +89,30 @@ native do
         x0 = x - (shape->w >> 1) * scale;
         y0 = y - (shape->h >> 1) * scale;
         if (((x0 | y0) & 511) == 0) {
-          GD.Vertex2ii(x0, y0, shape->handle, cell);
+            GD.Vertex2ii(x0, y0, shape->handle, cell);
         } else {
-          GD.BitmapHandle(shape->handle);
-          GD.Cell(cell);
-          GD.Vertex2f(x0 << 4, y0 << 4);
+            GD.BitmapHandle(shape->handle);
+            GD.Cell(cell);
+            GD.Vertex2f(x0 << 4, y0 << 4);
         }
-      }
+    }
       
-      void load_level(int n){
-
+    void load_level(int n){
         GD.Clear();
         GD.cmd_text(240, 110, 29, OPT_CENTER, "LEVEL");
         GD.cmd_number(240, 145, 31, OPT_CENTER, n + 1);
         GD.swap();
         GD.finish();
-
         char filename[] = "night#.gd2";
         filename[5] = '0' + (n % 5);
         GD.load(filename);
-      }
+    }
     
     void drawtemp(const shape_t *shape, byte scale = 1){
-          GD.cmd_translate(F16(shape->w / 2), F16(shape->h / 2));
-          GD.cmd_scale(F16(-scale), F16(scale));
-          GD.cmd_translate(F16(-(shape->w / 2)), F16(-(shape->h / 2)));
-          GD.cmd_setmatrix();
+        GD.cmd_translate(F16(shape->w / 2), F16(shape->h / 2));
+        GD.cmd_scale(F16(-scale), F16(scale));
+        GD.cmd_translate(F16(-(shape->w / 2)), F16(-(shape->h / 2)));
+        GD.cmd_setmatrix();
     }
     
     void drawmissile(const shape_t *shape, uint16_t angle, int x, int y, int cell = 0){
@@ -142,9 +133,7 @@ native do
     void draw_status(int power) {
         GD.SaveContext();
         GD.Begin(LINES);
-
         GD.ColorA(0x70);
-
         GD.ColorRGB(0x000000);
         GD.LineWidth(5 * 16);
         GD.Vertex2ii(10, 10);
@@ -153,17 +142,16 @@ native do
         if (power > 20) {
           int x0 = (240 - power);
           int x1 = (240 + power);
-
           GD.ColorRGB(0xff6040);
           GD.Vertex2ii(x0, 10);
           GD.Vertex2ii(x1, 10);
-
           GD.ColorA(0xff);
           GD.ColorRGB(0xffd0a0);
           GD.LineWidth(2 * 16);
           GD.Vertex2ii(x0, 10);
           GD.Vertex2ii(x1, 10);
         }
+        
         GD.RestoreContext();
         GD.ColorA(0xf0);
         GD.ColorRGB(0xd7f2fd);
@@ -214,12 +202,22 @@ end
 /// END OF OPENING SEQUENCE
 */
 
+/*
+ * "Collidable" interface.
+ * For each helicopter, missile and soldier object we store 
+ * the id and the coordinates. 
+ * hit event is emitted on collision. 
+ * The interface is implemented in the respective classes.
+ */
 interface Collidable with
     var byte cid;
     var byte cx, cy;
     event void hit;
 end
 
+/*
+ * Fires emitted from the missile tail.
+ */
 class Fires with
     var int x, y;
 do
@@ -244,6 +242,9 @@ do
     end
 end
 
+/*
+ * Explosion sequence when object falls on ground
+ */
 class Explosion with
     var int x, y;
     var u16 angle = 0xc000;
@@ -266,7 +267,10 @@ do
         end
     end
 end
-
+/*
+ * Missile from Helicopter.
+ * Hits the base object. Collision with base implemented in class itself.
+ */
 class Missile with
     var int x,y;
     interface Collidable;
@@ -290,9 +294,6 @@ do
         dir = -1;
     end
     pool Fires[6] f;
-    this.cid = _OBJ_MISSILE2;
-    this.cx = x;
-    this.cy = y;
     
     every GD_REDRAW do
         _GD.Begin(_BITMAPS);
@@ -313,10 +314,6 @@ do
         _GD.SaveContext();
         _drawmissile(_shape2, angle, x, y);
         _GD.RestoreContext();
-        
-        this.cid = 0;
-        this.cx = x;
-        this.cy = y;
         
         if( (t & 7) == 0) then
             a = 0x8000 + angle; 
@@ -347,6 +344,11 @@ do
     await 300ms;
 end
 
+/*
+ * Soldier class.
+ * Goes across the screen from a random direction. 
+ * Dies on missile hit. 
+ */
 class Soldier with
     interface Collidable;
 do
@@ -366,10 +368,6 @@ do
         x = _SOLDIER_RIGHT;
         vx = -1;
     end
-
-    this.cid = _OBJ_SOLDIER;
-    this.cx = x;
-    this.cy = y;
     par/or do 
         every GD_REDRAW do                 
             _GD.Begin(_BITMAPS);
@@ -402,6 +400,12 @@ do
     await 300ms;
 end
 
+/*
+ * Helicopter class. 
+ * Flies across from random direction. 
+ * Launches missile at random time.
+ * Falls to the ground when hit by missile.
+ */
 class Heli with
     interface Collidable;
 do
@@ -456,8 +460,6 @@ do
     */
     with
         await hit;
-    with
-        await DEAD;
     end
     
     //Helicopter dying sequence:
@@ -499,6 +501,10 @@ do
     end
 end
 
+/*
+ * Missile launched by base object.
+ * Collides with an object or explodes on ground.
+ */
 class MissileBase with
     interface Collidable;
     var u16 angle, vel;
@@ -560,6 +566,11 @@ do
         end
 end
 
+/*
+ * The moving part of the base object. 
+ * Directed according to touch. 
+ * Missile is launched if power exceeds threshold.
+ */
 class Turret with
 do
     native do
@@ -608,6 +619,9 @@ do
     end
 end
 
+/*
+ * Base object. On collision, animates appropriately.
+ */
 class Base with
     interface Collidable;
 do
@@ -622,9 +636,6 @@ do
     var u32 cash = 0;
     var byte life = 100;
     var Turret t;
-    this.cid = _OBJ_TANK;
-    this.cx = x;
-    this.cy = 270;
     var byte hurt = 0;
     par do
         loop do
@@ -658,7 +669,6 @@ do
     end
 end
 
-//pool Soldier[] s1;
 _GD.cmd_track(240, 271, 1, 1, 0x01);
 var byte level = 0;
 
@@ -676,7 +686,6 @@ loop do
         end
     with
         var Base b;
-        //var Explosion e;
         loop do
             await GD_REDRAW;
             if(_rand() % 2) then
@@ -723,13 +732,10 @@ loop do
                     
                     if(_idVSid[o1:cid][o2:cid]) then
                         emit o2:hit;
-                        /*async do
-                            emit DEAD;
-                        end*/
                     end
                 end         // end of loop j
             end             // end of loop i
             _OBJS_N = 0;
         end                 // end of GD_REDRAW
-    end                 // end of par/or
+    end                     // end of par/or
 end

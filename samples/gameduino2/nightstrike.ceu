@@ -365,7 +365,7 @@ do
     y = 272 - _SOLDIER_RUN_HEIGHT / 2;
     var u8 t = 0;
     var byte a = 0;
-    if (_rand() %2 ) then
+    if (_rand() % 2 ) then
         x = _SOLDIER_LEFT;
         vx = 1;
     else

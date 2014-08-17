@@ -11,6 +11,10 @@ native do
 end
 _LOAD_ASSETS();
 
+/*
+ * Cloud Class
+ * Start from random position and go down at random speed
+ */
 #if NCLOUD > 0
 class Cloud with
 do
@@ -30,7 +34,7 @@ do
         y = y + (4 + (vel >> 3));
         
         if (y > (16 * 272)) then
-            if(vel%2==0) then
+            if(vel % 2 == 0) then
                 x = 16 * (_random(240) - (_CLOUD_WIDTH / 2));
             else
                 x = 16 * (_random(240, 480) - (_CLOUD_WIDTH / 2));
@@ -41,6 +45,10 @@ do
 end
 #endif
 
+/*
+ * Heart Class.
+ * Start from random position and go down. Twist and turn while going down.
+ */
 #if NHEART > 0
 class Heart with
 do
@@ -57,7 +65,7 @@ do
         _GD.Cell(0);
         _GD.cmd_loadidentity();
         _GD.cmd_translate(_F16(_HEART_SZ/2), _F16(_HEART_SZ/2));
-        if( dir%2 == 0 ) then
+        if( dir % 2 == 0 ) then
             _GD.cmd_rotate(_DEGREES(deg));
         else
             _GD.cmd_rotate(_DEGREES(-deg));
@@ -75,6 +83,9 @@ do
 end
 #endif
 
+/*
+ * Sun Class.
+ */
 class Sun with
 do
     await 5s;       /// moved this to the class (see below)
@@ -106,6 +117,10 @@ end
 
 #if NPLAYER > 0
 
+/*
+ * Trail class
+ * trail to follow the three players. 
+ */
 #if NTRAIL > 0
 class Trail with
     var int tx,ty;
@@ -126,6 +141,10 @@ do
 end
 #endif
 
+/*
+ * Player Class.
+ * Makes the player go up in a sinusoidal fashion
+ */
 class Player with
     var int i;
 do
@@ -216,7 +235,7 @@ every GD_REDRAW do
             ctr = ctr + 1;
             if  (t != 0) then
                 _GD.Cell(t - 1);
-                _GD.Vertex2f(16*32*(i), 16 * ((32*(j))-yo));
+                _GD.Vertex2f(16 * 32 * i, 16 * ((32 * j) - yo));
             end
         end
     end

@@ -1,0 +1,57 @@
+// - bug play no inicio
+// - async vs async_ (testar async no jogo!)
+// - tests para pause/async
+// - outros jogos
+
+// BUG tempo
+// BUG pause/if
+
+input int PIN02_;
+input int PIN03_;
+
+class App with
+    event int ok;
+do
+    var int ret = do
+        #define _STRINGIFY(X) #X
+        #define STRINGIFY(X) _STRINGIFY(X)
+        #include STRINGIFY(CEUFILE)
+    end;
+    emit this.ok => ret;
+end
+var App app;
+
+#include "timemachine.ceu"
+var TimeMachine tm with
+    this.app = app;
+end;
+
+event bool in_tm?;
+
+loop do
+    var int pin =
+        par do
+            await PIN02_;
+            escape 2;
+        with
+            await PIN03_;
+            escape 8;
+        end;
+
+    emit in_tm? => true;
+    emit tm.go_on;
+
+    if pin == 2 then
+        emit tm.go_backward => 1;
+        await 50ms;
+        var int v2 = await PIN02_ until (not v2);
+    else
+        emit tm.go_forward => 1;
+        await 50ms;
+        var int v2 = await PIN03_ until (not v2);
+    end
+
+    TM_AWAIT_SEEK(tm);
+    emit tm.go_off;
+    emit in_tm? => false;
+end

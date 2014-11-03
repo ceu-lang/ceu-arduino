@@ -12,6 +12,10 @@ BOARD = uno
 
 all: ceu ino _all
 
+sim: sim_ceu ino _all
+sim_ceu:
+	ceu --cpp-args "-I . -DCEU_TIMEMACHINE -DCEUFILE=$(CEUFILE)" sim.ceu --out-c _ceu_app.src
+
 ceu:
 	ceu $(CEUFILE) --out-c _ceu_app.src
 

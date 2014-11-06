@@ -1,4 +1,4 @@
-//#define POLLING_INTERVAL 100000    // in microseconds
+//#define POLLING_INTERVAL 1000    // in microseconds
 
 #define ceu_out_emit_PIN00(v) digitalWrite( 0, v)
 #define ceu_out_emit_PIN01(v) digitalWrite( 1, v)
@@ -131,7 +131,8 @@ void setup ()
     pinMode(13, OUTPUT);
 #endif
 
-    old = micros();
+    //old = micros();
+    old = millis();
 
     CEU_APP.data = (tceu_org*) &CEU_DATA;
     CEU_APP.init = &ceu_app_init;
@@ -181,7 +182,9 @@ void loop()
     if (bitRead(_ceu_arduino_V,2) != tmp) {
         bitWrite(_ceu_arduino_V,2,tmp);
 #ifdef CEU_TIMEMACHINE
+#ifdef CEU_IN_PIN02_
         ceu_sys_go(&CEU_APP, CEU_IN_PIN02_, CEU_EVTP(tmp));
+#endif
 #endif
 if (!CEU_TIMEMACHINE_ON) {
         ceu_sys_go(&CEU_APP, CEU_IN_PIN02, CEU_EVTP(tmp));
@@ -194,7 +197,9 @@ if (!CEU_TIMEMACHINE_ON) {
     if (bitRead(_ceu_arduino_V,3) != tmp) {
         bitWrite(_ceu_arduino_V,3,tmp);
 #ifdef CEU_TIMEMACHINE
+#ifdef CEU_IN_PIN03_
         ceu_sys_go(&CEU_APP, CEU_IN_PIN03_, CEU_EVTP(tmp));
+#endif
 #endif
 if (!CEU_TIMEMACHINE_ON) {
         ceu_sys_go(&CEU_APP, CEU_IN_PIN03, CEU_EVTP(tmp));
@@ -289,14 +294,15 @@ if (!CEU_TIMEMACHINE_ON) {
     }
 #endif
 
-    u32 now = micros();
+    //u32 now = micros();
+    u32 now = millis();
     s32 dt = now - old;     // no problems with overflow
 
     old = now;
 #ifdef CEU_TIMEMACHINE
-    ceu_sys_go(&CEU_APP, CEU_IN__WCLOCK_, CEU_EVTP(dt));
+    ceu_sys_go(&CEU_APP, CEU_IN__WCLOCK_, CEU_EVTP(dt*1000));
 #endif
-    ceu_sys_go(&CEU_APP, CEU_IN__WCLOCK, CEU_EVTP(dt));
+    ceu_sys_go(&CEU_APP, CEU_IN__WCLOCK, CEU_EVTP(dt*1000));
 
 #ifdef CEU_IN_DT_
     ceu_sys_go(&CEU_APP, CEU_IN_DT_, CEU_EVTP(dt));

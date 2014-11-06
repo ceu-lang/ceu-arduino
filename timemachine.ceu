@@ -1,7 +1,3 @@
-input int DT;
-input int PIN02;
-input int PIN03;
-
 native @nohold _queue_put();
 native @pure   _queue_get();
 
@@ -9,11 +5,26 @@ native do
     enum {
         TM_REQ_PAUSE = -1,
     };
-    ##define assert(x)
+end
+
+#ifndef TM_INPUT_DT
+#error Missing "TM_INPUT_DT"
+#endif
+#ifndef TM_INPUT_FRAME
+#error Missing "TM_INPUT_FRAME"
+#endif
+
+//#define TM_SNAP
+
+interface IIOTimeMachine with
+    event void         go_on;
+    event void         go_off;
+    event _tceu_queue* go_queue;
 end
 
 class TimeMachine with
     var App& app;
+    var IIOTimeMachine& io;
     event void go_on, go_off;
     //event void ok_restart;
 
@@ -23,48 +34,43 @@ class TimeMachine with
     event int  go_forward;
 
     var   bool seeking? = false;
-    event void ok;
+    event void ok_seek;
     #define TM_AWAIT_SEEK(me)  \
         if me.seeking? then    \
-            await me.ok;       \
+            await me.ok_seek;  \
         end
 
     var int time_total = 0;
     var int time_now;
 do
-    _SNAP_data := (char*) &this.app;
     _QUEUE_get = 0;
-    _SNAP_put = 0;
 
+    _SNAP_data := (char*) &this.app;
+    _SNAP_put = 0;
     _snap_put(_QUEUE_put, this.time_total);     // 0, 0
+#ifdef TM_SNAP
     var int next_snap = _SNAP_ms;
+#endif
 
     loop do
         watching this.go_on do
-            par do
-                var int dt;
-                every dt in DT do
-                    this.time_total = this.time_total + dt;
-                    _queue_put(_CEU_IN_DT, _EVTP(dt), 0, null);
-                    if this.time_total >= next_snap then
-                        next_snap = next_snap + _SNAP_ms;
-                        _snap_put(_QUEUE_put, this.time_total);
-                    end
+            var int dt;
+            every dt in TM_INPUT_DT do
+                this.time_total = this.time_total + dt;
+//_printf("DT %d %d\n", this.time_total, this.app.v);
+                _assert(dt >= 0);
+                _queue_put(_CEU_IN__WCLOCK, _CEU_EVTP(dt), 0, null);
+#ifdef TM_SNAP
+                if this.time_total >= next_snap then
+                    next_snap = next_snap + _SNAP_ms;
+                    _snap_put(_QUEUE_put, this.time_total);
                 end
-            with
-                var int v;
-                every v in PIN02 do
-                    _queue_put(_CEU_IN_PIN02, _EVTP((void*)null), sizeof(int), (byte*)v);
-                end
-            with
-                var int v;
-                every v in PIN03 do
-                    _queue_put(_CEU_IN_PIN03, _EVTP((void*)null), sizeof(int), (byte*)v);
-                end
+#endif
             end
         end
 
         _CEU_TIMEMACHINE_ON = _CEU_TIMEMACHINE_ON + 1;
+        emit this.io.go_on;
 
         par/or do
             finalize with
@@ -72,9 +78,12 @@ do
                 this.time_total = time_now;     // drop future
                 _QUEUE_put = _QUEUE_get;
                 _QUEUE_tot = _QUEUE_get;
+#ifdef TM_SNAP
                 next_snap = _snap_set(time_now);
+#endif
             end
             await this.go_off;
+            emit this.io.go_off;
         with
             var int speed = 0;
                 // initialization avoids valgrind "uninitalized access" below
@@ -92,19 +101,16 @@ do
                         time_req = tmp;
                         this.time_now = _snap_get(time_req);
                         speed = 0;
-//_printf("=== SEEK: [%d] => [%d]\n", time_now, time_req);
                         //emit this.ok_restart;
                         //_queue_reset();
                     with
                         await this.go_pause;
                         TM_AWAIT_SEEK(this);
-//_printf("=== PAUSE ===\n");
                         time_req = _TM_REQ_PAUSE;
                     with
                         var int s = await this.go_backward;
                         TM_AWAIT_SEEK(this);
                         speed = s;
-//_printf("=== BACKWARDS: [%d] => ??\n", time_now);
                         emit e_backward => s;
                         await FOREVER;          // e_backward emits go_seek
                     with
@@ -112,55 +118,117 @@ do
                         TM_AWAIT_SEEK(this);
                         speed    = s;
                         time_req = this.time_total;
-//_printf("=== FORWARD: [%d] => [%d]\n", time_now, time_req);
                     with
                         if speed == 0 then
                             this.seeking? = true;
                         end
+#ifndef TM_DELAY
+                        var int late = 0;
+#endif
+/*
+TODO: old, remove
                         async (&time_now, speed, time_req, time_total) do
-//_printf("=== seek (%d => %d || %d) ===\n", time_now, time_req, time_total);
                             loop do
                                 if time_req == _TM_REQ_PAUSE then
-//_printf("=== break: pause ===\n");
                                     break;  // already there
                                 end
                                 var int get = _QUEUE_get;
                                 var _tceu_queue[] qu = _queue_get();
                                 if qu == null then
-//_printf("=== break: e=null ===\n");
                                     break;
                                 end
-//_printf("|\t[get=%d]  evt=%d v=%d\n", get, (int)qu:evt, (int)qu:param.v);
                                 //_assert(qu != null);
-                                if qu:evt == _CEU_IN_DT then
+                                if qu:evt == _CEU_IN__WCLOCK then
                                     var int dt = qu:param.v;
                                     if time_now+dt > time_req then
                                         _QUEUE_get = get;   // undo get
-//_printf("=== break: >time_req ===\n");
                                         break;  // stop before this emission
                                     end
-//_printf("[%d] => dt=%d , %d-%d\n", time_now, dt, get, _QUEUE_get);
                                     time_now = time_now + dt;
                                     emit (dt)ms;
-                                    emit DT => dt;
+                                    emit SDL_DT => dt;
                                     if speed > 0 then
-                                        _delay(dt/speed);
+                                        _SDL_Delay(dt/speed);
                                     else/if speed < 0 then
-                                        _delay(dt*-speed);
+                                        _SDL_Delay(dt*-speed);
                                     end
+                                else/if qu:evt == _CEU_IN_SDL_KEYDOWN then
+                                    emit SDL_KEYDOWN => qu:param.ptr;
+                                else/if qu:evt == _CEU_IN_SDL_KEYUP then
+                                    emit SDL_KEYUP => qu:param.ptr;
                                 else
                                     _assert(0);
                                 end
                                 if speed != 0 then
-                                    //emit SDL_REDRAW;
+                                    emit SDL_REDRAW;
                                 end
                             end
-                            //emit SDL_REDRAW;
+                            emit SDL_REDRAW;
                         end
-//_printf("=== EO-Seek ===\n");
+*/
+                        loop do
+                            if time_req == _TM_REQ_PAUSE then
+                                break;  // already there
+                            end
+                            var int get = _QUEUE_get;
+                            var _tceu_queue[] qu = _queue_get();
+                            if qu == null then
+                                break;
+                            end
+                            //_assert(qu != null);
+                            if qu:evt == _CEU_IN__WCLOCK then
+                                var int dt = qu:param.v;
+                                _assert(dt >= 0);
+                                if time_now+dt > time_req then
+                                    _QUEUE_get = get;   // undo get
+                                    break;  // stop before this emission
+                                end
+                                time_now = time_now + dt;
+
+                                if speed != 0 then
+                                    var int awt;
+                                    if speed > 0 then
+                                        awt = dt/speed;
+                                    else //  < 0
+                                        awt = dt*-speed;
+                                    end
+#ifdef TM_DELAY
+                                    TM_DELAY(awt);
+#else
+//_printf("AWT: %d %d\n", awt, late);
+                                    if awt > late then
+//_printf("\tyes\n");
+                                        late = await (awt-late) ms_;
+                                        _assert(late%1000 == 0);
+                                        late = late / 1000;
+                                    else
+//_printf("\tno\n");
+                                        late = late - awt;
+                                    end
+#endif
+                                end
+
+                                async(dt) do
+                                    emit (dt)ms;
+                                    emit TM_INPUT_DT => dt;
+                                end
+                            else
+                                emit io.go_queue => qu;
+                            end
+                            if speed != 0 then
+                                async do
+                                    emit TM_INPUT_FRAME;
+                                end
+                            end
+                        end
+                        async do
+                            emit TM_INPUT_FRAME;
+                        end
+/*
+*/
                         if this.seeking? then
                             this.seeking? = false;
-                            emit this.ok;
+                            emit this.ok_seek;
                         end
                         await FOREVER;
                     end
@@ -185,11 +253,12 @@ do
                         end
                         go? = false;
                     with
+/*
+TODO: old, remover
                         if not go? then
                             await FOREVER;
                         end
                         var int now = this.time_now;
-//_printf("=======back from now [%d]\n", now);
                         loop i do
                             now = now - 30;
                             if now < 0 then
@@ -199,7 +268,7 @@ do
                             emit this.go_seek => now;   // don't awake myself
                             me? = false;
                             par/and do
-                                await this.ok;
+                                await this.ok_seek;
                             with
                                 var int awt;
                                 if bk_speed > 0 then
@@ -216,6 +285,43 @@ do
                             end
                         end
                         await FOREVER;
+*/
+                        if not go? then
+                            await FOREVER;
+                        end
+                        var int now = this.time_now;
+//_printf("=======back from now [%d]\n", now);
+
+                        var int awt;
+                        if bk_speed > 0 then
+                            awt = 30/bk_speed;
+                        else/if bk_speed < 0 then
+                            awt = 30*-bk_speed;
+                        else
+                            _assert(0);
+                        end
+                        await (awt)ms_;             // first iteration
+
+                        loop i do
+                            now = now - 30;
+                            if now < 0 then
+                                now = 0; // one last time to stop exactly at 0
+                            end
+                            me? = true;
+                            emit this.go_seek => now; // don't awake myself (above)
+                            me? = false;
+                            par/and do
+                                await this.ok_seek;
+                            with
+                                await (awt)ms_;     // other iterations
+                            end
+                            if now == 0 then
+                                break;
+                            end
+                        end
+                        await FOREVER;
+/*
+*/
                     end
                 end
             end
@@ -223,12 +329,6 @@ do
     end
 
     native do
-        ##ifdef __cplusplus
-        ##define EVTP(v) (tceu_evtp(v))
-        ##else
-        ##define EVTP(v) ((tceu_evtp)v)
-        ##endif
-
         typedef struct {
             tceu_nevt evt;
             tceu_evtp param;
@@ -239,17 +339,19 @@ do
         #define QUEUE_MAX 60*60*1000           \
                           * sizeof(tceu_queue) \
                           / 30 * 2
+/*
                             // 60min*60sec*1000ms=(1h in ms)
                             // * minimum size of an event
                             // 30FPS * 2events/frame
             // 1h of events with 2 events/frame
             // 3600*1000 = 3600000 =>/30 = 120000 =>2 = 240000 = 240K events
 
+*/
         #undef QUEUE_MAX
         #define QUEUE_MAX 1000
 
         byte QUEUE[QUEUE_MAX];
-        int  QUEUE_tot = 0;
+        u32  QUEUE_tot = 0;
         u32  QUEUE_get = 0;
         u32  QUEUE_put = 0;
 
@@ -257,9 +359,10 @@ do
                                int sz, byte* buf) {
             int n = sizeof(tceu_queue) + sz;
 
-            if (QUEUE_tot+n > QUEUE_MAX)
+            if (QUEUE_tot+n > QUEUE_MAX) {
                 assert(0);
-                //return 0;   /* TODO: add event FULL when QUEUE_MAX-1 */
+                /*return 0;   TODO: add event FULL when QUEUE_MAX-1 */
+            }
 
             /* An event+data must be continuous in the QUEUE. */
             if (QUEUE_put+n+sizeof(tceu_queue)>=QUEUE_MAX && evt!=CEU_IN__NONE) {
@@ -303,10 +406,15 @@ do
             }
         }
 
-    ///////////////////////////////////////////////////////////////////////////////
+        /**********************************************************************/
 
-        #define SNAP_ms 2000       // 10s = 30*10 = at most 300 frames to traverse
-        #define SNAP_N   6*60       // 10s*6*60=1h  (360*56K-rocks = 1.8Mb)
+        #define SNAP_ms 2000  /* 10s = 30*10 = at most 300 frames to traverse */
+                              /* 0 means "do not take snaps" */
+#ifdef TM_SNAP
+        #define SNAP_N  6*60  /* 10s*6*60=1h  (360*56K-rocks = 1.8Mb) */
+#else
+        #define SNAP_N  1
+#endif
 
         typedef struct {
             CEU_App data;
@@ -338,7 +446,7 @@ do
         }
 
         u32 snap_get (u32 time) {
-            int i;  // SNAP[0] is guaranteed to succeed
+            int i;  /* SNAP[0] is guaranteed to succeed */
             for (i=SNAP_put-1; i>=0; i--) {
                 if (SNAP[i].time <= time) {
                     *((CEU_App*)SNAP_data) = SNAP[i].data;
@@ -348,25 +456,5 @@ do
             }
             assert(0);
         }
-/*
-        void dump () {
-            int i;
-            for (i=0; i<SNAP_put; i++) {
-                tceu_snap snap = SNAP[i];
-                snap_get(snap.time);
-                printf("SNAP[%d]  time=%d  queue=%d\n", i, snap.time, snap.queue);
-                tceu_queue* qu;
-                u32 get = QUEUE_get;
-                int time = snap.time;
-                while (qu = queue_get()) {
-                    printf("|\t[get=%d] [now=%d]  %d=>%d\n",
-                            get, time, qu->evt, qu->param);
-                    if (qu->evt == CEU_IN_SDL_DT)
-                        time += qu->param.v;
-                    get = QUEUE_get;
-                }
-            }
-        }
-*/
     end
 end

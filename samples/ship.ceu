@@ -8,7 +8,7 @@
  * $ /opt/arduino-1.0/libraries/LiquidCrystal/LiquidCrystal.* .
  *
  * Finally, run
- * $ make INOFILE=async.ino CEUFILE=ship.ceu
+ * $ make CEUFILE=ship.ceu
  *
  * Francisco Sant'Anna
  * http://www.lua.inf.puc-rio.br/~francisco/
@@ -16,7 +16,12 @@
 
 #include "arduino.ceu"
 
-input int KEY;
+#ifdef CEU_TIMEMACHINE
+input void REDRAW_;
+input int  KEY_;
+#endif
+input void REDRAW;
+input int  KEY;
 
 native @const _KEY_NONE, _KEY_RIGHT, _KEY_UP, _KEY_DOWN,
               _KEY_LEFT, _KEY_SELECT;
@@ -62,7 +67,7 @@ native do
         }
     }
 
-    void redraw (int N, int ship, int pts) {
+    void redraw (int N, int ship, int dir, int pts) {
         int i;
 
         lcd.setCursor(0, 0);
@@ -83,7 +88,11 @@ native do
         lcd.print(pts);
 
         lcd.setCursor(0, ship);
-        lcd.write('>');
+        if (dir) {
+            lcd.write('>');
+        } else {
+            lcd.write('<');
+        }
     }
 
     int analog2key (u16 analog) {
@@ -108,75 +117,78 @@ emit PIN10 => _LOW;
 _randomSeed(_analogRead(12));
 
 par do
-    var int pct, dt, step, ship, points;
+    var int pct, dt, step, ship, points, dir;
     var int win = 0;
 
-    loop do
-        if win then
-            // next phase (faster, harder, keep points)
-            step = 0;
-            ship = 0;
-            if dt > 100 then
-                dt = dt - 50;
-            end
-            if pct > 10 then
-                pct = pct - 1;
-            end
-        else
-            // restart
-            pct    = 35;    // map generator (10 out of 35 for a '*')
-            dt     = 500;   // game speed (500ms/step)
-            step   = 0;     // current step
-            ship   = 0;     // ship position (0=up, 1=down)
-            points = 0;     // number of steps alive
-        end
-
-        _map_generate(pct);
-        _redraw(step, ship, points);
-        await KEY;
-        win =
-            par do
-                loop do
-                    await (dt)ms;
-                    step = step + 1;
-                    _redraw(step, ship, points);
-
-                    if _MAP[ship][step] == '*' then
-                        escape 0;           // a collision
-                    end
-
-                    if step == _END-1 then
-                        escape 1;           // finish line
-                    end
-
-                    points = points + 1;
+    par do
+        loop do
+            if win then
+                // next phase (faster, harder, keep points)
+                step = 0;
+                ship = 0;
+                if dt > 100 then
+                    dt = dt - 50;
                 end
-            with
-                loop do
-                    var int key = await KEY;
-                    if key == _KEY_UP then
-                        ship = 0;
-                    end
-                    if key == _KEY_DOWN then
-                        ship = 1;
-                    end
+                if pct > 10 then
+                    pct = pct - 1;
                 end
-            end;
+            else
+                // restart
+                pct    = 35;    // map generator (10 out of 35 for a '*')
+                dt     = 500;   // game speed (500ms/step)
+                step   = 0;     // current step
+                ship   = 0;     // ship position (0=up, 1=down)
+                points = 0;     // number of steps alive
+            end
 
-        par/or do
-            await 1s;
+            dir = 1;
+            _map_generate(pct);
             await KEY;
-        with
-            if not win then
-                loop do
-                    await 100ms;
-                    _lcd.setCursor(0, ship);
-                    _lcd.write('<');
-                    await 100ms;
-                    _lcd.setCursor(0, ship);
-                    _lcd.write('>');
+            win =
+                par do
+                    loop do
+                        await (dt)ms;
+                        step = step + 1;
+
+                        if _MAP[ship][step] == '*' then
+                            escape 0;           // a collision
+                        end
+
+                        if step == _END-1 then
+                            escape 1;           // finish line
+                        end
+
+                        points = points + 1;
+                    end
+                with
+                    loop do
+                        var int key = await KEY;
+                        if key == _KEY_UP then
+                            ship = 0;
+                        end
+                        if key == _KEY_DOWN then
+                            ship = 1;
+                        end
+                    end
+                end;
+
+            par/or do
+                await 1s;
+                await KEY;
+            with
+                if not win then
+                    loop do
+                        await 100ms;
+                        dir = 0;
+                        await 100ms;
+                        dir = 1;
+                    end
                 end
             end
+        end
+    with
+        every REDRAW do
+            _redraw(step, ship, dir, points);
         end
     end
 
@@ -186,15 +198,32 @@ with
     loop do
         var int read1 = _analogRead(0);
                 read1 = _analog2key(read1);
-        await 50ms;
+#ifdef CEU_TIMEMACHINE
+        await 50ms_;
+#else
+        await 50ms_;
+#endif
         var int read2 = _analogRead(0);
                 read2 = _analog2key(read2);
         if read1==read2 and key!=read1 then
             key = read1;
             if key != _KEY_NONE then
                 async (read1) do
-                    emit KEY => read1;
+#ifdef CEU_TIMEMACHINE
+                    emit KEY_ => read1;
+#endif
+                    if not _CEU_TIMEMACHINE_ON then
+                        emit KEY => read1;
+                    end
                 end
+            end
+        end
+        async do
+#ifdef CEU_TIMEMACHINE
+            emit REDRAW_;
+#endif
+            if not _CEU_TIMEMACHINE_ON then
+                emit REDRAW;
             end
         end
     end

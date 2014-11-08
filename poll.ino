@@ -160,8 +160,6 @@ void loop()
 #ifdef POLLING_INTERVAL
     if (tm > 0) {
         if (dt < tm) {
-//Serial.print("DELAY ");
-//Serial.println(tm-dt);
             delay(tm-dt);
             now = millis();
             dt = now - old;
@@ -170,8 +168,6 @@ void loop()
 #endif
 
     old = now;
-//Serial.print("EMIT ");
-//Serial.println(dt);
 #ifdef CEU_TIMEMACHINE
     ceu_sys_go(&CEU_APP, CEU_IN__WCLOCK_, CEU_EVTP(dt*1000));
 #endif

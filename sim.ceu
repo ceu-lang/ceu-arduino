@@ -1,24 +1,29 @@
-class App with
-    var int v = 0;
-do
-    v = 0;
-    every 100ms do
-        this.v = this.v + 1;
-    end
-end
-var App app;
+input int  DT, DT_;
 
-input int  DT;
-input void FRAME;
-output int PIN13;
+output int PIN12, PIN13;
 
 native do
-    ##define assert(v) if (!(v)) { digitalWrite(12,1); for(;;); }
+    ##define assert(v) if (!(v)) { digitalWrite(13,1); for(;;); }
 end
-#define TM_INPUT_DT    DT
-#define TM_INPUT_FRAME FRAME
-#define TM_DELAY(v)    _delay(v)
+
+class App with
+    event int ok;
+do
+    var int ret = do
+        #define _STRINGIFY(X) #X
+        #define STRINGIFY(X) _STRINGIFY(X)
+        #include STRINGIFY(CEUFILE)
+    end;
+    emit this.ok => ret;
+end
+var App app;
+_printf("APP %d\n", sizeof(_CEU_App));
+
+#define TM_INPUT_DT     DT
+#define TM_INPUT_REDRAW REDRAW
 #define _assert(v) if not (v) then emit PIN13=>1; loop do end; end
+#define TM_QUEUE_MAX 1000
+#define TM_BACKWARD_TICK 200
 
 #include "timemachine.ceu"
 
@@ -29,43 +34,24 @@ do
         loop do
             // starts off
             watching this.go_on do
-                await FOREVER;
-/*
-                par do
-                    var _SDL_KeyboardEvent* key;
-                    every key in SDL_KEYDOWN do
-                        _queue_put(_CEU_IN_SDL_KEYDOWN, _CEU_EVTP(null),
-                                   sizeof(_SDL_KeyboardEvent), (byte*)key);
-                    end
-                with
-                    var _SDL_KeyboardEvent* key;
-                    every key in SDL_KEYUP do
-                        _queue_put(_CEU_IN_SDL_KEYUP, _CEU_EVTP(null),
-                                   sizeof(_SDL_KeyboardEvent), (byte*)key);
-                    end
+                var int key;
+                every key in KEY do
+                    _queue_put(_CEU_IN_KEY, _CEU_EVTP(key), 0, null);
                 end
-*/
             end
             await this.go_off;
         end
     with
-        await FOREVER;
-/*
         var _tceu_queue[] qu;   // TODO: ptr across await p/ else/if
         every qu in this.go_queue do
-            if qu:evt == _CEU_IN_SDL_KEYDOWN then
+            if qu:evt == _CEU_IN_KEY then
                 async(qu) do
-                    emit SDL_KEYDOWN => qu:param.ptr;
-                end
-            else/if qu:evt == _CEU_IN_SDL_KEYUP then
-                async(qu) do
-                    emit SDL_KEYUP => qu:param.ptr;
+                    emit KEY => qu:param.v;
                 end
             else
                 _assert(0);
             end
         end
-*/
     end
 end
 var IOTimeMachine io;
@@ -75,83 +61,48 @@ var TimeMachine tm with
     this.io  = io;
 end;
 
-_Serial.begin(9600);
-
-//_Serial.print("= 0: ");
-//_Serial.println(app.v);
-_assert(app.v == 0);
-await 150ms_;
-//_Serial.print("= 1.5: ");
-//_Serial.println(app.v);
-_assert(app.v == 1);
-await 100ms_;
-//_Serial.print("= 2.5: ");
-//_Serial.println(app.v);
-_assert(app.v == 2);
-
-await 100ms_;
-//_Serial.print("= 3.5: ");
-//_Serial.println(app.v);
-_assert(app.v == 3);
-
+/*
+await 10s_;
 emit tm.go_on;
 await 1ms_;
-_Serial.println("= TM ON");
 
-emit tm.go_seek => 0;
-TM_AWAIT_SEEK(tm);
-_Serial.print("= seek: ");
-_Serial.println(app.v);
-_assert(app.v == 0);
+loop do
+    emit tm.go_seek => 0;
+    TM_AWAIT_SEEK(tm);
+    emit tm.go_forward => 1;
+    await 10s_;
+    emit tm.go_backward => 1;
+    await 10s_;
+end
 
-await 100ms_;
-
-emit tm.go_forward => 2;
-_Serial.print("* fwd: ");
-_Serial.println(app.v);
-_assert(app.v == 0);
-
-//_Serial.println(">>>");
-await 150ms_;
-//_Serial.println("<<<");
-_Serial.print("* 1: ");
-_Serial.println(app.v);
-_assert(app.v == 2);
-
-await 50ms_;
-_Serial.print("* 2: ");
-_Serial.println(app.v);
-_assert(app.v == 3);
-/*
+var int key1 = await KEY_ until key1==_KEY_SELECT;
+async do end
+emit tm.go_on;
+await 1ms_;
+emit tm.go_backward => 4;
+await FOREVER;
 */
 
-_Serial.println("===");
-_Serial.println(tm.time_total);
-_Serial.println(_QUEUE_get);
-_Serial.println(_QUEUE_tot);
-emit tm.go_seek => tm.time_total;
-TM_AWAIT_SEEK(tm);
-_Serial.print("= END: ");
-_Serial.println(app.v);
-_Serial.println("===");
-_Serial.println(tm.time_total);
-_Serial.println(_QUEUE_get);
-_Serial.println(_QUEUE_tot);
-_assert(app.v == 3);
+loop do
+    var int key1 = await KEY_ until key1==_KEY_SELECT;
+    emit tm.go_on;
 
-emit tm.go_backward => 2;
-_Serial.print("* bak: ");
-_Serial.println(app.v);
-_assert(app.v == 3);
+    par/or do
+        var int key2 = await KEY_ until key2==_KEY_SELECT;
+    with
+        loop do
+            var int key2 = await KEY_;
+            TM_AWAIT_SEEK(tm);
+            if key2 == _KEY_RIGHT then
+                emit tm.go_forward => 4;
+            else/if key2 == _KEY_LEFT then
+                emit tm.go_backward => 4;
+            end
+        end
+    end
 
-await 150ms_;
-_Serial.print("* -1: ");
-_Serial.println(app.v);
-_assert(app.v == 2);
-
-await 100ms_;
-_Serial.print("* -1.5: ");
-_Serial.println(app.v);
-_assert(app.v == 1);
-
-await FOREVER;
+    TM_AWAIT_SEEK(tm);
+    emit tm.go_off;
+end
+/*
+*/

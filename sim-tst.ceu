@@ -1,0 +1,173 @@
+class App with
+    var int v = 0;
+do
+    v = 0;
+    every 100ms do
+        this.v = this.v + 1;
+    end
+end
+var App app;
+
+input int  DT;
+input void REDRAW;
+output int PIN13;
+
+native do
+    ##define assert(v) if (!(v)) { digitalWrite(12,1); for(;;); }
+end
+#define TM_INPUT_DT     DT
+#define TM_INPUT_REDRAW REDRAW
+//#define TM_DELAY(v)    _delay(v)
+#define _assert(v) if not (v) then emit PIN13=>1; loop do end; end
+#define TM_QUEUE_MAX 1000
+
+#include "timemachine.ceu"
+
+class IOTimeMachine with
+    interface IIOTimeMachine;
+do
+    par do
+        loop do
+            // starts off
+            watching this.go_on do
+                await FOREVER;
+/*
+                par do
+                    var _SDL_KeyboardEvent* key;
+                    every key in SDL_KEYDOWN do
+                        _queue_put(_CEU_IN_SDL_KEYDOWN, _CEU_EVTP(null),
+                                   sizeof(_SDL_KeyboardEvent), (byte*)key);
+                    end
+                with
+                    var _SDL_KeyboardEvent* key;
+                    every key in SDL_KEYUP do
+                        _queue_put(_CEU_IN_SDL_KEYUP, _CEU_EVTP(null),
+                                   sizeof(_SDL_KeyboardEvent), (byte*)key);
+                    end
+                end
+*/
+            end
+            await this.go_off;
+        end
+    with
+        await FOREVER;
+/*
+        var _tceu_queue[] qu;   // TODO: ptr across await p/ else/if
+        every qu in this.go_queue do
+            if qu:evt == _CEU_IN_SDL_KEYDOWN then
+                async(qu) do
+                    emit SDL_KEYDOWN => qu:param.ptr;
+                end
+            else/if qu:evt == _CEU_IN_SDL_KEYUP then
+                async(qu) do
+                    emit SDL_KEYUP => qu:param.ptr;
+                end
+            else
+                _assert(0);
+            end
+        end
+*/
+    end
+end
+var IOTimeMachine io;
+
+var TimeMachine tm with
+    this.app = app;
+    this.io  = io;
+end;
+
+_Serial.begin(9600);
+
+//_Serial.print("= 0: ");
+//_Serial.println(app.v);
+_assert(app.v == 0);
+await 150ms_;
+//_Serial.print("= 1.5: ");
+//_Serial.println(app.v);
+_assert(app.v == 1);
+await 100ms_;
+//_Serial.print("= 2.5: ");
+//_Serial.println(app.v);
+_assert(app.v == 2);
+
+await 100ms_;
+//_Serial.print("= 3.5: ");
+//_Serial.println(app.v);
+_assert(app.v == 3);
+
+emit tm.go_on;
+await 1ms_;
+_Serial.println("= TM ON");
+//_Serial.println(_QUEUE_tot);
+
+emit tm.go_seek => 0;
+TM_AWAIT_SEEK(tm);
+_Serial.print("= seek: ");
+_Serial.println(app.v);
+_assert(app.v == 0);
+
+await 50ms_;
+//_Serial.println(app.v);
+_assert(app.v == 0);
+
+_Serial.println("fwd-1:");
+emit tm.go_forward => 1;
+_assert(app.v == 0);
+await 130ms_;                   // TODO: 100ms_
+//_Serial.println(app.v);
+_assert(app.v == 1);
+
+emit tm.go_seek => 0;
+TM_AWAIT_SEEK(tm);
+_Serial.println("fwd-2:");
+emit tm.go_forward => 2;
+await 120ms_;                   // TODO: 100ms_
+//_Serial.print("*: ");
+//_Serial.println(app.v);
+_assert(app.v == 2);
+
+await 60ms_;                    // TODO: 50_ms
+//_Serial.print("*: ");
+//_Serial.println(app.v);
+_assert(app.v == 3);
+
+emit tm.go_backward => 1;
+_Serial.println("bak-1:");
+_assert(app.v == 3);
+
+await 100ms_;
+TM_AWAIT_SEEK(tm);
+//_Serial.print("*: ");
+//_Serial.println(app.v);
+_assert(app.v == 2);
+
+await 200ms_;
+TM_AWAIT_SEEK(tm);
+_Serial.print("*: ");
+_Serial.println(app.v);
+_assert(app.v == 0);
+
+emit tm.go_seek => tm.time_total;
+TM_AWAIT_SEEK(tm);
+emit tm.go_backward => 2;
+_Serial.println("bak-2:");
+_assert(app.v == 3);
+
+await 100ms_;
+TM_AWAIT_SEEK(tm);
+//_Serial.print("*: ");
+//_Serial.println(app.v);
+_assert(app.v == 1);
+
+await 50ms_;
+TM_AWAIT_SEEK(tm);
+_Serial.print("*: ");
+_Serial.println(app.v);
+_assert(app.v == 0);
+
+loop do
+    await 1s_;
+    _digitalWrite(12,1);
+    await 1s_;
+    _digitalWrite(12,0);
+end

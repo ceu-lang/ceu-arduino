@@ -1,4 +1,4 @@
-//#define POLLING_INTERVAL 1000    // in microseconds
+#define POLLING_INTERVAL 30    // in milliseconds
 
 #define ceu_out_emit_PIN00(v) digitalWrite( 0, v)
 #define ceu_out_emit_PIN01(v) digitalWrite( 1, v)
@@ -18,7 +18,6 @@
 #ifdef CEU_TIMEMACHINE
 int CEU_TIMEMACHINE_ON = 0;
 #else
-#error oioioi
 #define CEU_TIMEMACHINE_ON 0
 #endif
 
@@ -131,7 +130,6 @@ void setup ()
     pinMode(13, OUTPUT);
 #endif
 
-    //old = micros();
     old = millis();
 
     CEU_APP.data = (tceu_org*) &CEU_DATA;
@@ -144,6 +142,52 @@ void setup ()
 
 void loop()
 {
+#if defined(CEU_TIMEMACHINE) || POLLING_INTERVAL
+#ifndef POLLING_INTERVAL
+#error TM must define POLLING_INTERVAL
+#endif
+    int tm = (CEU_TIMEMACHINE_ON ? 0 : POLLING_INTERVAL);
+#ifdef CEU_ASYNCS
+    if (CEU_APP.pendingAsyncs) {
+        //tm = 0;
+    }
+#endif
+#endif
+
+    u32 now = millis();
+    s32 dt = now - old;     // no problems with overflow
+
+#ifdef POLLING_INTERVAL
+    if (tm > 0) {
+        if (dt < tm) {
+//Serial.print("DELAY ");
+//Serial.println(tm-dt);
+            delay(tm-dt);
+            now = millis();
+            dt = now - old;
+        }
+    }
+#endif
+
+    old = now;
+//Serial.print("EMIT ");
+//Serial.println(dt);
+#ifdef CEU_TIMEMACHINE
+    ceu_sys_go(&CEU_APP, CEU_IN__WCLOCK_, CEU_EVTP(dt*1000));
+#endif
+if (!CEU_TIMEMACHINE_ON) {
+    ceu_sys_go(&CEU_APP, CEU_IN__WCLOCK, CEU_EVTP(dt*1000));
+}
+
+#ifdef CEU_IN_DT_
+    ceu_sys_go(&CEU_APP, CEU_IN_DT_, CEU_EVTP(dt));
+#endif
+#ifdef CEU_IN_DT
+if (!CEU_TIMEMACHINE_ON) {
+    ceu_sys_go(&CEU_APP, CEU_IN_DT, CEU_EVTP(dt));
+}
+#endif
+
 #if defined(CEU_IN_PIN00) || \
     defined(CEU_IN_PIN01) || \
     defined(CEU_IN_PIN02) || \
@@ -292,29 +336,6 @@ if (!CEU_TIMEMACHINE_ON) {
         char c = Serial.read();
         ceu_sys_go(&CEU_APP, CEU_IN_SERIAL, CEU_EVTP(c));
     }
-#endif
-
-    //u32 now = micros();
-    u32 now = millis();
-    s32 dt = now - old;     // no problems with overflow
-
-    old = now;
-#ifdef CEU_TIMEMACHINE
-    ceu_sys_go(&CEU_APP, CEU_IN__WCLOCK_, CEU_EVTP(dt*1000));
-#endif
-    ceu_sys_go(&CEU_APP, CEU_IN__WCLOCK, CEU_EVTP(dt*1000));
-
-#ifdef CEU_IN_DT_
-    ceu_sys_go(&CEU_APP, CEU_IN_DT_, CEU_EVTP(dt));
-#endif
-#ifdef CEU_IN_DT
-    ceu_sys_go(&CEU_APP, CEU_IN_DT, CEU_EVTP(dt));
-#endif
-
-
-#ifdef POLLING_INTERVAL
-    delay(POLLING_INTERVAL / 1000);
-    delayMicroseconds(POLLING_INTERVAL % 1000);
 #endif
 
 #ifdef CEU_ASYNCS

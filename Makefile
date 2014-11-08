@@ -12,10 +12,6 @@ BOARD = uno
 
 all: ceu ino _all
 
-sim: sim_ceu ino _all
-sim_ceu:
-	ceu --cpp-args "-I . -DCEU_TIMEMACHINE -DCEUFILE=$(CEUFILE)" sim.ceu --out-c _ceu_app.src
-
 ceu:
 	ceu $(CEUFILE) --out-c _ceu_app.src
 
@@ -27,6 +23,15 @@ clean: _clean
 	find . -name "_ceu_*" | xargs rm -f
 	find . -name "*.hex"  | xargs rm -f
 	find . -name "*.o"    | xargs rm -f
+
+### SIM ###
+sim: sim-ceu ino _all
+sim-ceu:
+	ceu --cpp-args "-I . -DCEU_TIMEMACHINE -DCEUFILE=$(CEUFILE)" sim.ceu --out-c _ceu_app.src
+sim-tst: sim-tst-ceu ino _all
+sim-tst-ceu:
+	ceu --cpp-args "-I . -DCEU_TIMEMACHINE" sim-tst.ceu --out-c _ceu_app.src
+###
 
 include arduino.mk
 

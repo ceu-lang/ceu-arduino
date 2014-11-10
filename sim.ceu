@@ -17,7 +17,6 @@ do
     emit this.ok => ret;
 end
 var App app;
-_printf("APP %d\n", sizeof(_CEU_App));
 
 #define TM_INPUT_DT     DT
 #define TM_INPUT_REDRAW REDRAW

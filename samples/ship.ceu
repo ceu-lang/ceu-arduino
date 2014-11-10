@@ -93,6 +93,13 @@ native do
         } else {
             lcd.write('<');
         }
+
+#ifdef CEU_TIMEMACHINE
+        if (CEU_TIMEMACHINE_ON) {
+            lcd.setCursor(15,1);
+            lcd.write('!');
+        }
+#endif
     }
 
     int analog2key (u16 analog) {

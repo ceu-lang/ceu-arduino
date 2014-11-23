@@ -4,10 +4,6 @@ extern "C" {
     #include "serial.hh"
 }
 
-int serial_if (void) {
-    return Serial;
-}
-
 int serial_available (void) {
     return Serial.available();
 }

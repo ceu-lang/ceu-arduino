@@ -27,10 +27,10 @@ clean: _clean
 ### SIM ###
 sim: sim-ceu ino _all
 sim-ceu:
-	ceu --cpp-args "-I . -DCEU_TIMEMACHINE -DCEUFILE=$(CEUFILE)" sim.ceu --out-c _ceu_app.src
+	ceu --timemachine --cpp-args "-I . -DCEUFILE=$(CEUFILE)" sim.ceu --out-c _ceu_app.src
 sim-tst: sim-tst-ceu ino _all
 sim-tst-ceu:
-	ceu --cpp-args "-I . -DCEU_TIMEMACHINE" sim-tst.ceu --out-c _ceu_app.src
+	ceu --timemachine --cpp-args "-I ." sim-tst.ceu --out-c _ceu_app.src
 ###
 
 include arduino.mk

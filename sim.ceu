@@ -18,10 +18,31 @@ do
 end
 var App app;
 
+#define _assert(v) if not (v) then emit PIN13=>1; loop do end; end
+
 #define TM_INPUT_DT     DT
 #define TM_INPUT_REDRAW REDRAW
-#define _assert(v) if not (v) then emit PIN13=>1; loop do end; end
-#define TM_QUEUE_MAX 1000
+
+#if 1
+#define TM_QUEUE
+#define TM_QUEUE_N 1000
+//#define TM_QUEUE_WCLOCK_REUSE
+#endif
+
+#if 0
+#define TM_DIFF
+#define TM_DIFF_N 1000000000    // 1GB
+#endif
+
+#if 0
+#define TM_SNAP
+#if defined(TM_QUEUE) || defined(TM_DIFF)
+#define TM_SNAP_MS 10000 /* [10000] 10s = 30*10 = at most 300 frames to traverse */
+                         /* 0 means "do not take snaps" */
+#endif
+#define TM_SNAP_N  6*60  /* 10s*6*60=1h  (360*56K-rocks = 1.8Mb) */
+#endif
+
 #define TM_BACKWARD_TICK 200
 
 #include "timemachine.ceu"
@@ -35,17 +56,22 @@ do
             watching this.go_on do
                 var int key;
                 every key in KEY do
-                    _queue_put(_CEU_IN_KEY, _CEU_EVTP(key), 0, null);
+                    _queue_put(_CEU_IN_KEY, sizeof(int), &key)
+                        finalize with
+                            nothing;    // events are mem'copied
+                        end;
                 end
             end
             await this.go_off;
         end
     with
-        var _tceu_queue[] qu;   // TODO: ptr across await p/ else/if
+        var _tceu_queue* qu;
         every qu in this.go_queue do
-            if qu:evt == _CEU_IN_KEY then
-                async(qu) do
-                    emit KEY => qu:param.v;
+            var int evt = qu:evt;
+            var int val = *((int*)qu:buf);
+            if evt == _CEU_IN_KEY then
+                async(val) do
+                    emit KEY => val;
                 end
             else
                 _assert(0);

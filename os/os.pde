@@ -14,10 +14,10 @@ int dt () {
 
 void setup ()
 {
-    ceu_init();
+    ceu_os_init();
     MAIN();
     old = micros();
-    ceu_scheduler(dt);
+    ceu_os_scheduler(dt);
 }
 
 void loop() { }

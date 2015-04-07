@@ -1,10 +1,10 @@
-INOFILE ?= os.ino
+INOFILE ?= os.pde
 
 #ARDUINOSUB = arduino
-#BOARD = uno
+BOARD = uno
 #BOARD = lilypad328
-ARDUINOSUB = Microduino
-BOARD = 644pa16m
+ARDUINOSUB = arduino
+#BOARD = 644pa16m
 
 .PHONY: all target clean
 

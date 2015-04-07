@@ -208,7 +208,7 @@ with
 #ifdef CEU_TIMEMACHINE
         await 50ms_;
 #else
-        await 50ms_;
+        await 50ms;
 #endif
         var int read2 = _analogRead(0);
                 read2 = _analog2key(read2);

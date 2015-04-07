@@ -58,7 +58,12 @@
     #define CEU_IN_OS_STOP      246
     #define CEU_IN_OS_DT        245
     #define CEU_IN_OS_INTERRUPT 244
+#ifdef CEU_TIMEMACHINE
+    #define CEU_IN__WCLOCK_     243
+    #define CEU_IN              243
+#else
     #define CEU_IN              244
+#endif
 
     typedef s8 tceu_nlbl;   /* TODO: to small!! */
 
@@ -78,8 +83,16 @@
         ((__typeof__(ceu_sys_isr)*)((_ceu_app)->sys_vec[CEU_SYS_ISR]))(n,f,_ceu_app)
 #endif
 
-    #define ceu_out_org(app,org,n,lbl,seqno,par_org,par_trl) \
-        ((__typeof__(ceu_sys_org)*)((app)->sys_vec[CEU_SYS_ORG]))(org,n,lbl,seqno,par_org,par_trl)
+    #define ceu_out_org(app,org,n,lbl,seqno,isDyn,par_org,par_trl) \
+        ((__typeof__(ceu_sys_org)*)((app)->sys_vec[CEU_SYS_ORG]))(org,n,lbl,seqno,isDyn,par_org,par_trl)
+
+#ifdef CEU_ORGS
+    #define ceu_out_org_trail(org,idx,lnk) \
+        ((__typeof__(ceu_sys_org_trail)*)((_ceu_app)->sys_vec[CEU_SYS_ORG_TRAIL]))(org,idx,lnk)
+
+    #define ceu_out_org_spawn(go, lbl_cnt, org, lbl_org) \
+        ((__typeof__(ceu_sys_org_spawn)*)((_ceu_app)->sys_vec[CEU_SYS_ORG_SPAWN]))(go,lbl_cnt,org,lbl_org)
+#endif
 
     #define ceu_out_start(app) \
         ((__typeof__(ceu_sys_start)*)((_ceu_app)->sys_vec[CEU_SYS_START]))(app)
@@ -98,21 +111,34 @@
 #ifdef CEU_WCLOCKS
     #define ceu_out_wclock(app,dt,set,get) \
         ((__typeof__(ceu_sys_wclock)*)((app)->sys_vec[CEU_SYS_WCLOCK]))(app,dt,set,get)
+#ifdef CEU_TIMEMACHINE
+    #error TIMEMACHINE
+#endif
 #endif
 
     #define ceu_out_go(app,evt,evtp) \
         ((__typeof__(ceu_sys_go)*)((app)->sys_vec[CEU_SYS_GO]))(app,evt,evtp)
 
 #else /* ! CEU_OS */
-    #include "_ceu_app.h"
     #define ceu_out_malloc(size) \
             ceu_sys_malloc(size)
     #define ceu_out_free(ptr) \
             ceu_sys_free(ptr)
     #define ceu_out_req() \
             ceu_sys_req()
+#ifdef CEU_NEWS
+    #define ceu_out_org(app,org,n,lbl,seqno,isDyn,par_org,par_trl) \
+            ceu_sys_org(org,n,lbl,seqno,isDyn,par_org,par_trl)
+#else
     #define ceu_out_org(app,org,n,lbl,seqno,par_org,par_trl) \
             ceu_sys_org(org,n,lbl,seqno,par_org,par_trl)
+#endif
+#ifdef CEU_ORGS
+    #define ceu_out_org_trail(org,idx,lnk) \
+            ceu_sys_org_trail(org,idx,lnk)
+    #define ceu_out_org_spawn(go, lbl_cnt, org, lbl_org) \
+            ceu_sys_org_spawn(go, lbl_cnt, org, lbl_org)
+#endif
 /*#ifdef ceu_out_emit_val*/
     #define ceu_out_emit_buf(app,id,sz,buf) \
             ceu_out_emit_val(app,id,CEU_EVTP((void*)buf))
@@ -120,6 +146,10 @@
 #ifdef CEU_WCLOCKS
     #define ceu_out_wclock(app,dt,set,get) \
             ceu_sys_wclock(app,dt,set,get)
+#ifdef CEU_TIMEMACHINE
+    #define ceu_out_wclock_(app,dt,set,get) \
+            ceu_sys_wclock_(app,dt,set,get)
+#endif
 #endif
     #define ceu_out_go(app,evt,evtp) \
             ceu_sys_go(app,evt,evtp)
@@ -131,6 +161,18 @@
 #ifdef CEU_THREADS
 /* TODO: app */
 #include "ceu_threads.h"
+#endif
+
+#ifdef CEU_LUA
+#ifdef __ANDROID__
+    #include "lua.h"
+    #include "lauxlib.h"
+    #include "lualib.h"
+#else
+    #include <lua5.1/lua.h>
+    #include <lua5.1/lauxlib.h>
+    #include <lua5.1/lualib.h>
+#endif
 #endif
 
 typedef u8 tceu_nevt;   /* max number of events */
@@ -178,6 +220,7 @@ typedef union tceu_trl {
 
 typedef union tceu_evtp {
     int   v;
+    float f;
     void* ptr;
     s32   dt;
 #ifdef CEU_THREADS
@@ -185,8 +228,9 @@ typedef union tceu_evtp {
 #endif
 #ifdef __cplusplus
     tceu_evtp () {}
-    tceu_evtp (void* vv) : ptr(vv) {}
-    tceu_evtp (s32   vv) : dt(vv)  {}
+    tceu_evtp (float vv) : float(vv) {}
+    tceu_evtp (void* vv) : ptr(vv)   {}
+    tceu_evtp (s32   vv) : dt(vv)    {}
     /*tceu_evtp (int   vv) : v(vv)   {}*/
 #endif
 } tceu_evtp;
@@ -195,13 +239,23 @@ typedef union tceu_evtp {
 
 /* TODO(speed): hold nxt trl to run */
 typedef struct tceu_stk {
+    tceu_nevt evt;  /* TODO: small in the end of struct? */
     tceu_evtp evtp;
 #ifdef CEU_INTS
 #ifdef CEU_ORGS
-    void*     evto;
+    void* evto;
 #endif
 #endif
-    tceu_nevt evt;
+
+    tceu_trl* trl;  /* trail being traversed */
+#ifdef CEU_ORGS
+    void* org;      /* org being traversed */
+#endif
+#ifdef CEU_CLEAR
+    void* stop;     /* stop at this trl/org */
+        /* traversals may be bounded to org/trl
+         * default (NULL) is to traverse everything */
+#endif
 } tceu_stk;
 
 /* TCEU_LNK */
@@ -232,10 +286,14 @@ typedef struct tceu_org
 #ifdef CEU_IFCS
     tceu_ncls cls;          /* class id */
 #endif
-    u8 isAlive: 1;          /* required by "watching o" */
+    u8 isAlive: 1;          /* Two purposes:
+                             * - =0 if terminate normally or =1 if from scope
+                             *      checked to see if should call free on pool
+                             * - required by "watching o" to avoid awaiting a
+                             *      dead org
+                             */
 #ifdef CEU_NEWS
     u8 isDyn: 1;            /* created w/ new or spawn? */
-    /*u8 isSpw: 1;            // free on termination? */
     struct tceu_org* nxt_free;  /* "to free" list (only on reaction end) */
 #endif
 #endif  /* CEU_ORGS */
@@ -250,36 +308,44 @@ typedef struct tceu_org
 
 /* TCEU_GO */
 
+/* TODO: tceu_go => tceu_stk? */
 typedef struct tceu_go {
-    int         evt;
-    tceu_evtp   evtp;
-
-#ifdef CEU_INTS
-#ifdef CEU_ORGS
-    tceu_org* evto;       /* org that emitted current event */
-#endif
-#endif
-
 #if defined(CEU_ORGS) || defined(CEU_OS)
-    #define CEU_MAX_STACK   255     /* TODO 256??? */
+    #define CEU_MAX_STACK   128
     /* TODO: CEU_ORGS is calculable // CEU_NEWS isn't (255?) */
-    tceu_stk stk[CEU_MAX_STACK];
 #else
-    tceu_stk stk[CEU_NTRAILS];
+    #define CEU_MAX_STACK   (CEU_NTRAILS+1) /* current +1 for each trail */
 #endif
-
-    /* current traversal state */
-    int        stki;   /* points to next */
-    tceu_trl*  trl;
-    tceu_nlbl  lbl;
-    tceu_org* org;
-
-    /* traversals may be bounded to org/trl
-     * default (NULL) is to traverse everything */
-#ifdef CEU_CLEAR
-    void* stop;     /* stop at this trl/org */
-#endif
+    tceu_stk stk[CEU_MAX_STACK];
+    int stki;
 } tceu_go;
+
+#define stack_init(go) (go).stki = -1
+#define stack_get(go) ((go).stk[(go).stki])
+#define stack_pop(go) \
+    go.stki--
+
+#ifdef CEU_DEBUG
+#define stack_push(go,elem)             \
+    assert((go).stki+1 < CEU_MAX_STACK);  \
+    (go).stk[++((go).stki)] = elem
+#else
+#define stack_push(go,elem)             \
+    (go).stk[++((go).stki)] = elem
+#endif
+
+#define STK  stack_get(go)
+#define _STK stack_get(*_ceu_go)
+#ifdef CEU_ORGS
+#define STK_ORG_ATTR  (STK.org)
+#define _STK_ORG_ATTR (_STK.org)
+#else
+#define STK_ORG_ATTR  (app->data)
+#define _STK_ORG_ATTR (_ceu_app->data)
+#endif
+#define STK_ORG  ((tceu_org*)STK_ORG_ATTR)    /* not an lvalue */
+#define _STK_ORG ((tceu_org*)_STK_ORG_ATTR)   /* not an lvalue */
+#define STK_LBL (STK.trl->lbl)
 
 /* TCEU_LST */
 
@@ -317,9 +383,14 @@ typedef struct tceu_app {
 #endif
 
 #ifdef CEU_WCLOCKS
-    int         wclk_late;
+    s32         wclk_late;
     s32         wclk_min;
     s32         wclk_min_tmp;
+#ifdef CEU_TIMEMACHINE
+    s32         wclk_late_;
+    s32         wclk_min_;
+    s32         wclk_min_tmp_;
+#endif
 #endif
 
 #ifndef CEU_OS
@@ -333,6 +404,9 @@ typedef struct tceu_app {
     /*CEU_THREADS_COND_T  threads_cond;*/
     u8                  threads_n;          /* number of running threads */
         /* TODO: u8? */
+#endif
+#ifdef CEU_LUA
+    lua_State*  lua;
 #endif
 
     int         (*code)  (struct tceu_app*,tceu_go*);
@@ -368,17 +442,16 @@ typedef struct {
 /* RET_* */
 
 enum {
-    RET_HALT = 0,
-    RET_END
+    RET_HALT = 0
     /*RET_GOTO,*/
-#if defined(CEU_INTS) || defined(CEU_ORGS)
-    , RET_ORG
-#endif
-#if defined(CEU_CLEAR) || defined(CEU_ORGS)
-    , RET_TRL
+#if defined(CEU_INTS) || defined(CEU_CLEAR) || defined(CEU_ORGS)
+    , RET_RESTART
 #endif
 #ifdef CEU_ASYNCS
     , RET_ASYNC
+#endif
+#ifdef CEU_RET
+    , RET_QUIT
 #endif
 };
 
@@ -423,24 +496,28 @@ typedef struct {
 typedef void(*tceu_isr_f)(tceu_app* app, tceu_org* org);
 #endif
 
-void ceu_init      (void);
-int  ceu_scheduler (int(*dt)());
+void ceu_os_init      (void);
+int  ceu_os_scheduler (int(*dt)());
 tceu_queue* ceu_sys_queue_nxt (void);
 void        ceu_sys_queue_rem (void);
 
-void*     ceu_sys_malloc (size_t size);
-void      ceu_sys_free   (void* ptr);
-int       ceu_sys_req    (void);
-tceu_app* ceu_sys_load   (void* addr);
+void*     ceu_sys_malloc    (size_t size);
+void      ceu_sys_free      (void* ptr);
+int       ceu_sys_req       (void);
+tceu_app* ceu_sys_load      (void* addr);
 #ifdef CEU_ISR
-int       ceu_sys_isr    (int n, tceu_isr_f f, tceu_app* app);
+int       ceu_sys_isr       (int n, tceu_isr_f f, tceu_app* app);
 #endif
-void      ceu_sys_org    (tceu_org* org, int n, int lbl, int seqno, tceu_org* par_org, int par_trl);
-void      ceu_sys_start  (tceu_app* app);
-int       ceu_sys_link   (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
-int       ceu_sys_unlink (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
-int       ceu_sys_emit   (tceu_app* app, tceu_nevt evt, tceu_evtp param, int sz, byte* buf);
-tceu_evtp ceu_sys_call   (tceu_app* app, tceu_nevt evt, tceu_evtp param);
+void      ceu_sys_org       (tceu_org* org, int n, int lbl, int seqno, int isDyn, tceu_org* par_org, int par_trl);
+#ifdef CEU_ORGS
+void      ceu_sys_org_trail (tceu_org* org, int idx, tceu_org_lnk* lnk);
+int       ceu_sys_org_spawn (tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* org, tceu_nlbl lbl_org);
+#endif
+void      ceu_sys_start     (tceu_app* app);
+int       ceu_sys_link      (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
+int       ceu_sys_unlink    (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
+int       ceu_sys_emit      (tceu_app* app, tceu_nevt evt, tceu_evtp param, int sz, byte* buf);
+tceu_evtp ceu_sys_call      (tceu_app* app, tceu_nevt evt, tceu_evtp param);
 
 enum {
     CEU_SYS_MALLOC = 0,
@@ -451,6 +528,10 @@ enum {
     CEU_SYS_ISR,
 #endif
     CEU_SYS_ORG,
+#ifdef CEU_ORGS
+    CEU_SYS_ORG_TRAIL,
+    CEU_SYS_ORG_SPAWN,
+#endif
     CEU_SYS_START,
     CEU_SYS_LINK,
     CEU_SYS_UNLINK,

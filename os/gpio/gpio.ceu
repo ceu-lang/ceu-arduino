@@ -25,7 +25,7 @@ output (u8,int) DIGITAL_CHANGED;
 
 every (DT)ms do
     //async (pins_v, pins_m) do
-        loop i, N_PINS do
+        loop i in N_PINS do
             if _bitRead(pins_m,i) == _INPUT then
                 var int v = _digitalRead(i);    // returns "int"
                 if v != _bitRead(pins_v,i) then

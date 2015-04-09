@@ -158,7 +158,6 @@ void loop()
 
     u32 now = millis();
     s32 dt = now - old;     // no problems with overflow
-    s32 dt_us = dt*1000;
 
 #ifdef POLLING_INTERVAL
     if (tm > 0) {
@@ -169,8 +168,9 @@ void loop()
         }
     }
 #endif
-
+    s32 dt_us = dt*1000;
     old = now;
+
 #ifdef CEU_TIMEMACHINE
     ceu_sys_go(&CEU_APP, CEU_IN__WCLOCK_, &dt_us);
 #endif

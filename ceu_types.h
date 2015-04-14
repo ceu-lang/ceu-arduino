@@ -34,4 +34,7 @@ typedef uint8_t   u8;
 typedef float    f32;
 typedef double   f64;
 
+void ceu_sys_log (int mode, long s) {
+}
+
 #endif

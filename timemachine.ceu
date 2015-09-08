@@ -12,12 +12,16 @@ native @nohold _snap_seek();
 #endif
 
 #ifdef TM_QUEUE
+#if 0
     _printf("TM_QUEUE:\n");
     _printf("\tQUEUE_N      %d\n", TM_QUEUE_N);
     _printf("\tT_QUEUE_DT   %ld\n", sizeof(_tceu_queue_dt));
     _printf("\tT_QUEUE      %ld\n", sizeof(_tceu_queue));
+#endif
 #   ifdef TM_QUEUE_WCLOCK_REUSE
+#if 0
         _printf("\tWCLOCK_REUSE\n");
+#endif
 #   endif
 #   ifndef TM_QUEUE_N
 #       error "Missing TM_QUEUE_N"
@@ -32,8 +36,10 @@ native @nohold _snap_seek();
 #   ifndef TM_SNAP_N
 #       error "Missing TM_SNAP_N"
 #   endif
+#if 0
     _printf("TM_SNAP:\n");
     _printf("\tSNAP_N %d\n", TM_SNAP_N);
+#endif
 #   if defined(TM_QUEUE) || defined(TM_DIFF)
 #       define TM_SNAP_QUEUE_DIFF
 #       ifndef TM_SNAP_MS
@@ -47,8 +53,10 @@ native @nohold _snap_seek();
 #endif
 
 #ifdef TM_DIFF
+#if 0
     _printf("TM_DIFF:\n");
     _printf("\tDIFF_N %d\n", TM_DIFF_N);
+#endif
 #   ifndef TM_DIFF_N
 #       error "Missing TM_DIFF_N"
 #   endif
@@ -66,6 +74,7 @@ interface IIOTimeMachine with
 end
 #endif
 
+#ifdef TM_FPS
 class Fps with
     event int go;
 do
@@ -80,11 +89,13 @@ do
         end
         fps = c;
 /*
+#if 0
         _printf("[FPS=%d (%ds)]\n", fps, t/10);
         _printf("%d %d\n", t/10, fps);
 */
     end
 end
+#endif
 
 class TimeMachine with
     var App& app;
@@ -236,7 +247,9 @@ do
             _snap_toend();
 #endif
 
+#ifdef TM_FPS
             var Fps fps;
+#endif
 
             par do
                 loop do
@@ -378,7 +391,9 @@ do
 
 #ifdef TM_INPUT_REDRAW
                                 this.locked = true;
+#ifdef TM_FPS
                                 emit fps.go => time_now;
+#endif
                                 async do
                                     emit OS_RESUME => false;
                                     emit TM_INPUT_REDRAW;
@@ -395,7 +410,9 @@ do
 
                         // this async is forced to ensure at least one sync 
                         // break (even if there's no REDRAW event)
+#ifdef TM_FPS
                         emit fps.go => time_now;
+#endif
                         async do
                             emit OS_RESUME => false;
 #ifdef TM_INPUT_REDRAW
@@ -707,9 +724,9 @@ do
                 int n = 0;
                 for (n=0; n<TM_DIFF_BUF(cur).n; n++) {
                     u32 off = TM_DIFF_BUF(cur).vec[n].offset;
-                    u8  old = TM_DIFF_BUF(cur).vec[n].from;
-                    u8  new = TM_DIFF_BUF(cur).vec[n].to;
-                    sum1 += new;
+                    u8  fr  = TM_DIFF_BUF(cur).vec[n].from;
+                    u8  to  = TM_DIFF_BUF(cur).vec[n].to;
+                    sum1 += to;
                 }
             }
             u32 sum2 = 0;
@@ -731,9 +748,9 @@ printf("====== %d (%dms)\n", i, TM_DIFF_BUF(i).time);
 diff_sum(i);
                 for (n=0; n<TM_DIFF_BUF(i).n; n++) {
                     u32 off = TM_DIFF_BUF(i).vec[n].offset;
-                    u8  old = TM_DIFF_BUF(i).vec[n].from;
+                    u8  fr  = TM_DIFF_BUF(i).vec[n].from;
                     u8  to  = TM_DIFF_BUF(i).vec[n].to;
-                    printf("|[%d]%d:%d", off,old,to);
+                    printf("|[%d]%d:%d", off,fr,to);
                 }
 printf("\n");
                 i += TM_BUF_SZ(TM_DIFF_BUF(i).n);
@@ -747,13 +764,13 @@ printf("<<< DUMP\n");
             u32 i;
             u32 n = 0;
             for (i=0; i<sizeof(CEU_App); i++) {
-                u8 old = DIFF.data_old[i];
-                u8 new = DIFF.data[i];
-                if (old != new) {
+                u8 fr = DIFF.data_old[i];
+                u8 to = DIFF.data[i];
+                if (fr != to) {
                     assert(DIFF.put+TM_BUF_SZ(n) < TM_DIFF_N);
                     TM_DIFF_BUF(DIFF.put).vec[n].offset = i;
-                    TM_DIFF_BUF(DIFF.put).vec[n].from   = old;
-                    TM_DIFF_BUF(DIFF.put).vec[n].to     = new;
+                    TM_DIFF_BUF(DIFF.put).vec[n].from   = fr;
+                    TM_DIFF_BUF(DIFF.put).vec[n].to     = to;
                     n++;
                     assert(n < 65536);
                 }
@@ -779,9 +796,9 @@ printf("<<< DUMP\n");
                 int n = 0;
                 for (n=0; n<TM_DIFF_BUF(cur).n; n++) {
                     u32 off = TM_DIFF_BUF(cur).vec[n].offset;
-                    u8  old = TM_DIFF_BUF(cur).vec[n].from;
-                    u8  new = TM_DIFF_BUF(cur).vec[n].to;
-                    assert(DIFF.data_old[off] == new);
+                    u8  fr  = TM_DIFF_BUF(cur).vec[n].from;
+                    u8  to  = TM_DIFF_BUF(cur).vec[n].to;
+                    assert(DIFF.data_old[off] == to);
                 }
                 /*diff_sum(cur);*/
             }
@@ -821,10 +838,10 @@ printf("<<< DUMP\n");
                         int n = 0;
                         for (n=0; n<TM_DIFF_BUF(cur).n; n++) {
                             u32 off = TM_DIFF_BUF(cur).vec[n].offset;
-                            u8  old = TM_DIFF_BUF(cur).vec[n].from;
-                            u8  new = TM_DIFF_BUF(cur).vec[n].to;
-                            assert(DIFF.data_old[off] == old);
-                            DIFF.data_old[off] = new;
+                            u8  fr  = TM_DIFF_BUF(cur).vec[n].from;
+                            u8  to  = TM_DIFF_BUF(cur).vec[n].to;
+                            assert(DIFF.data_old[off] == fr);
+                            DIFF.data_old[off] = to;
                         }
                     }
                     /*diff_sum(cur);*/
@@ -850,10 +867,10 @@ printf("<<< DUMP\n");
                         int n = 0;
                         for (n=0; n<TM_DIFF_BUF(cur).n; n++) {
                             u32 off = TM_DIFF_BUF(cur).vec[n].offset;
-                            u8  old = TM_DIFF_BUF(cur).vec[n].from;
-                            u8  new = TM_DIFF_BUF(cur).vec[n].to;
-                            assert(DIFF.data_old[off] == new);
-                            DIFF.data_old[off] = old;
+                            u8  fr  = TM_DIFF_BUF(cur).vec[n].from;
+                            u8  to  = TM_DIFF_BUF(cur).vec[n].to;
+                            assert(DIFF.data_old[off] == to);
+                            DIFF.data_old[off] = fr;
                         }
                     }
                     DIFF.nxt = cur;
@@ -883,9 +900,9 @@ printf("<<< DUMP\n");
                 int n = 0;
                 for (n=0; n<TM_DIFF_BUF(DIFF.nxt).n; n++) {
                     u32 off = TM_DIFF_BUF(DIFF.nxt).vec[n].offset;
-                    u8  new = TM_DIFF_BUF(DIFF.nxt).vec[n].to;
-                    DIFF.data[off] = new;
-                    DIFF.data_old[off] = new;
+                    u8  to = TM_DIFF_BUF(DIFF.nxt).vec[n].to;
+                    DIFF.data[off] = to;
+                    DIFF.data_old[off] = to;
                 }
                 /*diff_sum(DIFF.nxt);*/
                 DIFF.nxt += TM_BUF_SZ(n);

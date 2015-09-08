@@ -31,7 +31,7 @@ var App app;
 
 #if 0
 #define TM_DIFF
-#define TM_DIFF_N 1000000000    // 1GB
+#define TM_DIFF_N 1000    // 1K
 #endif
 
 #if 0
@@ -46,6 +46,8 @@ var App app;
 #define TM_BACKWARD_TICK 200
 
 #include "timemachine.ceu"
+
+#ifdef TM_QUEUE
 
 class IOTimeMachine with
     interface IIOTimeMachine;
@@ -81,9 +83,13 @@ do
 end
 var IOTimeMachine io;
 
+#endif  // TM_QUEUE
+
 var TimeMachine tm with
     this.app = app;
+#ifdef TM_QUEUE
     this.io  = io;
+#endif
 end;
 
 /*

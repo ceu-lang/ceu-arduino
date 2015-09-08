@@ -1,4 +1,24 @@
-#define POLLING_INTERVAL 30    // in milliseconds
+//#define POLLING_INTERVAL 30    // in milliseconds
+
+#define ceu_out_assert(v) ceu_sys_assert(v)
+void ceu_sys_assert (int v) {
+#if 0
+    if (!v) {
+        pinMode(13, OUTPUT);
+        while(1) {
+            digitalWrite(13, 0);
+            delay(200);
+            digitalWrite(13, 1);
+            delay(200);
+        }
+    }
+#endif
+}
+
+#define ceu_out_log(m,s) ceu_sys_log(m,s)
+void ceu_sys_log (int mode, long s) {
+    /* TODO: use Serial? */
+}
 
 #define ceu_out_emit_PIN00(v) digitalWrite( 0, v->_1)
 #define ceu_out_emit_PIN01(v) digitalWrite( 1, v->_1)
@@ -25,9 +45,26 @@ int CEU_TIMEMACHINE_ON = 0;
 
 #include "_ceu_app.src"
 
+#if defined(CEU_IN__WCLOCK) || defined(CEU_IN_DT)
 u32 old;
+#endif
 
+#if defined(CEU_IN_PIN00) || \
+    defined(CEU_IN_PIN01) || \
+    defined(CEU_IN_PIN02) || \
+    defined(CEU_IN_PIN03) || \
+    defined(CEU_IN_PIN04) || \
+    defined(CEU_IN_PIN05) || \
+    defined(CEU_IN_PIN06) || \
+    defined(CEU_IN_PIN07) || \
+    defined(CEU_IN_PIN08) || \
+    defined(CEU_IN_PIN09) || \
+    defined(CEU_IN_PIN00) || \
+    defined(CEU_IN_PIN01) || \
+    defined(CEU_IN_PIN12) || \
+    defined(CEU_IN_PIN13)
 int _ceu_arduino_V;
+#endif
 
 byte CEU_DATA[sizeof(CEU_Main)];
 tceu_app CEU_APP;
@@ -40,91 +77,78 @@ void setup ()
 #ifdef CEU_OUT_PIN00
     pinMode( 0, OUTPUT);
 #endif
-
 #ifdef CEU_IN_PIN01
     pinMode( 1, INPUT);
 #endif
 #ifdef CEU_OUT_PIN01
     pinMode( 1, OUTPUT);
 #endif
-
 #ifdef CEU_IN_PIN02
     pinMode( 2, INPUT);
 #endif
 #ifdef CEU_OUT_PIN02
     pinMode( 2, OUTPUT);
 #endif
-
 #ifdef CEU_IN_PIN03
     pinMode( 3, INPUT);
 #endif
 #ifdef CEU_OUT_PIN03
     pinMode( 3, OUTPUT);
 #endif
-
 #ifdef CEU_IN_PIN04
     pinMode( 4, INPUT);
 #endif
 #ifdef CEU_OUT_PIN04
     pinMode( 4, OUTPUT);
 #endif
-
 #ifdef CEU_IN_PIN05
     pinMode( 5, INPUT);
 #endif
 #ifdef CEU_OUT_PIN05
     pinMode( 5, OUTPUT);
 #endif
-
 #ifdef CEU_IN_PIN06
     pinMode( 6, INPUT);
 #endif
 #ifdef CEU_OUT_PIN06
     pinMode( 6, OUTPUT);
 #endif
-
 #ifdef CEU_IN_PIN07
     pinMode( 7, INPUT);
 #endif
 #ifdef CEU_OUT_PIN07
     pinMode( 7, OUTPUT);
 #endif
-
 #ifdef CEU_IN_PIN08
     pinMode( 8, INPUT);
 #endif
 #ifdef CEU_OUT_PIN08
     pinMode( 8, OUTPUT);
 #endif
-
 #ifdef CEU_IN_PIN09
     pinMode( 9, INPUT);
 #endif
 #ifdef CEU_OUT_PIN09
     pinMode( 9, OUTPUT);
 #endif
-
 #ifdef CEU_IN_PIN10
     pinMode(10, INPUT);
 #endif
 #ifdef CEU_OUT_PIN10
     pinMode(10, OUTPUT);
 #endif
-
 #ifdef CEU_IN_PIN11
     pinMode(11, INPUT);
 #endif
 #ifdef CEU_OUT_PIN11
     pinMode(11, OUTPUT);
 #endif
-
 #ifdef CEU_IN_PIN12
     pinMode(12, INPUT);
 #endif
 #ifdef CEU_OUT_PIN12
     pinMode(12, OUTPUT);
 #endif
-
 #ifdef CEU_IN_PIN13
     pinMode(13, INPUT);
 #endif
@@ -132,7 +156,9 @@ void setup ()
     pinMode(13, OUTPUT);
 #endif
 
+#if defined(CEU_IN__WCLOCK) || defined(CEU_IN_DT)
     old = millis();
+#endif
 
     CEU_APP.data = (tceu_org*) &CEU_DATA;
     CEU_APP.init = &ceu_app_init;
@@ -155,6 +181,8 @@ void loop()
     }
 #endif
 #endif
+
+#if defined(CEU_IN__WCLOCK) || defined(CEU_IN_DT)
 
     u32 now = millis();
     s32 dt = now - old;     // no problems with overflow
@@ -186,6 +214,8 @@ if (!CEU_TIMEMACHINE_ON) {
     ceu_sys_go(&CEU_APP, CEU_IN_DT, &dt);
 }
 #endif
+
+#endif  /* CEU_IN__WCLOCK || CEU_IN_DT */
 
 #if defined(CEU_IN_PIN00) || \
     defined(CEU_IN_PIN01) || \

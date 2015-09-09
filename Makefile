@@ -35,5 +35,5 @@ sim-tst-ceu:
 
 include arduino.mk
 
-CPPFLAGS += -Wno-pointer-arith
+CPPFLAGS += -Wno-pointer-arith -Wno-unused-label
 #LINKFLAGS += -Wl,--section-start=.bootloader=0xE000

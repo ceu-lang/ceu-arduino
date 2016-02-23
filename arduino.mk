@@ -124,7 +124,7 @@ ARDUINODIR ?= /opt/arduino
 ARDUINOSUB ?= arduino
 
 # check arduino software
-ifeq ($(wildcard $(ARDUINODIR)/hardware/$(ARDUINOSUB)/boards.txt), )
+ifeq ($(wildcard $(ARDUINODIR)/hardware/$(ARDUINOSUB)/avr/boards.txt), )
 $(error ARDUINODIR is not set correctly; arduino software not found)
 endif
 
@@ -168,7 +168,7 @@ endif
 
 # files
 OBJECTS += $(addsuffix .o, $(basename $(SOURCES)))
-ARDUINOSRCDIR := $(ARDUINODIR)/hardware/$(ARDUINOSUB)/cores/arduino
+ARDUINOSRCDIR := $(ARDUINODIR)/hardware/$(ARDUINOSUB)/avr/cores/arduino
 ARDUINOLIB := _arduino.a
 ARDUINOLIBTMP := _arduino.a.tmp
 ARDUINOLIBOBJS := $(patsubst %, $(ARDUINOLIBTMP)/%.o, $(basename $(notdir \
@@ -178,7 +178,7 @@ ARDUINOLIBOBJS += $(foreach lib, $(LIBRARIES), \
 	$(wildcard $(addprefix $(ARDUINODIR)/libraries/$(lib)/, *.c *.cpp))))))
 
 # obtain board parameters from the arduino boards.txt file
-BOARDS_FILE := $(ARDUINODIR)/hardware/$(ARDUINOSUB)/boards.txt
+BOARDS_FILE := $(ARDUINODIR)/hardware/$(ARDUINOSUB)/avr/boards.txt
 BOARD_BUILD_MCU := \
 	$(shell sed -ne "s/$(BOARD).build.mcu=\(.*\)/\1/p" $(BOARDS_FILE))
 BOARD_BUILD_FCPU := \
@@ -191,16 +191,16 @@ BOARD_UPLOAD_PROTOCOL := \
 	$(shell sed -ne "s/$(BOARD).upload.protocol=\(.*\)/\1/p" $(BOARDS_FILE))
 
 # software
-CPP := $(ARDUINODIR)/hardware/tools/avr/bin/avr-cpp
-CC  := $(ARDUINODIR)/hardware/tools/avr/bin/avr-gcc
-CXX := $(ARDUINODIR)/hardware/tools/avr/bin/avr-g++
-LD  := $(ARDUINODIR)/hardware/tools/avr/bin/avr-ld
-AR  := $(ARDUINODIR)/hardware/tools/avr/bin/avr-ar
-STRIP := $(ARDUINODIR)/hardware/tools/avr/bin/avr-strip
-OBJCOPY := $(ARDUINODIR)/hardware/tools/avr/bin/avr-objcopy
-OBJDUMP := $(ARDUINODIR)/hardware/tools/avr/bin/avr-objdump
+CPP := avr-cpp
+CC  := avr-gcc
+CXX := avr-g++
+LD  := avr-ld
+AR  := avr-ar
+STRIP := avr-strip
+OBJCOPY := avr-objcopy
+OBJDUMP := avr-objdump
 AVRDUDE := avrdude
-AVRSIZE := $(ARDUINODIR)/hardware/tools/avr/bin/avr-size
+AVRSIZE := avr-size
 SRECCAT := srec_cat
 
 #CC := /usr/bin/avr-gcc
@@ -215,12 +215,12 @@ CPPFLAGS += -fno-inline-small-functions
 CPPFLAGS += -fno-jump-tables
 CPPFLAGS += -mmcu=$(BOARD_BUILD_MCU) -DF_CPU=$(BOARD_BUILD_FCPU)
 CPPFLAGS += -I. -Iutil -Iutility -I$(ARDUINOSRCDIR)
-CPPFLAGS += -I$(ARDUINODIR)/hardware/$(ARDUINOSUB)/variants/$(BOARD_BUILD_VARIANT)/
+CPPFLAGS += -I$(ARDUINODIR)/hardware/$(ARDUINOSUB)/avr/variants/$(BOARD_BUILD_VARIANT)/
 CPPFLAGS += $(addprefix -I$(ARDUINODIR)/libraries/, $(LIBRARIES))
 CPPFLAGS += $(patsubst %, -I$(ARDUINODIR)/libraries/%/utility, $(LIBRARIES))
 CPPFLAGS += -DARDUINO
 #AVRDUDEFLAGS = -C $(ARDUINODIR)/hardware/tools/avrdude.conf -DV
-AVRDUDEFLAGS = -C /etc/avrdude.conf -DV
+AVRDUDEFLAGS = -C /etc/avrdude/avrdude.conf -DV
 AVRDUDEFLAGS += -p $(BOARD_BUILD_MCU) -P $(SERIALDEV)
 AVRDUDEFLAGS += -c $(BOARD_UPLOAD_PROTOCOL) -b $(BOARD_UPLOAD_SPEED)
 LINKFLAGS += -Os -Wl,--gc-sections -mmcu=$(BOARD_BUILD_MCU)

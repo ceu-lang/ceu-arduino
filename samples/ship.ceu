@@ -124,7 +124,7 @@ emit PIN10 => _LOW;
 _randomSeed(_analogRead(12));
 
 par do
-    var int pct, dt, step, ship, points, dir;
+    var int pct=0, dt=0, step=0, ship=0, points=0, dir=0;     // all initialized on "restart" below
     var int win = 0;
 
     par do

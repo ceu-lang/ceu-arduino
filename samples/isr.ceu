@@ -1,0 +1,12 @@
+input int PIN02;
+
+_pinMode(13, _OUTPUT);
+_pinMode( 2, _INPUT);
+
+interrupt (_digitalPinToInterrupt(2),_CHANGE) do
+    //emit PIN02 => _digitalRead(2);
+end
+
+every v in PIN02 do
+    _digitalWrite(13, v);
+end

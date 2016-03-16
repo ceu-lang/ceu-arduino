@@ -1,28 +1,37 @@
-INOFILE ?= poll.ino
-CEUFILE ?= samples/blink1.ceu
+ifneq ($(MAKECMDGOALS),clean)
+ifndef CEU
+$(error USAGE: make CEU=<path-to-ceu-file>)
+endif
+endif
 
-ARDUINOSUB = arduino
-BOARD = uno
+INO ?= *.ino
+
+#This feature is available since beta release 1.5.2
+
+#ARDUINO ?= arduino
+ARDUINO = /opt/arduino-1.5.8/arduino
+#ARDUINO = /opt/arduino-1.6.6/arduino
+#ARDUINO = /opt/arduino-1.6.8/arduino
+
+BOARD ?= nano
 #BOARD = atmega328
 #BOARD = lilypad328
 #ARDUINOSUB = Microduino
 #BOARD = 644pa16m
 
+PORT ?= /dev/ttyACM0
+
 .PHONY: all ceu ino clean
 
-all: ceu ino _all
+all: ceu
+	$(ARDUINO) --verbose --board arduino:avr:$(BOARD):cpu=atmega168 --port $(PORT) --upload $(INO)
 
 ceu:
-	ceu $(CEUFILE) --out-c _ceu_app.src
+	ceu $(CEU) --out-c _ceu_app.c.h
 
-ino:
-	touch poll.ino async.ino gd.ino
-
-clean: _clean
-	find . -name "*.exe"  | xargs rm -f
+clean:
+	rm -Rf /tmp/build*
 	find . -name "_ceu_*" | xargs rm -f
-	find . -name "*.hex"  | xargs rm -f
-	find . -name "*.o"    | xargs rm -f
 
 ### SIM ###
 sim: sim-ceu ino _all
@@ -33,7 +42,5 @@ sim-tst-ceu:
 	ceu --timemachine --cpp-args "-I ." sim-tst.ceu --out-c _ceu_app.src
 ###
 
-include arduino.mk
-
-CPPFLAGS += -Wno-pointer-arith -Wno-unused-label
+#CPPFLAGS += -Wno-pointer-arith -Wno-unused-label
 #LINKFLAGS += -Wl,--section-start=.bootloader=0xE000

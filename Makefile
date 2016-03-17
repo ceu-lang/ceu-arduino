@@ -9,22 +9,29 @@ INO ?= *.ino
 #This feature is available since beta release 1.5.2
 
 #ARDUINO ?= arduino
-ARDUINO = /opt/arduino-1.5.8/arduino
+#ARDUINO = /opt/arduino-1.5.8/arduino
 #ARDUINO = /opt/arduino-1.6.6/arduino
-#ARDUINO = /opt/arduino-1.6.8/arduino
+ARDUINO = /opt/arduino-1.6.8/arduino
 
-BOARD ?= nano
-#BOARD = atmega328
+ARCH ?= avr
+
+BOARD ?= uno
+#BOARD ?= mega
 #BOARD = lilypad328
-#ARDUINOSUB = Microduino
+#BOARD = Microduino
 #BOARD = 644pa16m
+
+#CPU ?= :cpu=atmega328p
+#CPU ?= :cpu=atmega168
 
 PORT ?= /dev/ttyACM0
 
 .PHONY: all ceu ino clean
 
 all: ceu
-	$(ARDUINO) --verbose --board arduino:avr:$(BOARD):cpu=atmega168 --port $(PORT) --upload $(INO)
+	$(ARDUINO) --verbose --preserve-temp-files \
+			   --board arduino:$(ARCH):$(BOARD)$(CPU) \
+			   --port $(PORT) --upload $(INO)
 
 ceu:
 	ceu $(CEU) --out-c _ceu_app.c.h

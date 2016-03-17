@@ -39,7 +39,6 @@ int _ceu_arduino_V;
 byte CEU_DATA[sizeof(CEU_Main)];
 tceu_app CEU_APP;
 
-
 void setup ()
 {
 #ifdef CEU_IN_PIN00

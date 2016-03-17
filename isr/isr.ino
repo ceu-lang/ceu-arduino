@@ -5,16 +5,20 @@ void __ceu_dummy_to_arduino_include_headers (void);
 #include "common.h"
 
 #include "_ceu_app.h"
-void _attachInterrupt(u8 interruptNum, void (*userFunc)(tceu_app*,CEU_Main*), int mode);
-void _detachInterrupt(uint8_t interruptNum);
-#define ceu_out_isr_on(f,num,mode)  _attachInterrupt(num, f, mode);
-#define ceu_out_isr_off(f,num,mode) _detachInterrupt(num);
+#define ceu_out_isr_on(f,num,mode)  digitalWrite(12,1);  attachInterrupt(num, f, mode);
+#define ceu_out_isr_off(f,num,mode) digitalWrite(12,0);  detachInterrupt(num);
+
+byte CEU_DATA[sizeof(CEU_Main)];
+tceu_app CEU_APP;
 
 #include "_ceu_app.c.h"
 
 void setup ()
 {
-    ceu_go_all(NULL);
+    pinMode(12, OUTPUT);
+    CEU_APP.data = (tceu_org*) &CEU_DATA;
+    CEU_APP.init = &ceu_app_init;
+    ceu_go_all(&CEU_APP);
 }
 
 void loop()

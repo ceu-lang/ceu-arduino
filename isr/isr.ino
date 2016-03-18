@@ -11,9 +11,6 @@ void __ceu_dummy_to_arduino_include_headers (void);
 #error "Unsupported Platform!"
 #endif
 
-#define ceu_out_isr_on()  interrupts()
-#define ceu_out_isr_off() noInterrupts()
-
 #include "_ceu_app.h"
 
 static volatile voidFuncPtr isrs[_VECTORS_SIZE];
@@ -52,7 +49,7 @@ ISR(TIMER1_COMPA_vect)
 ISR(TIMER1_OVF_vect)
 {
     //static int v = 0;
-    //digitalWrite(13, v=!v);
+    //digitalWrite(12, v=!v);
     if (isrs[TIMER1_OVF_vect_num] != NULL) {
         isrs[TIMER1_OVF_vect_num]();
     }

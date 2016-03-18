@@ -1,16 +1,22 @@
+#define ceu_out_isr_on()  interrupts()
+#define ceu_out_isr_off() noInterrupts()
+
 #define ceu_out_assert(v) ceu_sys_assert(v)
 void ceu_sys_assert (int v) {
-#if 0
     if (!v) {
+        ceu_out_isr_off();
         pinMode(13, OUTPUT);
-        while(1) {
-            digitalWrite(13, 0);
-            delay(200);
-            digitalWrite(13, 1);
-            delay(200);
+        int v = 0;
+        for (;;) {
+            digitalWrite(13, v=!v);
+            delayMicroseconds(10000);
+            delayMicroseconds(10000);
+            delayMicroseconds(10000);
+            delayMicroseconds(10000);
+            delayMicroseconds(10000);
         }
+        ceu_out_isr_on();
     }
-#endif
 }
 
 #define ceu_out_log(m,s) ceu_sys_log(m,s)

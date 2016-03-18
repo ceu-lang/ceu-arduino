@@ -41,50 +41,21 @@ par do
     end
     await FOREVER;
 with
-    _digitalWrite(13, 1);
-    loop i in 10 do
-        await 1s;
+    async/isr (_digitalPinToInterrupt(2),_CHANGE) do
+        emit PIN02 => _digitalRead(2);
     end
-    _digitalWrite(13, 0);
-
-    await 1s;
-    loop i in 5 do
-        _digitalWrite(13, 1);
-        await 250ms;
-        _digitalWrite(13, 0);
-        await 250ms;
-    end
-
-    await 1s;
-    loop i in 5 do
-        _digitalWrite(13, 1);
-        await 500ms;
-        _digitalWrite(13, 0);
-        await 500ms;
-    end
-
-    await 1s;
-    loop i in 5 do
-        _digitalWrite(13, 1);
-        await 1s;
-        _digitalWrite(13, 0);
-        await 1s;
-    end
-
-    await 1s;
-    loop i in 5 do
-        _digitalWrite(13, 1);
-        await 2s;
-        _digitalWrite(13, 0);
-        await 2s;
-    end
-
-    // ERROR here, overflow!
-    await 1s;
-    loop i in 5 do
-        _digitalWrite(13, 1);
-        await 5s;
-        _digitalWrite(13, 0);
-        await 5s;
+    await FOREVER;
+with
+    loop do
+        watching PIN02 do
+            var int x = 0;
+            every 500ms do
+                x = not x;
+                _digitalWrite(13, x);
+            end
+        end
+        await 1s;     // debouncing
+        await PIN02;
+        await 1s;     // debouncing
     end
 end

@@ -39,6 +39,7 @@ par do
             async/isr (_TIMER1_COMPA_vect_num, 0) do
                 emit 500ms;
             end
+            await FOREVER;
         end
         await PIN02;
     end
@@ -46,6 +47,7 @@ with
     async/isr (_digitalPinToInterrupt(2),_CHANGE) do
         emit PIN02 => _digitalRead(2);
     end
+    await FOREVER;
 with
     var int x = 0;
     every 500ms do

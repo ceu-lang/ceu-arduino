@@ -26,10 +26,12 @@ par do
         _TCNT1 = 34286;            // preload timer 65536-16MHz/256/2Hz
         emit 500ms;
     end
+    await FOREVER;
 with
     async/isr (_digitalPinToInterrupt(2),_CHANGE) do
         emit PIN02 => _digitalRead(2);
     end
+    await FOREVER;
 with
     loop do
         watching PIN02 do

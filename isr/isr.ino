@@ -66,7 +66,9 @@ tceu_app CEU_APP;
 
 void setup ()
 {
-    pinMode(12, OUTPUT);
+    //pinMode(12, OUTPUT);
+    //Serial.begin(9600);
+
     int i;
     for (i=0; i<_VECTORS_SIZE; i++) {
         isrs[i] = NULL;

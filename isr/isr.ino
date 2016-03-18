@@ -4,9 +4,44 @@ void __ceu_dummy_to_arduino_include_headers (void);
 
 #include "common.h"
 
+#include "wiring_private.h"
+#ifdef __AVR
+#include <avr/interrupt.h>
+#else
+#error "Unsupported Platform!"
+#endif
+
+#define ceu_out_isr_on()  interrupts()
+#define ceu_out_isr_off() noInterrupts()
+
 #include "_ceu_app.h"
-#define ceu_out_isr_on(f,num,mode)  digitalWrite(12,1);  attachInterrupt(num, f, mode);
-#define ceu_out_isr_off(f,num,mode) digitalWrite(12,0);  detachInterrupt(num);
+
+static volatile voidFuncPtr isrs[_VECTORS_SIZE];
+
+#define ceu_out_isr_attach(f,num,mode) {    \
+    if (num < EXTERNAL_NUM_INTERRUPTS) {    \
+        attachInterrupt(num, f, mode);      \
+    } else {                                \
+        isrs[num] = f;                      \
+    }                                       \
+}
+
+#define ceu_out_isr_detach(f,num,mode) {    \
+    if (num < EXTERNAL_NUM_INTERRUPTS) {    \
+        detachInterrupt(num);               \
+    } else {                                \
+        isrs[num] = NULL;                   \
+    }                                       \
+}
+
+#ifdef CEU_ISR__TIMER1_COMPA_vect_num
+ISR(TIMER1_COMPA_vect)
+{
+    if (isrs[TIMER1_COMPA_vect_num] != NULL) {
+        isrs[TIMER1_COMPA_vect_num]();
+    }
+}
+#endif
 
 byte CEU_DATA[sizeof(CEU_Main)];
 tceu_app CEU_APP;
@@ -15,7 +50,11 @@ tceu_app CEU_APP;
 
 void setup ()
 {
-    pinMode(12, OUTPUT);
+    int i;
+    for (i=0; i<_VECTORS_SIZE; i++) {
+        isrs[i] = NULL;
+    }
+
     CEU_APP.data = (tceu_org*) &CEU_DATA;
     CEU_APP.init = &ceu_app_init;
     ceu_go_all(&CEU_APP);

@@ -1,6 +1,8 @@
 ifneq ($(MAKECMDGOALS),clean)
+ifneq ($(MAKECMDGOALS),c)
 ifndef CEU
 $(error USAGE: make CEU=<path-to-ceu-file>)
+endif
 endif
 endif
 
@@ -10,8 +12,8 @@ INO ?= *.ino
 
 #ARDUINO ?= arduino
 #ARDUINO = /opt/arduino-1.5.8/arduino
-#ARDUINO = /opt/arduino-1.6.6/arduino
-ARDUINO = /opt/arduino-1.6.8/arduino
+ARDUINO = /opt/arduino-1.6.6/arduino
+#ARDUINO = /opt/arduino-1.6.8/arduino
 
 ARCH ?= avr
 
@@ -26,10 +28,14 @@ BOARD ?= uno
 
 PORT ?= /dev/ttyACM0
 
+PRESERVE = --preserve-temp-files
+
 .PHONY: all ceu ino clean
 
-all: ceu
-	$(ARDUINO) --verbose --preserve-temp-files \
+all: ceu c
+
+c:
+	$(ARDUINO) --verbose $(PRESERVE) \
 			   --board arduino:$(ARCH):$(BOARD)$(CPU) \
 			   --port $(PORT) --upload $(INO)
 

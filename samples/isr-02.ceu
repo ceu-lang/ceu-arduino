@@ -1,13 +1,12 @@
 input int PIN02;
 
 _pinMode(13, _OUTPUT);
-_pinMode(12, _OUTPUT);
 _pinMode( 2, _INPUT);
 
 // atomic
 par do
     // initialize timer1 
-    _ceu_out_isr_off(); // disable all interrupts
+    atomic do
         _TCCR1A = 0;
         _TCCR1B = 0;
         _TCNT1  = 0;
@@ -16,21 +15,24 @@ par do
         _TCCR1B = _TCCR1B | (1 << _WGM12);   // CTC mode
         _TCCR1B = _TCCR1B | (1 << _CS12);    // 256 prescaler
         _TIMSK1 = _TIMSK1 | (1 << _OCIE1A);  // enable timer compare interrupt
-    _ceu_out_isr_on();  // enable all interrupts
+    end
 
     async/isr (_TIMER1_COMPA_vect_num, 0) do
-        emit PIN02 => 1;//_digitalRead(2);
+        emit 500ms;
     end
-/*
 with
     async/isr (_digitalPinToInterrupt(2),_CHANGE) do
         emit PIN02 => _digitalRead(2);
     end
-*/
 with
-    var int x = 0;
-    every v in PIN02 do
-        x = not x;
-        _digitalWrite(13, x);
+    loop do
+        watching PIN02 do
+            var int x = 0;
+            every 500ms do
+                x = not x;
+                _digitalWrite(13, x);
+            end
+        end
+        await 2s;
     end
 end

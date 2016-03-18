@@ -1,5 +1,5 @@
 /*
- * TIMER => LED, BUTTON => PAUSE/RESTART
+ * TIMER-CTC => LED, BUTTON => PAUSE/RESTART
  * Runs a timer on CTC mode, e.g., every 500ms generates an interrupt.
  * Interrupt generates "emit 500ms" to the application.
  * Also uses PIN02 interrupts from the previous example.
@@ -13,7 +13,6 @@ input int PIN02;
 _pinMode(13, _OUTPUT);
 _pinMode( 2, _INPUT);
 
-// atomic
 par do
     // initialize timer1 
     atomic do

@@ -1,4 +1,5 @@
 /*
+ * TIMER-OVF => LED, BUTTON => RESTART
  * Runs a timer on OVERFLOW mode, restarting it on every interrupt.
  * Interrupt generates "emit 500ms" to the application.
  * Also uses PIN02 interrupts from the previous example.
@@ -12,9 +13,7 @@ input int PIN02;
 _pinMode(13, _OUTPUT);
 _pinMode( 2, _INPUT);
 
-// atomic
 par do
-    // initialize timer1 
     atomic do
         _TCCR1A = 0;
         _TCCR1B = 0;

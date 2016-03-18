@@ -3,7 +3,8 @@
  * Interrupt generates "emit 500ms" to the application.
  * Also uses PIN02 interrupts from the previous example.
  * Main program blinks LED connected to PIN13 every 500ms.
- * Button click freezes the LED for 2s.
+ * Timer ISR aborts after 5s: ISR in C is also disabled due to finalize.
+ * Button click restarts timer ISR.
  */
 
 input int PIN02;
@@ -21,25 +22,34 @@ par do
         _OCR1A = 31250; // compare match register 16MHz/256/2Hz
         _TCCR1B = _TCCR1B | (1 << _WGM12);   // CTC mode
         _TCCR1B = _TCCR1B | (1 << _CS12);    // 256 prescaler
-        _TIMSK1 = _TIMSK1 | (1 << _OCIE1A);  // enable timer compare interrupt
     end
 
-    async/isr (_TIMER1_COMPA_vect_num, 0) do
-        emit 500ms;
+    loop do
+        watching 5s do
+            atomic do
+                // enable timer compare interrupt
+                _TIMSK1 = _TIMSK1 | (1 << _OCIE1A);
+            end
+            finalize with
+                atomic do
+                    // disable timer compare interrupt
+                    _TIMSK1 = _TIMSK1 & ~(1 << _OCIE1A);
+                end
+            end
+            async/isr (_TIMER1_COMPA_vect_num, 0) do
+                emit 500ms;
+            end
+        end
+        await PIN02;
     end
 with
     async/isr (_digitalPinToInterrupt(2),_CHANGE) do
         emit PIN02 => _digitalRead(2);
     end
 with
-    loop do
-        watching PIN02 do
-            var int x = 0;
-            every 500ms do
-                x = not x;
-                _digitalWrite(13, x);
-            end
-        end
-        await 2s;
+    var int x = 0;
+    every 500ms do
+        x = not x;
+        _digitalWrite(13, x);
     end
 end

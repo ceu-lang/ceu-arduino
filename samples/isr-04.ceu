@@ -1,5 +1,5 @@
 /*
- * Runs a timer on CTC mode, e.g., every 500ms generates an interrupt.
+ * Runs a timer on OVERFLOW mode, restarting it on every interrupt.
  * Interrupt generates "emit 500ms" to the application.
  * Also uses PIN02 interrupts from the previous example.
  * Main program blinks LED connected to PIN13 every 500ms.
@@ -17,14 +17,13 @@ par do
     atomic do
         _TCCR1A = 0;
         _TCCR1B = 0;
-        _TCNT1  = 0;
-        _OCR1A = 31250; // compare match register 16MHz/256/2Hz
-        _TCCR1B = _TCCR1B | (1 << _WGM12);   // CTC mode
-        _TCCR1B = _TCCR1B | (1 << _CS12);    // 256 prescaler
-        _TIMSK1 = _TIMSK1 | (1 << _OCIE1A);  // enable timer compare interrupt
+        _TCNT1 = 34286;                     // preload timer 65536-16MHz/256/2Hz
+        _TCCR1B = _TCCR1B | (1 << _CS12);   // 256 prescaler
+        _TIMSK1 = _TIMSK1 | (1 << _TOIE1);  // enable timer overflow interrupt
     end
 
-    async/isr (_TIMER1_COMPA_vect_num, 0) do
+    async/isr (_TIMER1_OVF_vect_num, 0) do
+        _TCNT1 = 34286;            // preload timer 65536-16MHz/256/2Hz
         emit 500ms;
     end
 with

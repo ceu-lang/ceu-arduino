@@ -41,9 +41,20 @@ void ceu_sys_isr_detach (voidFuncPtr f, int num, int mode) {
 ISR(TIMER1_COMPA_vect)
 {
     //static int v = 0;
-    //digitalWrite(13, v=!v);
+    //digitalWrite(12, v=!v);
     if (isrs[TIMER1_COMPA_vect_num] != NULL) {
         isrs[TIMER1_COMPA_vect_num]();
+    }
+}
+#endif
+
+#ifdef CEU_ISR__TIMER1_OVF_vect_num
+ISR(TIMER1_OVF_vect)
+{
+    //static int v = 0;
+    //digitalWrite(13, v=!v);
+    if (isrs[TIMER1_OVF_vect_num] != NULL) {
+        isrs[TIMER1_OVF_vect_num]();
     }
 }
 #endif
@@ -55,7 +66,7 @@ tceu_app CEU_APP;
 
 void setup ()
 {
-    //pinMode(13, OUTPUT);
+    pinMode(12, OUTPUT);
     int i;
     for (i=0; i<_VECTORS_SIZE; i++) {
         isrs[i] = NULL;

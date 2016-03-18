@@ -1,9 +1,11 @@
 /*
+ * TIMER => LED, BUTTON => PAUSE/RESTART
  * Runs a timer on CTC mode, e.g., every 500ms generates an interrupt.
  * Interrupt generates "emit 500ms" to the application.
  * Also uses PIN02 interrupts from the previous example.
  * Main program blinks LED connected to PIN13 every 500ms.
  * Button click freezes the LED for 2s.
+ * (http://letsmakerobots.com/node/28278)
  */
 
 input int PIN02;

@@ -1,4 +1,5 @@
 /*
+ * BUTTON => LED
  * Button press/release connected to PIN02 generates an interrupt.
  * Interrupt generates "emit PIN02" passing the button state.
  * Main program changes LED connected to PIN13 according to the button state.

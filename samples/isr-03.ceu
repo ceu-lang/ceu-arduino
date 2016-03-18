@@ -1,10 +1,12 @@
 /*
+ * TIMER => LED, TIMER => DETACH, BUTTON => RESTART
  * Runs a timer on CTC mode, e.g., every 500ms generates an interrupt.
  * Interrupt generates "emit 500ms" to the application.
  * Also uses PIN02 interrupts from the previous example.
  * Main program blinks LED connected to PIN13 every 500ms.
  * Timer ISR aborts after 5s: ISR in C is also disabled due to finalize.
  * Button click restarts timer ISR.
+ * (http://letsmakerobots.com/node/28278)
  */
 
 input int PIN02;

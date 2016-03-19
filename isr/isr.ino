@@ -1,3 +1,5 @@
+#define SLEEP
+
 void __ceu_dummy_to_arduino_include_headers (void);
     /* HACK: any function prototype suffices for the Arduino build system to
      *       include appropriate headers. */
@@ -61,10 +63,28 @@ tceu_app CEU_APP;
 
 #include "_ceu_app.c.h"
 
+#ifdef SLEEP
+#ifdef __AVR
+#include <avr/sleep.h>
+#include <avr/power.h>
+#else
+#error "Unsupported Platform!"
+#endif
+/*
+#ifdef __cplusplus
+extern "C" {
+#endif
+void sleep (void);
+#ifdef __cplusplus
+}
+#endif
+*/
+#endif
+
 void setup ()
 {
-    //pinMode(12, OUTPUT);
-    //Serial.begin(9600);
+    Serial.begin(9600);
+    pinMode(12, OUTPUT);
 
     int i;
     for (i=0; i<_VECTORS_SIZE; i++) {
@@ -73,9 +93,46 @@ void setup ()
 
     CEU_APP.data = (tceu_org*) &CEU_DATA;
     CEU_APP.init = &ceu_app_init;
+
+#ifndef SLEEP
     ceu_go_all(&CEU_APP);
+#else
+    CEU_APP.init(&CEU_APP);
+#ifdef CEU_IN_OS_START
+    ceu_sys_go(app, CEU_IN_OS_START, NULL);
+#endif
+    set_sleep_mode(SLEEP_MODE_IDLE);
+    //set_sleep_mode(SLEEP_MODE_ADC);
+    //set_sleep_mode(SLEEP_MODE_PWR_SAVE);
+    //set_sleep_mode(SLEEP_MODE_STANDBY);
+    //set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+    power_timer0_disable();     // disable "millis()" clock
+#endif
 }
 
 void loop()
 {
+#ifdef SLEEP
+#ifdef CEU_ASYNCS
+    while (app->pendingAsyncs) {
+        ceu_sys_go(app, CEU_IN__ASYNC, NULL);
+    }
+#endif
+
+    {
+        static volatile u32 i;
+        Serial.println(">>>");
+        for (i=0; i<10000; i++);    // await print to avoid new interrupt
+    }
+
+    sleep_mode();
+    static int v = 0;
+    digitalWrite(12, v=!v);
+
+    {
+        static volatile u32 i;
+        Serial.println("<<<");
+        for (i=0; i<10000; i++);    // await print to avoid new interrupt
+    }
+#endif
 }

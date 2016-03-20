@@ -26,11 +26,13 @@ native/pre do
     }
 end
 
-atomic do
-    _TCCR1A = 0;
-    _TCCR1B = (1 << _CS12) | (1 << _CS10); // 1024 prescaler
+spawn do
+    atomic do
+        _TCCR1A = 0;
+        _TCCR1B = (1 << _CS12) | (1 << _CS10); // 1024 prescaler
+    end
+    async/isr (_TIMER1_OVF_vect_num, 0) do
+        emit (_US)us;
+    end
+    await FOREVER;
 end
-async/isr (_TIMER1_OVF_vect_num, 0) do
-    emit (_US)us;
-end
-await FOREVER;

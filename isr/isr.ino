@@ -58,6 +58,27 @@ ISR(TIMER1_OVF_vect)
 }
 #endif
 
+#ifdef CEU_ISR__USART_RX_vect_num
+ISR(USART_RX_vect)
+{
+    //static int v = 0;
+    //digitalWrite(12, v=!v);
+    if (isrs[USART_RX_vect_num] != NULL) {
+        isrs[USART_RX_vect_num]();
+    }
+}
+#endif
+#ifdef CEU_ISR__USART_TX_vect_num
+ISR(USART_TX_vect)
+{
+    //static int v = 0;
+    //digitalWrite(12, v=!v);
+    if (isrs[USART_TX_vect_num] != NULL) {
+        isrs[USART_TX_vect_num]();
+    }
+}
+#endif
+
 byte CEU_DATA[sizeof(CEU_Main)];
 tceu_app CEU_APP;
 
@@ -83,7 +104,7 @@ void sleep (void);
 
 void setup ()
 {
-    Serial.begin(9600);
+    //Serial.begin(9600);
     pinMode(12, OUTPUT);
 
     int i;
@@ -99,7 +120,7 @@ void setup ()
 #else
     CEU_APP.init(&CEU_APP);
 #ifdef CEU_IN_OS_START
-    ceu_sys_go(app, CEU_IN_OS_START, NULL);
+    ceu_sys_go(&CEU_APP, CEU_IN_OS_START, NULL);
 #endif
     set_sleep_mode(SLEEP_MODE_IDLE);
     //set_sleep_mode(SLEEP_MODE_ADC);
@@ -119,20 +140,24 @@ void loop()
     }
 #endif
 
+#if 0
     {
         static volatile u32 i;
         Serial.println(">>>");
         for (i=0; i<10000; i++);    // await print to avoid new interrupt
     }
+#endif
 
     sleep_mode();
     static int v = 0;
     digitalWrite(12, v=!v);
 
+#if 0
     {
         static volatile u32 i;
         Serial.println("<<<");
         for (i=0; i<10000; i++);    // await print to avoid new interrupt
     }
+#endif
 #endif
 }

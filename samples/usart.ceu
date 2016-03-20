@@ -1,0 +1,68 @@
+native do
+    ##include <avr/io.h>
+#ifdef __AVR_ATmega644P__
+    ##define BAUD_USART(baud_human) (((F_CPU / (baud_human * 16UL))) - 1)
+#else
+    ##define BAUD_USART(baud_human) ((F_CPU / 4 / baud_human - 1) / 2)
+#endif
+end
+
+event int  usart_begin;
+event void usart_end;
+event byte usart_tx;
+input byte USART_RX;
+input void USART_TX_DONE;
+
+spawn do
+    loop do
+        par/or do
+            var int speed = await usart_begin;
+            _UBRR0H = (byte)(_BAUD_USART(speed)>>8); // set baud rate
+            _UBRR0L = (byte)(_BAUD_USART(speed));
+            _UCSR0C = (1<<_USBS0)|(3<<_UCSZ00);     // 8data, 2stop-bit
+            _UCSR0B = (1<<_RXEN0)  | (1<<_TXEN0)    // enable RX/TX
+                    | (1<<_RXCIE0) | (1<<_TXCIE0);  // enable interrupts
+        with
+            await usart_tx;
+            _ceu_out_assert(0);
+        end
+
+        finalize with
+            _UCSR0B = 0;    // disable TX/RX & interrups
+        end
+
+        watching usart_end do
+            // error if "usart_begin" without "usart_end"
+            spawn do
+                await usart_begin;
+                _ceu_out_assert(0);
+                await FOREVER;
+            end
+
+            var bool on_tx = false;
+            par do
+                async/isr (_USART_RX_vect_num,0) do
+                    var byte c = _UDR0;
+                    emit USART_RX => c;
+                end
+                await FOREVER;
+            with
+                async/isr (_USART_TX_vect_num,0) do
+                    on_tx = false;
+                    emit USART_TX_DONE;
+                end
+                await FOREVER;
+            with
+                every c in usart_tx do
+                    _ceu_out_assert(_UCSR0A & (1<<_UDRE0));
+                    _ceu_out_assert(not on_tx);
+                    on_tx = true;
+                    atomic do
+                        _UDR0 = c;          // send data
+                    end
+                end
+            end
+        end
+        _UCSR0B = 0;    // disable RX/TX/ISR
+    end
+end

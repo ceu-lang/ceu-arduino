@@ -1,0 +1,52 @@
+input int PIN02;
+#include "pins.ceu"
+
+#include "timer.ceu"
+#include "usart.ceu"
+
+input void OS_START;
+await OS_START;
+
+emit usart_begin => 9600;
+
+watching 4s do
+    loop do
+        par/and do
+            await 1s;
+        with
+            emit usart_tx => 'o';
+            await USART_TX_DONE;
+            emit usart_tx => 'i';
+            await USART_TX_DONE;
+            emit usart_tx => '\n';
+            await USART_TX_DONE;
+        end
+    end
+end
+
+watching PIN02 do
+    var byte c = 0;
+    par do
+        every rx in USART_RX do
+            c = rx;
+        end
+    with
+        loop do
+            await USART_RX;
+            loop do
+                emit usart_tx => c;
+                c = 0;
+                await USART_TX_DONE;
+                if c == 0 then
+                    break;
+                end
+            end
+        end
+    end
+end
+
+// error
+emit usart_tx => 'a';
+emit usart_tx => 'b';
+
+escape 0;

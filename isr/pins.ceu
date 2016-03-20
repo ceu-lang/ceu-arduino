@@ -2,8 +2,10 @@
 _pinMode( 2, _INPUT);
 { #endif };
 
-async/isr (_digitalPinToInterrupt(2),_CHANGE) do
-    emit PIN02 => _digitalRead(2);
+spawn do
+    async/isr (_digitalPinToInterrupt(2),_CHANGE) do
+        emit PIN02 => _digitalRead(2);
+    end
+    await FOREVER;
 end
-await FOREVER;
 

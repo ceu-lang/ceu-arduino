@@ -79,6 +79,7 @@ ISR(USART_TX_vect)
 }
 #endif
 
+#define CEU ((CEU_Main*)(CEU_APP.data))
 byte CEU_DATA[sizeof(CEU_Main)];
 tceu_app CEU_APP;
 

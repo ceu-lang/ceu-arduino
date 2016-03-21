@@ -44,6 +44,15 @@ watching PIN02 do
     end
 end
 
+// should tx up to 1-6
+watching 6ms do
+    emit USART_TX => ((byte&&)"1234567890",10);
+    finalize with
+        emit USART_TX_CANCEL;
+    end
+    await USART_TX_DONE;
+end
+
 // error
 emit USART_TX => ((byte&&)"Hello World!\n",13);
 emit USART_TX => ((byte&&)"Hello World!\n",13);

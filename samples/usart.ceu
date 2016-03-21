@@ -15,7 +15,7 @@ pre do
     input  byte         USART_RX;
 
     output (byte&&,int) USART_TX;
-    output byte&&       USART_TX_CANCEL;
+    output void         USART_TX_CANCEL;
     input  void         USART_TX_DONE;
     var    bool         usart_tx_going = false;
     var    byte&&       usart_tx_buf = null;
@@ -56,17 +56,25 @@ spawn do
             with
                 native do
                     ##define ceu_out_emit_USART_TX(args) ceu_sys_usart_tx(args->_1, args->_2)
-                    static void ceu_sys_usart_tx_one (void) {
+                    static int ceu_sys_usart_tx_one (void) {
                         ceu_out_assert(UCSR0A & (1<<UDRE0));
                         UDR0 = *(CEU->usart_tx_buf++);
                         CEU->usart_tx_len--;
+                        return 0;
                     }
-                    static void ceu_sys_usart_tx (byte* buf, int len) {
+                    static int ceu_sys_usart_tx (byte* buf, int len) {
                         ceu_out_assert(len>0 && CEU->usart_on && !CEU->usart_tx_going);
                         CEU->usart_tx_going = 1;
                         CEU->usart_tx_len   = len;
                         CEU->usart_tx_buf   = buf;
                         ceu_sys_usart_tx_one();
+                        return 0;
+                    }
+
+                    ##define ceu_out_emit_USART_TX_CANCEL(args) ceu_sys_usart_tx_cancel()
+                    static int ceu_sys_usart_tx_cancel (void) {
+                        CEU->usart_tx_len = 0;
+                        return 0;
                     }
                 end
                 async/isr [_USART_TX_vect_num,0] do

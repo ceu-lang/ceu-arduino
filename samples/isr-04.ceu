@@ -13,6 +13,8 @@ input int PIN02;
 _pinMode(13, _OUTPUT);
 _pinMode( 2, _INPUT);
 
+@safe _digitalWrite with _digitalRead; // different pins
+
 par do
     atomic do
         _TCCR1A = 0;
@@ -22,13 +24,13 @@ par do
         _TIMSK1 = _TIMSK1 | (1 << _TOIE1);  // enable timer overflow interrupt
     end
 
-    async/isr (_TIMER1_OVF_vect_num, 0) do
+    async/isr [_TIMER1_OVF_vect_num, 0] do
         _TCNT1 = 34286;            // preload timer 65536-16MHz/256/2Hz
         emit 500ms;
     end
     await FOREVER;
 with
-    async/isr (_digitalPinToInterrupt(2),_CHANGE) do
+    async/isr [_digitalPinToInterrupt(2),_CHANGE] do
         emit PIN02 => _digitalRead(2);
     end
     await FOREVER;

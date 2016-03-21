@@ -77,7 +77,7 @@ spawn do
                         return 0;
                     }
                 end
-                async/isr [_USART_TX_vect_num,0] do
+                async/isr [_USART_TX_vect_num,0] (usart_tx_len,usart_tx_going) do
                     if usart_tx_len > 0 then
                         _ceu_sys_usart_tx_one();
                     else

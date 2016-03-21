@@ -31,17 +31,19 @@ input int PIN02;
 _pinMode(13, _OUTPUT);
 _pinMode( 2, _INPUT);
 
+@safe _digitalWrite with _digitalRead; // different pins
+
 par do
     atomic do
         _TCCR1A = 0;
         _TCCR1B = (1 << _CS12) | (1 << _CS10); // 1024 prescaler
     end
-    async/isr (_TIMER1_OVF_vect_num, 0) do
+    async/isr [_TIMER1_OVF_vect_num, 0] do
         emit (_US)us;
     end
     await FOREVER;
 with
-    async/isr (_digitalPinToInterrupt(2),_CHANGE) do
+    async/isr [_digitalPinToInterrupt(2),_CHANGE] do
         emit PIN02 => _digitalRead(2);
     end
     await FOREVER;

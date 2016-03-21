@@ -1,10 +1,12 @@
+_pinMode(13, _OUTPUT);
+_pinMode( 2, _INPUT);
+
+@safe _digitalWrite with _digitalRead; // different pins
+
 #include "timer.ceu"
 
 input int PIN02;
 #include "pins.ceu"
-
-_pinMode(13, _OUTPUT);
-_pinMode( 2, _INPUT);
 
 loop do
     watching PIN02 do

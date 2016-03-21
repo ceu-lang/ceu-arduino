@@ -13,6 +13,8 @@ input int PIN02;
 _pinMode(13, _OUTPUT);
 _pinMode( 2, _INPUT);
 
+@safe _digitalWrite with _digitalRead; // different pins
+
 par do
     // initialize timer1 
     atomic do
@@ -25,12 +27,12 @@ par do
         _TIMSK1 = _TIMSK1 | (1 << _OCIE1A);  // enable timer compare interrupt
     end
 
-    async/isr (_TIMER1_COMPA_vect_num, 0) do
+    async/isr [_TIMER1_COMPA_vect_num, 0] do
         emit 500ms;
     end
     await FOREVER;
 with
-    async/isr (_digitalPinToInterrupt(2),_CHANGE) do
+    async/isr [_digitalPinToInterrupt(2),_CHANGE] do
         emit PIN02 => _digitalRead(2);
     end
     await FOREVER;

@@ -1,3 +1,5 @@
+#include "arduino.ceu"
+
 input int PIN02;
 #include "pins.ceu"
 
@@ -14,11 +16,7 @@ watching 4s do
         par/and do
             await 1s;
         with
-            emit usart_tx => 'o';
-            await USART_TX_DONE;
-            emit usart_tx => 'i';
-            await USART_TX_DONE;
-            emit usart_tx => '\n';
+            emit USART_TX => ((byte&&)"Hello World!\n",13);
             await USART_TX_DONE;
         end
     end
@@ -34,7 +32,8 @@ watching PIN02 do
         loop do
             await USART_RX;
             loop do
-                emit usart_tx => c;
+                var byte cc = c;
+                emit USART_TX => (&&cc,1);
                 c = 0;
                 await USART_TX_DONE;
                 if c == 0 then
@@ -46,7 +45,7 @@ watching PIN02 do
 end
 
 // error
-emit usart_tx => 'a';
-emit usart_tx => 'b';
+emit USART_TX => ((byte&&)"Hello World!\n",13);
+emit USART_TX => ((byte&&)"Hello World!\n",13);
 
 escape 0;

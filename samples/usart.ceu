@@ -7,27 +7,35 @@ native do
 #endif
 end
 
-event int  usart_begin;
-event void usart_end;
-event byte usart_tx;
-input byte USART_RX;
-input void USART_TX_DONE;
+pre do
+    var    bool         usart_on = false;
+    event  int          usart_begin;
+    event  void         usart_end;
+
+    input  byte         USART_RX;
+
+    output (byte&&,int) USART_TX;
+    output byte&&       USART_TX_CANCEL;
+    input  void         USART_TX_DONE;
+    var    bool         usart_tx_going = false;
+    var    byte&&       usart_tx_buf = null;
+    var    int          usart_tx_len = 0;
+end
+
+native @pure _BAUD_USART;
+@safe _ceu_sys_usart_tx_one;
 
 spawn do
     loop do
-        par/or do
-            var int speed = await usart_begin;
-            _UBRR0H = (byte)(_BAUD_USART(speed)>>8); // set baud rate
-            _UBRR0L = (byte)(_BAUD_USART(speed));
-            _UCSR0C = (1<<_USBS0)|(3<<_UCSZ00);     // 8data, 2stop-bit
-            _UCSR0B = (1<<_RXEN0)  | (1<<_TXEN0)    // enable RX/TX
-                    | (1<<_RXCIE0) | (1<<_TXCIE0);  // enable interrupts
-        with
-            await usart_tx;
-            _ceu_out_assert(0);
-        end
-
+        var int speed = await usart_begin;
+        usart_on = true;
+        _UBRR0H = (byte)(_BAUD_USART(speed)>>8); // set baud rate
+        _UBRR0L = (byte)(_BAUD_USART(speed));
+        _UCSR0C = (1<<_USBS0)|(3<<_UCSZ00);     // 8data, 2stop-bit
+        _UCSR0B = (1<<_RXEN0)  | (1<<_TXEN0)    // enable RX/TX
+                | (1<<_RXCIE0) | (1<<_TXCIE0);  // enable interrupts
         finalize with
+            usart_on = false;
             _UCSR0B = 0;    // disable TX/RX & interrups
         end
 
@@ -39,30 +47,38 @@ spawn do
                 await FOREVER;
             end
 
-            var bool on_tx = false;
             par do
-                async/isr (_USART_RX_vect_num,0) do
+                async/isr [_USART_RX_vect_num,0] do
                     var byte c = _UDR0;
                     emit USART_RX => c;
                 end
                 await FOREVER;
             with
-                async/isr (_USART_TX_vect_num,0) do
-                    on_tx = false;
-                    emit USART_TX_DONE;
+                native do
+                    ##define ceu_out_emit_USART_TX(args) ceu_sys_usart_tx(args->_1, args->_2)
+                    static void ceu_sys_usart_tx_one (void) {
+                        ceu_out_assert(UCSR0A & (1<<UDRE0));
+                        UDR0 = *(CEU->usart_tx_buf++);
+                        CEU->usart_tx_len--;
+                    }
+                    static void ceu_sys_usart_tx (byte* buf, int len) {
+                        ceu_out_assert(len>0 && CEU->usart_on && !CEU->usart_tx_going);
+                        CEU->usart_tx_going = 1;
+                        CEU->usart_tx_len   = len;
+                        CEU->usart_tx_buf   = buf;
+                        ceu_sys_usart_tx_one();
+                    }
                 end
-                await FOREVER;
-            with
-                every c in usart_tx do
-                    _ceu_out_assert(_UCSR0A & (1<<_UDRE0));
-                    _ceu_out_assert(not on_tx);
-                    on_tx = true;
-                    atomic do
-                        _UDR0 = c;          // send data
+                async/isr [_USART_TX_vect_num,0] do
+                    if usart_tx_len > 0 then
+                        _ceu_sys_usart_tx_one();
+                    else
+                        usart_tx_going = false;
+                        emit USART_TX_DONE;
                     end
                 end
+                await FOREVER;
             end
         end
-        _UCSR0B = 0;    // disable RX/TX/ISR
     end
 end

@@ -1,3 +1,7 @@
+###############################################################################
+# EDIT
+###############################################################################
+
 ARD_EXE    = /opt/arduino-1.6.8/arduino
 #ARD_EXE   = arduino
 ARD_ARCH   ?= avr
@@ -9,15 +13,19 @@ ARD_PORT   ?= /dev/ttyACM0
 ARD_FLAGS += --verbose
 #ARD_FLAGS += --preserve-temp-files		# only Arduino >= 1.6?
 
-# main.c needs to be renamed to x.ino, where x must equal to OUT_DIR
-ARD_INO = $(OUT_DIR)/$(OUT_DIR).ino;
-
 #C_FLAGS += -DHardwareSerial_h	# only for ISR
 C_FLAGS += -I$(ARCH_DIR_ABS)
 C_FLAGS := --pref compiler.cpp.extra_flags="$(C_FLAGS)"
 
 CEU_FLAGS += --safety 2
 CEU_FLAGS += --out-c _ceu_app.c.h
+
+###############################################################################
+# DO NOT EDIT
+###############################################################################
+
+# main.c needs to be renamed to x.ino, where x must equal to OUT_DIR
+ARD_INO = $(OUT_DIR)/$(OUT_DIR).ino;
 
 all: compiler ceu c
 	:	# nop

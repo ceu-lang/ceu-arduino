@@ -1,15 +1,3 @@
-ifneq ($(MAKECMDGOALS),clean)
-ifneq ($(MAKECMDGOALS),c)
-ifndef CEU
-$(error USAGE: make CEU=<path-to-ceu-file>)
-endif
-endif
-endif
-
-INO ?= *.ino
-
-#This feature is available since beta release 1.5.2
-
 #ARDUINO ?= arduino
 #ARDUINO = /opt/arduino-1.5.8/arduino
 ARDUINO = /opt/arduino-1.6.6/arduino
@@ -28,23 +16,34 @@ BOARD ?= uno
 
 PORT ?= /dev/ttyACM0
 
+# only Arduino >= 1.6?
 PRESERVE = --preserve-temp-files
 
-.PHONY: all ceu ino clean
+#CFLAGS += -DHardwareSerial_h	# only for ISR
+CFLAGS += -I$(ARCH_DIR)
+CFLAGS := --pref compiler.cpp.extra_flags="$(CFLAGS)"
 
-all: ceu c
+CEU_FLAGS += --safety 2
+CEU_FLAGS += --out-c _ceu_app.c.h
 
-c:
-	$(ARDUINO) --verbose $(PRESERVE) \
+# main.c needs to be renamed to x.ino, where x must equal to OUT_DIR
+INO = $(OUT_DIR)/$(OUT_DIR).ino;
+
+all: compiler ceu
+	cp $(ARCH_DIR)/main.c $(INO)
+	$(ARDUINO) --verbose $(PRESERVE) $(CFLAGS) \
 			   --board arduino:$(ARCH):$(BOARD)$(CPU) \
 			   --port $(PORT) --upload $(INO)
 
-ceu:
-	ceu $(CEU) --out-c _ceu_app.c.h
+c:
+	cp $(ARCH_DIR)/main.c $(INO)
+	$(ARDUINO) --verbose $(PRESERVE) $(CFLAGS) \
+			   --board arduino:$(ARCH):$(BOARD)$(CPU) \
+			   --port $(PORT) --verify $(INO)
 
 clean:
+	rm -rf $(OUT_DIR)/
 	rm -Rf /tmp/build*
-	find . -name "_ceu_*" | xargs rm -f
 
 ### SIM ###
 sim: sim-ceu ino _all

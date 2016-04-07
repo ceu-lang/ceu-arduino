@@ -3,6 +3,8 @@
 
 native @const  _INPUT, _INPUT_PULLUP, _OUTPUT, _LOW, _HIGH;
 
+@safe _ceu_out_assert;
+
 @safe PIN00 with PIN01, PIN02, PIN03, PIN04, PIN05, PIN06, PIN07,
                 PIN08, PIN09, PIN10, PIN11, PIN12, PIN13;
 @safe PIN01 with PIN02, PIN03, PIN04, PIN05, PIN06, PIN07,

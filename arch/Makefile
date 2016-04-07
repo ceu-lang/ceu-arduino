@@ -6,8 +6,8 @@ ARD_BOARD  ?= uno
 #ARD_CPU   ?= :cpu=atmega328p
 ARD_PORT   ?= /dev/ttyACM0
 
-ARD_FLAGS += --preserve-temp-files		# only Arduino >= 1.6?
 ARD_FLAGS += --verbose
+#ARD_FLAGS += --preserve-temp-files		# only Arduino >= 1.6?
 
 # main.c needs to be renamed to x.ino, where x must equal to OUT_DIR
 ARD_INO = $(OUT_DIR)/$(OUT_DIR).ino;
@@ -19,17 +19,14 @@ C_FLAGS := --pref compiler.cpp.extra_flags="$(C_FLAGS)"
 CEU_FLAGS += --safety 2
 CEU_FLAGS += --out-c _ceu_app.c.h
 
-all: compiler ceu
-	cp $(ARCH_DIR_ABS)/main.c $(ARD_INO)
-	$(ARD_EXE) $(ARD_FLAGS) $(C_FLAGS) \
-			   --board arduino:$(ARD_ARCH):$(ARD_BOARD)$(ARD_CPU) \
-			   --port $(ARD_PORT) --upload $(ARD_INO)
+all: compiler ceu c
+	:	# nop
 
 c:
 	cp $(ARCH_DIR_ABS)/main.c $(ARD_INO)
 	$(ARD_EXE) $(ARD_FLAGS) $(C_FLAGS) \
 			   --board arduino:$(ARD_ARCH):$(ARD_BOARD)$(ARD_CPU) \
-			   --port $(ARD_PORT) --verify $(ARD_INO)
+			   --port $(ARD_PORT) --upload $(ARD_INO)
 
 clean:
 	rm -rf $(OUT_DIR)/

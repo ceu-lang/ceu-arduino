@@ -1,45 +1,35 @@
-#ARDUINO ?= arduino
-#ARDUINO = /opt/arduino-1.5.8/arduino
-ARDUINO = /opt/arduino-1.6.6/arduino
-#ARDUINO = /opt/arduino-1.6.8/arduino
+ARD_EXE    = /opt/arduino-1.6.8/arduino
+#ARD_EXE   = arduino
+ARD_ARCH   ?= avr
+ARD_BOARD  ?= uno
+#ARD_BOARD ?= mega
+#ARD_CPU   ?= :cpu=atmega328p
+ARD_PORT   ?= /dev/ttyACM0
 
-ARCH ?= avr
+ARD_FLAGS += --preserve-temp-files		# only Arduino >= 1.6?
+ARD_FLAGS += --verbose
 
-BOARD ?= uno
-#BOARD ?= mega
-#BOARD = lilypad328
-#BOARD = Microduino
-#BOARD = 644pa16m
+# main.c needs to be renamed to x.ino, where x must equal to OUT_DIR
+ARD_INO = $(OUT_DIR)/$(OUT_DIR).ino;
 
-#CPU ?= :cpu=atmega328p
-#CPU ?= :cpu=atmega168
-
-PORT ?= /dev/ttyACM0
-
-# only Arduino >= 1.6?
-PRESERVE = --preserve-temp-files
-
-#CFLAGS += -DHardwareSerial_h	# only for ISR
-CFLAGS += -I$(ARCH_DIR)
-CFLAGS := --pref compiler.cpp.extra_flags="$(CFLAGS)"
+#C_FLAGS += -DHardwareSerial_h	# only for ISR
+C_FLAGS += -I$(ARCH_DIR_ABS)
+C_FLAGS := --pref compiler.cpp.extra_flags="$(C_FLAGS)"
 
 CEU_FLAGS += --safety 2
 CEU_FLAGS += --out-c _ceu_app.c.h
 
-# main.c needs to be renamed to x.ino, where x must equal to OUT_DIR
-INO = $(OUT_DIR)/$(OUT_DIR).ino;
-
 all: compiler ceu
-	cp $(ARCH_DIR)/main.c $(INO)
-	$(ARDUINO) --verbose $(PRESERVE) $(CFLAGS) \
-			   --board arduino:$(ARCH):$(BOARD)$(CPU) \
-			   --port $(PORT) --upload $(INO)
+	cp $(ARCH_DIR_ABS)/main.c $(ARD_INO)
+	$(ARD_EXE) $(ARD_FLAGS) $(C_FLAGS) \
+			   --board arduino:$(ARD_ARCH):$(ARD_BOARD)$(ARD_CPU) \
+			   --port $(ARD_PORT) --upload $(ARD_INO)
 
 c:
-	cp $(ARCH_DIR)/main.c $(INO)
-	$(ARDUINO) --verbose $(PRESERVE) $(CFLAGS) \
-			   --board arduino:$(ARCH):$(BOARD)$(CPU) \
-			   --port $(PORT) --verify $(INO)
+	cp $(ARCH_DIR_ABS)/main.c $(ARD_INO)
+	$(ARD_EXE) $(ARD_FLAGS) $(C_FLAGS) \
+			   --board arduino:$(ARD_ARCH):$(ARD_BOARD)$(ARD_CPU) \
+			   --port $(ARD_PORT) --verify $(ARD_INO)
 
 clean:
 	rm -rf $(OUT_DIR)/

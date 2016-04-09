@@ -2,11 +2,12 @@
 # EDIT
 ###############################################################################
 
-ARCH_DIR = $(error set path to "<ceu-arduino>/arch/?" repository)
 CEU_DIR  = $(error set path to "<ceu>" repository)
 
 ###############################################################################
 # DO NOT EDIT
 ###############################################################################
+
+ARCH_DIR = ../arch/poll
 
 include $(CEU_DIR)/Makefile

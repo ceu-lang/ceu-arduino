@@ -1,12 +1,5 @@
 build/
-ignore/
-gd2/
-_ceu_*
-*_m4
-*.exe
+samples
+arch/up
 *.swp
 *.swo
-*.a
-*.o
-*.hex
-*.elf

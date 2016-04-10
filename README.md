@@ -21,15 +21,9 @@ Join our chat at https://gitter.im/fsantanna/ceu
 
 # Quick Start
 
-## Install `ceu`:
-
-First, you need to install `ceu`:
-
-https://github.com/fsantanna/ceu/
-
 ## Install `arduino`:
 
-Then, you need to install `arduino`:
+First, you need to install `arduino`:
 
 ```
 # Ubuntu:
@@ -39,31 +33,45 @@ $ sudo apt-get install arduino
 - Arduino: http://www.arduino.cc/
 ```
 
-## Change to `poll` or `isr` bindings:
+## Install `ceu`:
 
+Then, you need to install `ceu`:
+
+https://github.com/fsantanna/ceu/
+
+## Download and Configure `ceu-arduino`:
+
+Then, you need to download and configure `ceu-arduino`:
+
+```
+$ git clone https://github.com/fsantanna/ceu-arduino/
+$ cd ceu-arduino/
+```
+
+Edit the `Makefile` to point to your `ceu` directory:
+
+```
+$ vi Makefile
+CEU_DIR ?= <path to "ceu" repository>  # EDIT THIS LINE
+```
+
+Run `make link` to properly point to your `ceu` repository:
+
+```
+$ make link
+```
+
+## Run the examples
+
+<!--
 First, try the `poll` binding:
 
 ```
 $ cd poll/
 ```
+-->
 
-After testing `poll` (see below), try also the `isr` binding:
-
-```
-$ cd ../isr/
-```
-
-## Edit `Makefile`:
-
-Then, you need to edit `Makefile` to point to your `ceu` directory:
-
-```
-CEU_DIR ?= <path to "ceu" repository>  # EDIT THIS LINE
-```
-
-## Run the examples
-
-Now, you are ready to run the examples:
+Now, you are ready to run the examples.
 
 ```
 $ make samples
@@ -90,6 +98,15 @@ File: samples/blink-01.ceu
 ##########################################################################
 Press <enter> to start...
 ```
+
+<!--
+After testing `poll`, try also the `isr` binding:
+
+```
+$ cd ../isr/
+$ make samples
+```
+-->
 
 # Applications
 

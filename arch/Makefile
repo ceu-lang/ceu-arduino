@@ -13,26 +13,26 @@ ARD_PORT   ?= /dev/ttyACM0
 ARD_FLAGS += --verbose
 #ARD_FLAGS += --preserve-temp-files		# only Arduino >= 1.6?
 
-#C_FLAGS += -DHardwareSerial_h	# only for ISR
-C_FLAGS += -I$(ARCH_DIR)
-C_FLAGS := --pref compiler.cpp.extra_flags="$(C_FLAGS)"
-
-CEU_FLAGS += --safety 2
-CEU_FLAGS += --out-c _ceu_app.c.h
-
 ###############################################################################
 # DO NOT EDIT
 ###############################################################################
 
 # ceu_main.c needs to be renamed to x.ino, where x must equal to OUT_DIR
-ARD_INO = $(OUT_DIR)/$(OUT_DIR).ino;
+ARD_INO = $(OUT_DIR)/$(OUT_DIR).ino
+
+#C_FLAGS += -DHardwareSerial_h	# only for ISR
+C_FLAGS_ += -I$(ARCH_DIR)
+C_FLAGS_ := --pref compiler.cpp.extra_flags="$(C_FLAGS_)"
+
+CEU_FLAGS += --safety 2
+CEU_FLAGS += --out-c _ceu_app.c.h
 
 all: ceu c
 	:	# nop
 
 c:
 	cp $(ARCH_DIR)/ceu_main.c $(ARD_INO)
-	$(ARD_EXE) $(ARD_FLAGS) $(C_FLAGS) \
+	$(ARD_EXE) $(ARD_FLAGS) $(C_FLAGS_) \
 			   --board arduino:$(ARD_ARCH):$(ARD_BOARD)$(ARD_CPU) \
 			   --port $(ARD_PORT) --upload $(ARD_INO)
 

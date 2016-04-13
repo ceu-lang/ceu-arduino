@@ -2,19 +2,26 @@
 # EDIT
 ###############################################################################
 
-CEU_DIR  ?= $(error set path to "<ceu>" repository)
+CEU_DIR  ?= $(error set absolute path to "<ceu>" repository)
+ARCH_SUB ?= poll
 
 ###############################################################################
 # DO NOT EDIT
 ###############################################################################
 
-ARCH_SUB = poll
-ARCH_DIR = arch/$(ARCH_SUB)
+ARD_DIR  = .
+ARCH_DIR = $(ARD_DIR)/arch/$(ARCH_SUB)
 
 include $(CEU_DIR)/Makefile
 
+ifneq ($(MAKECMDGOALS),link)
+ifeq ("$(wildcard $(ARD_DIR)/arch/up)","")
+$(error run "make link")
+endif
+endif
+
 link:
-	rm -f arch/up
-	ln -s `readlink -f $(CEU_DIR)/arch` arch/up
+	rm -f $(ARD_DIR)/arch/up
+	ln -s `readlink -f $(CEU_DIR)/arch` $(ARD_DIR)/arch/up
 	rm -f samples
 	ln -s samples-$(ARCH_SUB) samples

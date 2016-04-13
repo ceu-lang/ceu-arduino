@@ -18,7 +18,7 @@ ARD_FLAGS += --verbose
 ###############################################################################
 
 # ceu_main.c needs to be renamed to x.ino, where x must equal to OUT_DIR
-ARD_INO = $(OUT_DIR)/$(OUT_DIR).ino
+ARD_INO = $(OUT_DIR)/$(basename $(notdir $(OUT_DIR))).ino
 
 #C_FLAGS += -DHardwareSerial_h	# only for ISR
 C_FLAGS_ += -I$(ARCH_DIR)

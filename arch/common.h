@@ -1,3 +1,5 @@
+#ifndef _COMON_H
+
 #define ceu_out_isr_on()  interrupts()
 #define ceu_out_isr_off() noInterrupts()
 
@@ -38,3 +40,5 @@ void ceu_sys_log (int mode, long s) {
 #define ceu_out_emit_PIN11(v) digitalWrite(11, v->_1)
 #define ceu_out_emit_PIN12(v) digitalWrite(12, v->_1)
 #define ceu_out_emit_PIN13(v) digitalWrite(13, v->_1)
+
+#endif

@@ -22,7 +22,6 @@ ARD_INO = $(OUT_DIR)/$(basename $(notdir $(OUT_DIR))).ino
 
 #C_FLAGS += -DHardwareSerial_h	# only for ISR
 C_FLAGS_ += -I$(ARCH_DIR)
-C_FLAGS_ := --pref compiler.cpp.extra_flags="$(C_FLAGS_)"
 
 CEU_FLAGS += --safety 2
 CEU_FLAGS += --out-c _ceu_app.c.h
@@ -32,7 +31,7 @@ all: ceu c
 
 c:
 	cp $(ARCH_DIR)/ceu_main.c $(ARD_INO)
-	$(ARD_EXE) $(ARD_FLAGS) $(C_FLAGS_) \
+	$(ARD_EXE) $(ARD_FLAGS) --pref compiler.cpp.extra_flags="$(C_FLAGS_)" \
 			   --board arduino:$(ARD_ARCH):$(ARD_BOARD)$(ARD_CPU) \
 			   --port $(ARD_PORT) --upload $(ARD_INO)
 

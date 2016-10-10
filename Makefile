@@ -1,59 +1,38 @@
-ifneq ($(MAKECMDGOALS),clean)
-ifneq ($(MAKECMDGOALS),c)
-ifndef CEU
-$(error USAGE: make CEU=<path-to-ceu-file>)
-endif
-endif
-endif
+#CEU_DIR = $(error set absolute path to "<ceu>" repository)
+CEU_DIR = /data/ceu/ceu
 
-INO ?= *.ino
-
-#This feature is available since beta release 1.5.2
-
-#ARDUINO ?= arduino
-#ARDUINO = /opt/arduino-1.5.8/arduino
-ARDUINO = /opt/arduino-1.6.6/arduino
-#ARDUINO = /opt/arduino-1.6.8/arduino
-
-ARCH ?= avr
-
-BOARD ?= uno
-#BOARD ?= mega
-#BOARD = lilypad328
-#BOARD = Microduino
-#BOARD = 644pa16m
-
-#CPU ?= :cpu=atmega328p
-#CPU ?= :cpu=atmega168
-
-PORT ?= /dev/ttyACM0
+#ARD_EXE = arduino
+ARD_EXE   = /opt/arduino-1.6.12/arduino
+ARD_ARCH  = avr
+ARD_BOARD = uno
+ARD_PORT  = /dev/ttyACM0
+#ARD_BOARD = mega
+#ARD_BOARD = lilypad328
+#ARD_BOARD = Microduino
+#ARD_BOARD = 644pa16m
+#ARD_CPU = :cpu=atmega328p
+#ARD_CPU = :cpu=atmega168
 
 PRESERVE = --preserve-temp-files
-
-.PHONY: all ceu ino clean
 
 all: ceu c
 
 c:
-	$(ARDUINO) --verbose $(PRESERVE) \
-			   --board arduino:$(ARCH):$(BOARD)$(CPU) \
-			   --port $(PORT) --upload $(INO)
+	$(ARD_EXE) --verbose $(PRESERVE)								\
+			   --board arduino:$(ARD_ARCH):$(ARD_BOARD)$(ARD_CPU)	\
+			   --upload env/poll/poll.ino
+
+_c:
+	$(ARD_EXE) --verbose $(PRESERVE)								\
+			   --board arduino:$(ARD_ARCH):$(ARD_BOARD)$(ARD_CPU)	\
+			   --port $(ARD_PORT) --upload env/poll/poll.ino
 
 ceu:
-	ceu $(CEU) --out-c _ceu_app.c.h
+	ceu --pre --pre-args="-I$(CEU_DIR)/include -I./include"         \
+	          --pre-input=samples/blink1.ceu                        \
+	    --ceu --ceu-err-unused=pass --ceu-err-uninitialized=pass    \
+			  --ceu-features-lua=false --ceu-features-thread=false  \
+	    --env --env-types=env/types.h								\
+	          --env-output=env/poll/_ceu_app.c.h
 
-clean:
-	rm -Rf /tmp/build*
-	find . -name "_ceu_*" | xargs rm -f
-
-### SIM ###
-sim: sim-ceu ino _all
-sim-ceu:
-	ceu --timemachine --cpp-args "-I . -DCEUFILE=$(CEUFILE)" sim.ceu --out-c _ceu_app.src
-sim-tst: sim-tst-ceu ino _all
-sim-tst-ceu:
-	ceu --timemachine --cpp-args "-I ." sim-tst.ceu --out-c _ceu_app.src
-###
-
-#CPPFLAGS += -Wno-pointer-arith -Wno-unused-label
-#LINKFLAGS += -Wl,--section-start=.bootloader=0xE000
+.PHONY: all ceu

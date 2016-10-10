@@ -1,0 +1,6 @@
+#ifndef _ARDUINO_CEU
+#define _ARDUINO_CEU
+
+native/const  _INPUT, _INPUT_PULLUP, _OUTPUT, _LOW, _HIGH;
+
+#endif

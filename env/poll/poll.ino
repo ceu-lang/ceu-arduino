@@ -18,9 +18,11 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1,
             break;
         case CEU_CALLBACK_OUTPUT:
             switch (p1.num) {
+#ifdef _CEU_OUTPUT_PIN13_
                 case CEU_OUTPUT_PIN13:
                     digitalWrite(13, *((int*)p2.ptr));
                     break;
+#endif
             }
             break;
         default:

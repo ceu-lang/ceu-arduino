@@ -14,27 +14,20 @@
  * http://www.lua.inf.puc-rio.br/~francisco/
  */
 
-#include "arduino.ceu"
+#include "arduino/arduino.ceu"
 
-#ifdef CEU_TIMEMACHINE
-input void REDRAW_;
-input int  KEY_;
-#endif
 input void REDRAW;
 input int  KEY;
 
-native @const _KEY_NONE, _KEY_RIGHT, _KEY_UP, _KEY_DOWN,
-              _KEY_LEFT, _KEY_SELECT;
+native/const _KEY_NONE, _KEY_RIGHT, _KEY_UP, _KEY_DOWN,
+             _KEY_LEFT, _KEY_SELECT;
+native/pure _analog2key;
+native/nohold _randomSeed;
+native _analogRead, _map_generate, _redraw, _MAP, _END, _lcd;
 
-native _analogRead(), _map_generate(), _redraw(),
-       _MAP, _END;
-native @nohold _randomSeed();
+deterministic _analogRead with _map_generate, _redraw;
 
-native @pure _analog2key();
-
-@safe _analogRead with _map_generate, _redraw;
-
-native do
+native/pre do
     ##include <LiquidCrystal.h>
     LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 
@@ -93,13 +86,6 @@ native do
         } else {
             lcd.write('<');
         }
-
-#ifdef CEU_TIMEMACHINE
-        if (CEU_TIMEMACHINE_ON) {
-            lcd.setCursor(15,1);
-            lcd.write('!');
-        }
-#endif
     }
 
     int analog2key (u16 analog) {
@@ -119,13 +105,13 @@ end
 
 _lcd.begin(16, 2);
 output int PIN10;
-emit PIN10 => _LOW;
+emit PIN10(_LOW);
 
 _randomSeed(_analogRead(12));
 
 par do
     var int pct=0, dt=0, step=0, ship=0, points=0, dir=0;     // all initialized on "restart" below
-    var int win = 0;
+    var bool win = false;
 
     par do
         loop do
@@ -151,18 +137,18 @@ par do
             dir = 1;
             _map_generate(pct);
             await KEY;
-            win =
+            win = do
                 par do
                     loop do
                         await (dt)ms;
                         step = step + 1;
 
-                        if _MAP[ship][step] == '*' then
-                            escape 0;           // a collision
+                        if _MAP[ship][step] == {'*'} then
+                            escape false;           // a collision
                         end
 
                         if step == _END-1 then
-                            escape 1;           // finish line
+                            escape true;            // finish line
                         end
 
                         points = points + 1;
@@ -177,7 +163,8 @@ par do
                             ship = 1;
                         end
                     end
-                end;
+                end
+            end;
 
             par/or do
                 await 1s;
@@ -205,33 +192,19 @@ with
     loop do
         var int read1 = _analogRead(0);
                 read1 = _analog2key(read1);
-#ifdef CEU_TIMEMACHINE
-        await 50ms_;
-#else
         await 50ms;
-#endif
         var int read2 = _analogRead(0);
                 read2 = _analog2key(read2);
         if read1==read2 and key!=read1 then
             key = read1;
             if key != _KEY_NONE then
-                async (read1) do
-#ifdef CEU_TIMEMACHINE
-                    emit KEY_ => read1;
-#endif
-                    if not _CEU_TIMEMACHINE_ON then
-                        emit KEY => read1;
-                    end
+                await async (read1) do
+                    emit KEY(read1);
                 end
             end
         end
-        async do
-#ifdef CEU_TIMEMACHINE
-            emit REDRAW_;
-#endif
-            if not _CEU_TIMEMACHINE_ON then
-                emit REDRAW;
-            end
+        await async do
+            emit REDRAW;
         end
     end
 end

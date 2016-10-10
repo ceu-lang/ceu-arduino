@@ -29,7 +29,7 @@ _c:
 
 ceu:
 	ceu --pre --pre-args="-I$(CEU_DIR)/include -I./include"         \
-	          --pre-input=samples/blink1.ceu                        \
+	          --pre-input=samples/button1.ceu                        \
 	    --ceu --ceu-err-unused=pass --ceu-err-uninitialized=pass    \
 			  --ceu-features-lua=false --ceu-features-thread=false  \
 	    --env --env-types=env/types.h								\

@@ -104,8 +104,6 @@ native/pre do
 end
 
 _lcd.begin(16, 2);
-output int PIN10;
-emit PIN10(_LOW);
 
 _randomSeed(_analogRead(12));
 

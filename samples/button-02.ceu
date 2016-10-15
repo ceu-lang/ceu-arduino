@@ -1,0 +1,19 @@
+#include "arduino/arduino.ceu"
+
+input  int PIN_02;
+output int PIN_13;
+
+loop do
+    watching PIN_02 do
+        var int t = 1000;
+        loop do
+            emit PIN_13(LOW);
+            await (t)ms;
+            emit PIN_13(HIGH);
+            await (t)ms;
+            if t >= 200 then
+                t = t - 100;
+            end
+        end
+    end
+end

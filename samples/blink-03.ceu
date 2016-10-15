@@ -1,0 +1,28 @@
+#include "arduino/arduino.ceu"
+
+output int PIN_11;
+output int PIN_12;
+output int PIN_13;
+
+par do
+    loop do
+        emit PIN_11(HIGH);
+        await 1s;
+        emit PIN_11(LOW);
+        await 1s;
+    end
+with
+    loop do
+        emit PIN_12(HIGH);
+        await 500ms;
+        emit PIN_12(LOW);
+        await 500ms;
+    end
+with
+    loop do
+        emit PIN_13(HIGH);
+        await 250ms;
+        emit PIN_13(LOW);
+        await 250ms;
+    end
+end

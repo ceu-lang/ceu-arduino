@@ -1,8 +1,0 @@
-_pinMode(13, 1);            // OUTPUT PIN
-
-loop do
-    _digitalWrite(13, 1);   // ON
-    await 100ms;
-    _digitalWrite(13, 0);   // OFF
-    await 100ms;
-end

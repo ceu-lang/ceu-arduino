@@ -3,7 +3,7 @@
 static int is_terminating = 0;
 static int has_async      = 0;
 static u32 old;
-static u32 pins_bits;
+static u32 pins_bits      = 0;
 
 tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1,
                                          tceu_callback_arg p2)
@@ -182,6 +182,7 @@ void setup () {
     pinMode(13, OUTPUT);
 #endif
     old = millis();
+    //Serial.begin(9600);
     ceu_start();
 }
 
@@ -297,10 +298,10 @@ void loop ()
             }
 #endif
 #ifdef _CEU_INPUT_PIN_13_
-            int tmp = digitalRead(12);
-            if (bitRead(pins_bits,12) != tmp) {
-                bitWrite(pins_bits,12,tmp);
-                ceu_input(CEU_INPUT_PIN_12, &tmp);
+            int tmp = digitalRead(13);
+            if (bitRead(pins_bits,13) != tmp) {
+                bitWrite(pins_bits,13,tmp);
+                ceu_input(CEU_INPUT_PIN_13, &tmp);
             }
 #endif
         }

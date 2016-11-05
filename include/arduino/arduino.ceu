@@ -5,5 +5,9 @@
 #define LOW  _LOW
 
 native/const  _INPUT, _INPUT_PULLUP, _OUTPUT, _LOW, _HIGH;
+native
+    _digitalRead,
+    _Serial,
+;
 
 #endif

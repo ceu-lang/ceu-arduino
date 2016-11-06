@@ -4,9 +4,19 @@
 #define HIGH _HIGH
 #define LOW  _LOW
 
-native/const  _INPUT, _INPUT_PULLUP, _OUTPUT, _LOW, _HIGH;
+native/const
+    _CHANGE,
+    _HIGH,
+    _LOW,
+    _INPUT,
+    _INPUT_PULLUP,
+    _OUTPUT,
+;
+
 native
+    _digitalPinToInterrupt,
     _digitalRead,
+    _digitalWrite,
     _Serial,
 ;
 

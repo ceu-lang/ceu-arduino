@@ -19,19 +19,20 @@ all: ceu c
 c:
 	$(ARD_EXE) --verbose $(PRESERVE)								\
 			   --board arduino:$(ARD_ARCH):$(ARD_BOARD)$(ARD_CPU)	\
-			   --upload env/poll/poll.ino
+			   --upload env/env.ino
 
 _c:
 	$(ARD_EXE) --verbose $(PRESERVE)								\
 			   --board arduino:$(ARD_ARCH):$(ARD_BOARD)$(ARD_CPU)	\
-			   --port $(ARD_PORT) --upload env/poll/poll.ino
+			   --port $(ARD_PORT) --upload env/env.ino
 
 ceu:
 	ceu --pre --pre-args="-I$(CEU_DIR)/include -I./include"         \
 	          --pre-input=samples/blink-01.ceu                      \
 	    --ceu --ceu-err-unused=pass --ceu-err-uninitialized=pass    \
 			  --ceu-features-lua=false --ceu-features-thread=false  \
+	          --ceu-features-isr=true \
 	    --env --env-types=env/types.h								\
-	          --env-output=env/poll/_ceu_app.c.h
+	          --env-output=env/_ceu_app.c.h
 
 .PHONY: all ceu

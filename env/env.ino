@@ -1,5 +1,21 @@
 #include "_ceu_app.c.h"
 
+#ifdef CEU_FEATURES_ISR
+#include "wiring_private.h"
+#ifdef __AVR
+#include <avr/interrupt.h>
+/*
+ * ... Thus, normally interrupts will remain disabled inside the handler until
+ *     the handler exits, ...
+ * <http://www.nongnu.org/avr-libc/user-manual/group__avr__interrupts.html>
+ */
+#else
+#error "Unsupported Platform!"
+#endif
+
+static volatile voidFuncPtr isrs[_VECTORS_SIZE];
+#endif
+
 static int is_terminating = 0;
 static int has_async      = 0;
 static u32 old;
@@ -16,6 +32,37 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1,
         case CEU_CALLBACK_ASYNC_PENDING:
             has_async = 1;
             break;
+
+#ifdef CEU_FEATURES_ISR
+        case CEU_CALLBACK_ISR_ENABLE: {
+            if (p1.num == 1) {
+                interrupts();
+            } else {
+                noInterrupts();
+            }
+            break;
+        }
+        case CEU_CALLBACK_ISR_ATTACH: {
+            void(*f)() = (void(*)()) p1.ptr;
+            int* args = (int*) p2.ptr;
+            if (args[0] < EXTERNAL_NUM_INTERRUPTS) {
+                attachInterrupt(args[0], f, args[1]);
+            } else {
+                isrs[args[0]] = f;
+            }
+            break;
+        }
+        case CEU_CALLBACK_ISR_DETACH: {
+            int* args = (int*)p2.ptr;
+            if (args[0] < EXTERNAL_NUM_INTERRUPTS) {
+                detachInterrupt(args[0]);
+            } else {
+                isrs[args[0]] = NULL;
+            }
+            break;
+        }
+#endif
+
         case CEU_CALLBACK_OUTPUT:
             switch (p1.num) {
 #ifdef _CEU_OUTPUT_PIN_00_
@@ -190,6 +237,7 @@ void loop ()
 {
     while (!is_terminating)
     {
+noInterrupts();
         /* ASYNC */
         if (has_async) {
             has_async = 0;
@@ -305,6 +353,7 @@ void loop ()
             }
 #endif
         }
+interrupts();
     }
     ceu_stop();
     while (1);

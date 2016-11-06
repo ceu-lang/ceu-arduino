@@ -3,7 +3,7 @@
 input  int PIN_02;
 output int PIN_13;
 
-emit PIN_13(_LOW);
+emit PIN_13(LOW);
 
 loop do
     var int v = await PIN_02;

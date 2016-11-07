@@ -244,6 +244,7 @@ noInterrupts();
             ceu_input(CEU_INPUT__ASYNC, NULL);
         }
 
+#ifdef CEU_FEATURES_ISR
         /* WCLOCK */
         {
             u32 now = micros();
@@ -353,6 +354,7 @@ noInterrupts();
             }
 #endif
         }
+#endif
 interrupts();
     }
     ceu_stop();

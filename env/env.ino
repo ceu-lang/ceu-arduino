@@ -14,6 +14,17 @@
 #endif
 
 static volatile voidFuncPtr isrs[_VECTORS_SIZE];
+
+#ifdef CEU_ISR__TIMER1_COMPA_vect_num
+ISR(TIMER1_COMPA_vect)
+{
+    //static int v = 0;
+    //digitalWrite(12, v=!v);
+    if (isrs[TIMER1_COMPA_vect_num] != NULL) {
+        isrs[TIMER1_COMPA_vect_num]();
+    }
+}
+#endif
 #endif
 
 static int is_terminating = 0;
@@ -244,7 +255,7 @@ noInterrupts();
             ceu_input(CEU_INPUT__ASYNC, NULL);
         }
 
-#ifdef CEU_FEATURES_ISR
+#if CEU_ARDUINO_POOL_WCLOCK != 0
         /* WCLOCK */
         {
             u32 now = micros();
@@ -252,6 +263,7 @@ noInterrupts();
             ceu_input(CEU_INPUT__WCLOCK, &dt);
             old = now;
         }
+#endif
 
         /* PINS */
         {
@@ -354,7 +366,6 @@ noInterrupts();
             }
 #endif
         }
-#endif
 interrupts();
     }
     ceu_stop();

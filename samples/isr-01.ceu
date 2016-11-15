@@ -1,22 +1,22 @@
 /*
  * BUTTON => LED
- * Button press/release connected to PIN02 generates an interrupt.
- * Interrupt generates "emit PIN02" passing the button state.
+ * Button press/release connected to INT_PIN_02 generates an interrupt.
+ * Interrupt generates "emit INT_PIN_02" passing the button state.
  * Main program changes LED connected to PIN13 according to the button state.
  */
 
 #include "arduino/arduino.ceu"
 
-input  int PIN_02;
+input  int INT_PIN_02;
 output int PIN_13;
 
 emit PIN_13(LOW);
 
 spawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do
-    emit PIN_02(_digitalRead(2));
+    emit INT_PIN_02(_digitalRead(2));
 end
 
 var int v;
-every v in PIN_02 do
+every v in INT_PIN_02 do
     emit PIN_13(v);
 end

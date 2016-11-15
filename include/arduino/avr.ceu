@@ -1,5 +1,6 @@
 native/const
     _TIMER1_COMPA_vect_num,
+    _TIMER1_OVF_vect_num,
 ;
 
 native
@@ -10,5 +11,6 @@ native
     _TCCR1B,
     _TCNT1,
     _TIMSK1,
+    _TOIE1,
     _WGM12,
 ;

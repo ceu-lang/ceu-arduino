@@ -1,0 +1,57 @@
+/*
+ * TIMER-CTC => LED, TIMER => DETACH, BUTTON => RESTART
+ * Runs a timer on CTC mode, e.g., every 500ms generates an interrupt.
+ * Interrupt generates "emit 500ms" to the application.
+ * Also uses INT_PIN_02 interrupts from the previous example.
+ * Main program blinks LED connected to PIN13 every 500ms.
+ * Timer ISR aborts after 5s: ISR in C is also disabled due to finalize.
+ * Button click restarts timer ISR.
+ * (http://letsmakerobots.com/node/28278)
+ */
+
+#include "arduino/avr.ceu"
+#include "arduino/arduino.ceu"
+
+input  int INT_PIN_02;
+output int PIN_13;
+
+native/pre do
+    ##define CEU_ARDUINO_POLL_WCLOCK 0
+end
+
+spawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do
+    emit INT_PIN_02(_digitalRead(2));
+end
+
+spawn do
+    var int x = 0;
+    every 500ms do
+        x = 1 - x;
+        emit PIN_13(x);
+    end
+end
+
+do
+    _TCCR1A = 0;
+    _TCCR1B = 0;
+    _TCNT1  = 0;
+    _OCR1A  = 31250;
+    _TCCR1B = _TCCR1B | (1 << _WGM12);
+    _TCCR1B = _TCCR1B | (1 << _CS12);
+end
+
+loop do
+    do
+        // enable timer compare interrupt
+        _TIMSK1 = _TIMSK1 | (1 << _OCIE1A);
+        do finalize with
+            // disable timer compare interrupt
+            _TIMSK1 = _TIMSK1 & ~(1 << _OCIE1A);
+        end
+        spawn async/isr [_TIMER1_COMPA_vect_num, 0] do
+            emit 500ms;
+        end
+        await 5s;
+    end
+    await INT_PIN_02;
+end

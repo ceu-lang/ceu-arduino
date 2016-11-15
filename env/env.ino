@@ -26,6 +26,14 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1,
                                          tceu_callback_arg p2)
 {
     tceu_callback_ret ret = { .is_handled=1 };
+
+#ifdef ceu_callback_user
+    ret = ceu_callback_user(cmd, p1, p2);
+    if (ret.is_handled) {
+        return ret;
+    }
+#endif
+
     switch (cmd) {
         case CEU_CALLBACK_TERMINATING:
             is_terminating = 1;

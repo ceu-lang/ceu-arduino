@@ -4,6 +4,7 @@ native/const
 ;
 
 native
+    _CS10,
     _CS12,
     _OCIE1A,
     _OCR1A,

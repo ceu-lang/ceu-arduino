@@ -1,0 +1,108 @@
+/*
+ * With 1024 prescaler: 16M/1024 incs/s : 15625 incs/s
+ * 4194304 us for 65536 incs
+ */
+
+#include "arduino/avr.ceu"
+#include "arduino/arduino.ceu"
+
+#define CPU_FREQ        16000000                          // 16Mhz
+#define INCS_PER_SECOND (CPU_FREQ/1024)                   // 15625
+#define US_PER_CYCLE    (65536*1000000 / INCS_PER_SECOND) // 4194304
+#define US_TO_INCS(us)  ((us)*65536/US_PER_CYCLE)
+//#define US_TO_OVERFLOW(us) (65536 - US_TO_INCS(us))
+// all simplified goes to this:
+#define US_TO_OVERFLOW(us) (65536 - (us/64))
+
+native/pre do
+    ##define CEU_ARDUINO_POLL_WCLOCK 0
+end
+
+native _US;
+native/pos do
+    static s32 US = CEU_WCLOCK_INACTIVE;
+    ##define ceu_callback_user _ceu_callback_user_
+    tceu_callback_ret _ceu_callback_user_ (int cmd, tceu_callback_arg p1, tceu_callback_arg p2)
+    {
+        tceu_callback_ret ret = { .is_handled=1 };
+
+        switch (cmd) {
+            case CEU_CALLBACK_WCLOCK_MIN: {
+                s32 us = p1.num;
+                if (us == CEU_WCLOCK_INACTIVE) {
+                    TIMSK1 = TIMSK1 & ~(1 << TOIE1);
+                } else {
+                    US = us;
+                    s32 v = US_TO_OVERFLOW(us);
+                    ceu_dbg_assert(v > 0);
+                    TCNT1 = v;
+                    TIMSK1 = TIMSK1 | (1 << TOIE1);
+                }
+                break;
+            }
+
+            default:
+                ret.is_handled = 0;
+        }
+
+        return ret;
+    }
+end
+
+input  int INT_PIN_02;
+output int PIN_13;
+
+_TCCR1A = 0;
+_TCCR1B = (1 << _CS12) | (1 << _CS10); // 1024 prescaler
+spawn async/isr [_TIMER1_OVF_vect_num, 0] do
+    emit (_US)us;
+end
+
+var int i;
+
+loop i in [0->5[ do
+    emit PIN_13(1);
+    await 250ms;
+    emit PIN_13(0);
+    await 250ms;
+end
+
+await 1s;
+loop i in [0->5[ do
+    emit PIN_13(1);
+    await 500ms;
+    emit PIN_13(0);
+    await 500ms;
+end
+
+await 1s;
+loop i in [0->5[ do
+    emit PIN_13(1);
+    await 1s;
+    emit PIN_13(0);
+    await 1s;
+end
+
+await 1s;
+loop i in [0->5[ do
+    emit PIN_13(1);
+    await 2s;
+    emit PIN_13(0);
+    await 2s;
+end
+
+await 1s;
+emit PIN_13(1);
+loop i in [0->10[ do
+    await 1s;
+end
+emit PIN_13(0);
+
+// ERROR here, overflow!
+await 1s;
+loop i in [0->5[ do
+    emit PIN_13(1);
+    await 5s;
+    emit PIN_13(0);
+    await 5s;
+end

@@ -1,0 +1,57 @@
+#include "arduino/isr/timer.ceu"
+#include "arduino/isr/usart.ceu"
+#include "arduino/isr/pin-02.ceu"
+
+var& IUsart usart;
+spawn Usart(9600) -> (&usart);
+
+watching INT_PIN_02 do
+    loop do
+        par/and do
+            await 1s;
+        with
+            vector[20] byte str = [].."Hello World!\n";
+            await Usart_TX(&usart,&str);
+        end
+    end
+end
+
+await 1s;
+
+watching INT_PIN_02 do
+    vector[20] byte rx = [];
+    par do
+        var byte c;
+        every c in usart.ok_rx do
+            rx = rx .. [c];
+        end
+    with
+        loop do
+            if $rx == 0 then
+                await usart.ok_rx;
+            end
+            vector[20] byte tx = []..rx;
+            rx = [];
+            await Usart_TX(&usart,&tx);
+        end
+    end
+end
+
+// should tx up to 1-5
+watching 6ms do
+    vector[20] byte str = [].."12345\n67890";
+    await Usart_TX(&usart, &str);
+end
+
+// print both in sequence
+vector[20] byte str = [].."Hello World!\n";
+par/and do
+    await Usart_TX(&usart, &str);
+with
+    await Usart_TX(&usart, &str);
+end
+
+vector[20] byte str = [].."ok!\n";
+await Usart_TX(&usart, &str);
+
+await FOREVER;

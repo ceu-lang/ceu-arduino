@@ -1,3 +1,8 @@
+#define ceu_callback_assert_msg_ex(v,msg,file,line)                              \
+    if (!(v)) {                                                                  \
+        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL);                       \
+    }
+
 #include "_ceu_app.c.h"
 
 #ifdef CEU_FEATURES_ISR
@@ -35,6 +40,20 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1,
 #endif
 
     switch (cmd) {
+        case CEU_CALLBACK_ABORT: {
+            noInterrupts();
+            pinMode(13, OUTPUT);
+            for (;;) {
+                digitalWrite(13, !digitalRead(13));
+                delayMicroseconds(10000);
+                delayMicroseconds(10000);
+                delayMicroseconds(10000);
+                delayMicroseconds(10000);
+                delayMicroseconds(10000);
+            }
+            interrupts();
+        }
+
         case CEU_CALLBACK_TERMINATING:
             is_terminating = 1;
             break;
@@ -102,7 +121,7 @@ void loop ()
             ceu_input(CEU_INPUT__ASYNC, NULL);
         }
 
-#if CEU_ARDUINO_POOL_WCLOCK != 0
+#if !defined(CEU_ARDUINO_POLL_WCLOCK) || CEU_ARDUINO_POLL_WCLOCK!=0
         /* WCLOCK */
         {
             u32 now = micros();

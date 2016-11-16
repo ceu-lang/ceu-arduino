@@ -1,0 +1,44 @@
+#include "arduino/arduino.ceu"
+#include "arduino/avr.ceu"
+#include "arduino/isr/timer.ceu"
+
+native/pure _BAUD_USART;
+native/pre do
+#ifdef __AVR_ATmega644P__
+    ##define BAUD_USART(baud_human) (((F_CPU / (baud_human * 16UL))) - 1)
+#else
+    ##define BAUD_USART(baud_human) ((F_CPU / 4 / baud_human - 1) / 2)
+#endif
+end
+
+input void USART_TX;
+spawn async/isr [_USART_TX_vect_num,0] do
+    emit USART_TX;
+end
+
+_UBRR0H = (_BAUD_USART(9600)>>8) as byte;   // set baud rate
+_UBRR0L = (_BAUD_USART(9600)) as byte;
+_UCSR0C = (1<<_USBS0)|(3<<_UCSZ00);         // 8data, 2stop-bit
+_UCSR0B = (1<<_RXEN0)  | (1<<_TXEN0)        // enable RX/TX
+        | (1<<_RXCIE0) | (1<<_TXCIE0);      // enable interrupts
+do finalize with
+    _UCSR0B = 0;                            // disable TX/RX & interrups
+end
+
+loop do
+    await 1s;
+
+    _ceu_dbg_assert(_UCSR0A & (1<<_UDRE0));
+    _UDR0 = {'h'};
+    await USART_TX;
+    _UDR0 = {'e'};
+    await USART_TX;
+    _UDR0 = {'l'};
+    await USART_TX;
+    _UDR0 = {'l'};
+    await USART_TX;
+    _UDR0 = {'o'};
+    await USART_TX;
+    _UDR0 = {'\n'};
+    await USART_TX;
+end

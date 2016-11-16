@@ -1,6 +1,15 @@
+#ifndef _ARDUINO_AVR_CEU
+#define _ARDUINO_AVR_CEU
+
+native/pre do
+    ##include <avr/io.h>
+end
+
 native/const
     _TIMER1_COMPA_vect_num,
     _TIMER1_OVF_vect_num,
+    _USART_RX_vect_num,
+    _USART_TX_vect_num,
 ;
 
 native
@@ -8,10 +17,25 @@ native
     _CS12,
     _OCIE1A,
     _OCR1A,
+    _RXCIE0,
+    _RXEN0,
     _TCCR1A,
     _TCCR1B,
     _TCNT1,
     _TIMSK1,
     _TOIE1,
+    _TXCIE0,
+    _TXEN0,
+    _UBRR0H,
+    _UBRR0L,
+    _UCSR0A,
+    _UCSR0B,
+    _UCSR0C,
+    _UCSZ00,
+    _UDR0,
+    _UDRE0,
+    _USBS0,
     _WGM12,
 ;
+
+#endif

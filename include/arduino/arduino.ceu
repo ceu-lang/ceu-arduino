@@ -14,9 +14,11 @@ native/const
 ;
 
 native
+    _ceu_dbg_assert,
     _digitalPinToInterrupt,
     _digitalRead,
     _digitalWrite,
+    _pinMode,
     _Serial,
 ;
 

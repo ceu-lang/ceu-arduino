@@ -15,3 +15,21 @@ ISR(TIMER1_OVF_vect)
     }
 }
 #endif
+
+#ifdef CEU_ISR__USART_RX_vect_num
+ISR(USART_RX_vect)
+{
+    if (isrs[USART_RX_vect_num] != NULL) {
+        isrs[USART_RX_vect_num]();
+    }
+}
+#endif
+
+#ifdef CEU_ISR__USART_TX_vect_num
+ISR(USART_TX_vect)
+{
+    if (isrs[USART_TX_vect_num] != NULL) {
+        isrs[USART_TX_vect_num]();
+    }
+}
+#endif

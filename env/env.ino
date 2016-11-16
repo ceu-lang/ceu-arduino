@@ -74,7 +74,7 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1,
             tceu_isr* isr = (tceu_isr*) p1.ptr;
             int* args = (int*) p2.ptr;
             if (args[0] < EXTERNAL_NUM_INTERRUPTS) {
-                attachInterrupt(args[0], isr->fun, args[1]);    /* TODO: no mem */
+                attachInterrupt(args[0], (void(*)())(isr->fun), args[1]);    /* TODO: no mem */
             } else {
                 isrs[args[0]] = *isr;
             }

@@ -3,7 +3,8 @@
 #include "arduino/isr/pin-02.ceu"
 
 var& IUsart usart;
-spawn Usart(9600) -> (&usart);
+vector[20] byte rx = [];
+spawn Usart(9600, &rx) -> (&usart);
 
 watching INT_PIN_02 do
     loop do
@@ -19,21 +20,13 @@ end
 await 1s;
 
 watching INT_PIN_02 do
-    vector[20] byte rx = [];
-    par do
-        var byte c;
-        every c in usart.ok_rx do
-            rx = rx .. [c];
+    loop do
+        if $rx == 0 then
+            await usart.ok_rx;
         end
-    with
-        loop do
-            if $rx == 0 then
-                await usart.ok_rx;
-            end
-            vector[20] byte tx = []..rx;
-            rx = [];
-            await Usart_TX(&usart,&tx);
-        end
+        vector[20] byte tx = []..rx;
+        rx = [];
+        await Usart_TX(&usart,&tx);
     end
 end
 

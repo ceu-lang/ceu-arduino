@@ -14,25 +14,24 @@ input void USART_TX;
 
 data IUsart with
     var   Lock l;
-    event byte ok_rx;
+    event void ok_rx;
 end
 
-// TODO: move to Usart
+code/await Usart (var int speed, vector&[] byte rx)
+                    -> (var& IUsart usart)
+                        -> FOREVER
+do
+    var IUsart usart_ = _;
+    usart = &usart_;
+
     spawn async/isr [_USART_RX_vect_num,0] do
         var byte c = _UDR0;
         emit USART_RX(c);
     end
 
-// TODO: move to Usart
     spawn async/isr [_USART_TX_vect_num,0] do
         emit USART_TX;
     end
-
-
-code/await Usart (var int speed) -> (var& IUsart usart) -> FOREVER
-do
-    var IUsart usart_ = _;
-    usart = &usart_;
 
     _UBRR0H = (_BAUD_USART(speed)>>8) as byte;  // set baud rate
     _UBRR0L = (_BAUD_USART(speed)) as byte;
@@ -45,7 +44,8 @@ do
 
     var byte c;
     every c in USART_RX do
-        emit usart_.ok_rx(c);
+        rx = rx..[c];
+        emit usart_.ok_rx;
     end
 end
 

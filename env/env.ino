@@ -18,7 +18,7 @@
 #error "Unsupported Platform!"
 #endif
 
-static volatile voidFuncPtr isrs[_VECTORS_SIZE];
+static volatile tceu_isr isrs[_VECTORS_SIZE];
 #include "isrs.c.h"
 #endif
 
@@ -71,12 +71,12 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1,
             break;
         }
         case CEU_CALLBACK_ISR_ATTACH: {
-            void(*f)() = (void(*)()) p1.ptr;
+            tceu_isr* isr = (tceu_isr*) p1.ptr;
             int* args = (int*) p2.ptr;
             if (args[0] < EXTERNAL_NUM_INTERRUPTS) {
-                attachInterrupt(args[0], f, args[1]);
+                attachInterrupt(args[0], isr->fun, args[1]);    /* TODO: no mem */
             } else {
-                isrs[args[0]] = f;
+                isrs[args[0]] = *isr;
             }
             break;
         }
@@ -85,7 +85,7 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1,
             if (args[0] < EXTERNAL_NUM_INTERRUPTS) {
                 detachInterrupt(args[0]);
             } else {
-                isrs[args[0]] = NULL;
+                isrs[args[0]].fun = NULL;
             }
             break;
         }

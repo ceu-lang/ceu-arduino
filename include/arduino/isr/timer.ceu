@@ -48,59 +48,8 @@ native/pos do
     }
 end
 
-output int PIN_13;
-
 _TCCR1A = 0;
 _TCCR1B = (1 << _CS12) | (1 << _CS10); // 1024 prescaler
 spawn async/isr [_TIMER1_OVF_vect_num, 0] do
     emit (_US)us;
-end
-
-var int i;
-
-loop i in [0->5[ do
-    emit PIN_13(1);
-    await 250ms;
-    emit PIN_13(0);
-    await 250ms;
-end
-
-await 1s;
-loop i in [0->5[ do
-    emit PIN_13(1);
-    await 500ms;
-    emit PIN_13(0);
-    await 500ms;
-end
-
-await 1s;
-loop i in [0->5[ do
-    emit PIN_13(1);
-    await 1s;
-    emit PIN_13(0);
-    await 1s;
-end
-
-await 1s;
-loop i in [0->5[ do
-    emit PIN_13(1);
-    await 2s;
-    emit PIN_13(0);
-    await 2s;
-end
-
-await 1s;
-emit PIN_13(1);
-loop i in [0->10[ do
-    await 1s;
-end
-emit PIN_13(0);
-
-// ERROR here, overflow!
-await 1s;
-loop i in [0->5[ do
-    emit PIN_13(1);
-    await 5s;
-    emit PIN_13(0);
-    await 5s;
 end

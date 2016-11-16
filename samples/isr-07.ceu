@@ -48,6 +48,7 @@ native/pos do
     }
 end
 
+input  int INT_PIN_02;
 output int PIN_13;
 
 _TCCR1A = 0;
@@ -56,51 +57,19 @@ spawn async/isr [_TIMER1_OVF_vect_num, 0] do
     emit (_US)us;
 end
 
-var int i;
-
-loop i in [0->5[ do
-    emit PIN_13(1);
-    await 250ms;
-    emit PIN_13(0);
-    await 250ms;
+spawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do
+    emit INT_PIN_02(_digitalRead(2));
 end
 
-await 1s;
-loop i in [0->5[ do
-    emit PIN_13(1);
-    await 500ms;
-    emit PIN_13(0);
-    await 500ms;
-end
-
-await 1s;
-loop i in [0->5[ do
-    emit PIN_13(1);
-    await 1s;
-    emit PIN_13(0);
-    await 1s;
-end
-
-await 1s;
-loop i in [0->5[ do
-    emit PIN_13(1);
-    await 2s;
-    emit PIN_13(0);
-    await 2s;
-end
-
-await 1s;
-emit PIN_13(1);
-loop i in [0->10[ do
-    await 1s;
-end
-emit PIN_13(0);
-
-// ERROR here, overflow!
-await 1s;
-loop i in [0->5[ do
-    emit PIN_13(1);
-    await 5s;
-    emit PIN_13(0);
-    await 5s;
+loop do
+    watching INT_PIN_02 do
+        var int x = 0;
+        every 500ms do
+            x = 1 - x;
+            emit PIN_13(x);
+        end
+    end
+    await 1s;     // debouncing
+    await INT_PIN_02;
+    await 1s;     // debouncing
 end

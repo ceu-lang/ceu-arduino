@@ -1,6 +1,10 @@
 #include "arduino/arduino.ceu"
 #include "arduino/avr.ceu"
 
+native/pre do
+    ##define CEU_ARDUINO_SLEEP 1
+end
+
 native/pure _BAUD_USART;
 native/pre do
 #ifdef __AVR_ATmega644P__

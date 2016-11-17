@@ -2,6 +2,10 @@
 #include "arduino/isr/usart.ceu"
 #include "arduino/isr/pin-02.ceu"
 
+native/pre do
+    ##define CEU_ARDUINO_SLEEP 1
+end
+
 var& IUsart usart;
 vector[20] byte rx = [];
 spawn Usart(9600, &rx) -> (&usart);
@@ -20,12 +24,26 @@ end
 await 1s;
 
 watching INT_PIN_02 do
+#if 1
+    spawn do
+        await async do
+            loop do
+                _delayMicroseconds(10000);
+                //_delayMicroseconds(1000);
+            end
+        end
+    end
+#endif
+
     loop do
         if $rx == 0 then
             await usart.ok_rx;
         end
-        vector[20] byte tx = []..rx;
-        rx = [];
+        vector[20] byte tx;
+        atomic do
+            tx = []..rx;
+            rx = [];
+        end
         await Usart_TX(&usart,&tx);
     end
 end

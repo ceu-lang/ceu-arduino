@@ -15,6 +15,7 @@ native/const
 
 native
     _ceu_dbg_assert,
+    _delayMicroseconds,
     _digitalPinToInterrupt,
     _digitalRead,
     _digitalWrite,

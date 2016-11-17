@@ -5,6 +5,10 @@
  * Main program changes LED connected to PIN13 according to the button state.
  */
 
+native/pre do
+    ##define CEU_ARDUINO_SLEEP 1
+end
+
 #include "arduino/arduino.ceu"
 
 input  int INT_PIN_02;

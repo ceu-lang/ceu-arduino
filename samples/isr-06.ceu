@@ -14,7 +14,7 @@
 #define US_TO_OVERFLOW(us) (65536 - (us/64))
 
 native/pre do
-    ##define CEU_ARDUINO_POLL_WCLOCK 0
+    ##define CEU_ARDUINO_SLEEP 1
 end
 
 native _US;

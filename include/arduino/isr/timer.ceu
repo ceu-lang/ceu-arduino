@@ -13,10 +13,6 @@
 // all simplified goes to this:
 #define US_TO_OVERFLOW(us) (65536 - (us/64))
 
-native/pre do
-    ##define CEU_ARDUINO_POLL_WCLOCK 0
-end
-
 native _US;
 native/pos do
     static s32 US = CEU_WCLOCK_INACTIVE;

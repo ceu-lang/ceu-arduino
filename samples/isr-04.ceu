@@ -16,7 +16,7 @@ input  int INT_PIN_02;
 output int PIN_13;
 
 native/pre do
-    ##define CEU_ARDUINO_POLL_WCLOCK 0
+    ##define CEU_ARDUINO_SLEEP 1
 end
 
 spawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do

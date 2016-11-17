@@ -9,7 +9,7 @@ native/pre do
 #endif
 end
 
-input byte USART_RX;
+input void USART_RX;
 input void USART_TX;
 
 data IUsart with
@@ -24,9 +24,10 @@ do
     var IUsart usart_ = _;
     usart = &usart_;
 
-    spawn async/isr [_USART_RX_vect_num,0] do
+    spawn async/isr [_USART_RX_vect_num,0] (rx) do
         var byte c = _UDR0;
-        emit USART_RX(c);
+        rx = rx..[c];
+        emit USART_RX;
     end
 
     spawn async/isr [_USART_TX_vect_num,0] do
@@ -42,9 +43,7 @@ do
         _UCSR0B = 0;                            // disable TX/RX & interrups
     end
 
-    var byte c;
-    every c in USART_RX do
-        rx = rx..[c];
+    every USART_RX do
         emit usart_.ok_rx;
     end
 end

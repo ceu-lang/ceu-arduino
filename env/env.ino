@@ -188,23 +188,33 @@ void loop ()
 #endif
 
 #ifdef CEU_FEATURES_ISR
-#if CEU_ARDUINO_SLEEP
-        if (!has_async) {
-            sleep_mode();
-            pinMode(12, 1);
-            digitalWrite(12, !digitalRead(12));
-        }
-#endif
         {
+            tceu_evt_id_params evt;
             int i;
+            noInterrupts();
             for (i=0; i<_VECTORS_SIZE; i++) {
                 tceu_isr* isr = &isrs[i];
                 if (isr->evt.id != CEU_INPUT__NONE) {
-                    tceu_evt_id_params evt = isr->evt;
+                    evt = isr->evt;
                     isr->evt.id = CEU_INPUT__NONE;
+                    interrupts();
+                    //pinMode(12, 1);
+                    //digitalWrite(12, !digitalRead(12));
                     ceu_input(evt.id, evt.params);
+                    goto _CEU_ARDUINO_AWAKE_;
                 }
             }
+#if CEU_ARDUINO_SLEEP
+            //sleep_mode();
+            if (!has_async) {
+                sleep_enable();
+                interrupts();
+                sleep_cpu();
+                sleep_disable();
+            }
+            interrupts();
+#endif
+_CEU_ARDUINO_AWAKE_:;
         }
 #endif
     }

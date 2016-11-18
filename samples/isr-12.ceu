@@ -10,6 +10,22 @@ var& IUsart usart;
 vector[20] byte rx = [];
 spawn Usart(9600, &rx) -> (&usart);
 
+output int PIN_13;
+
+// heavy loop to evaluate ISR responsiveness
+spawn do
+    await async     // comment to freeze synchronous code in tight loop
+    do
+        var int v = 0;
+        loop do
+            v = 1 - v;
+            _digitalWrite(13,v);
+            //emit PIN_13(v);
+            DELAY(1000);
+        end
+    end
+end
+
 watching INT_PIN_02 do
     loop do
         par/and do
@@ -24,17 +40,6 @@ end
 await 1s;
 
 watching INT_PIN_02 do
-#if 1
-    spawn do
-        await async do
-            loop do
-                _delayMicroseconds(10000);
-                //_delayMicroseconds(1000);
-            end
-        end
-    end
-#endif
-
     loop do
         if $rx == 0 then
             await usart.ok_rx;

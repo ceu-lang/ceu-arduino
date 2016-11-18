@@ -23,4 +23,12 @@ native
     _Serial,
 ;
 
+#define DELAY(ms)                       \
+    do                                  \
+        var int i;                      \
+        loop i in [0->ms[ do            \
+            _delayMicroseconds(1000);   \
+        end                             \
+    end
+
 #endif

@@ -5,51 +5,29 @@
 
 #include "_ceu_app.c.h"
 
-#ifndef CEU_ARDUINO_POLL_WCLOCK
-    #ifdef CEU_ARDUINO_SLEEP
-        #define CEU_ARDUINO_POLL_WCLOCK 0
-    #else
-        #define CEU_ARDUINO_POLL_WCLOCK 1
-    #endif
-#endif
-
-#ifndef CEU_ARDUINO_POLL_PINS
-    #ifdef CEU_ARDUINO_SLEEP
-        #define CEU_ARDUINO_POLL_PINS 0
-    #else
-        #define CEU_ARDUINO_POLL_PINS 1
-    #endif
-#endif
-
-#ifndef CEU_ARDUINO_SLEEP
-#define CEU_ARDUINO_SLEEP 0
-#endif
-
-#if CEU_ARDUINO_SLEEP
-#if CEU_ARDUINO_POLL_WCLOCK || CEU_ARDUINO_POLL_PINS
-#error "Invalid option!"
-#endif
-#endif
-
 #ifdef CEU_FEATURES_ISR
-#include "wiring_private.h"
-#ifdef __AVR
-#include <avr/interrupt.h>
-#if CEU_ARDUINO_SLEEP
-#include <avr/sleep.h>
-#include <avr/power.h>
-#endif
+    #include "wiring_private.h"
+    #ifdef __AVR
+        #include <avr/interrupt.h>
+        #ifdef CEU_FEATURES_ISR_SLEEP
+            #include <avr/sleep.h>
+            #include <avr/power.h>
+        #endif
 /*
  * ... Thus, normally interrupts will remain disabled inside the handler until
  *     the handler exits, ...
  * <http://www.nongnu.org/avr-libc/user-manual/group__avr__interrupts.html>
  */
-#else
-#error "Unsupported Platform!"
-#endif
+    #else
+        #error "Unsupported Platform!"
+    #endif
 
-static volatile tceu_isr isrs[_VECTORS_SIZE];
-#include "isrs.c.h"
+    static volatile tceu_isr isrs[_VECTORS_SIZE];
+    #include "isrs.c.h"
+#else
+    #ifdef CEU_FEATURES_ISR_SLEEP
+        #error "Invalid option!"
+    #endif
 #endif
 
 typedef struct tceu_arduino {
@@ -135,6 +113,16 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1,
             isrs[p1.num].evt = *((tceu_evt_id_params*) p2.ptr);
             break;
         }
+#else
+        case CEU_CALLBACK_WCLOCK_DT: {
+            u32 now = micros();
+            s32 dt  = (u32)(now - CEU_ARDUINO.old);  // no problems with overflow
+            CEU_ARDUINO.old = now;
+
+            ret.value.num = dt;
+            ret.is_handled = 1;
+            break;
+        }
 #endif
 
         case CEU_CALLBACK_OUTPUT:
@@ -150,13 +138,12 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1,
 
 void setup () {
     #include "pins_modes.c.h"
-    //Serial.begin(9600);
 
 #ifdef CEU_FEATURES_ISR
 
     memset((void*)&isrs, 0, sizeof(isrs));
 
-#if CEU_ARDUINO_SLEEP
+#ifdef CEU_FEATURES_ISR_SLEEP
     set_sleep_mode(SLEEP_MODE_IDLE);
 #if 0
     set_sleep_mode(SLEEP_MODE_ADC);
@@ -182,21 +169,6 @@ void loop ()
             ceu_input(CEU_INPUT__ASYNC, NULL);
         }
 
-#if CEU_ARDUINO_POLL_WCLOCK
-        /* WCLOCK */
-        {
-            u32 now = micros();
-            s32 dt = now - CEU_ARDUINO.old;     // no problems with overflow
-            ceu_input(CEU_INPUT__WCLOCK, &dt);
-            CEU_ARDUINO.old = now;
-        }
-#endif
-
-#if CEU_ARDUINO_POLL_PINS
-        /* PINS */
-        #include "pins_inputs.c.h"
-#endif
-
 #ifdef CEU_FEATURES_ISR
         {
             tceu_evt_id_params evt;
@@ -214,7 +186,7 @@ void loop ()
                     goto _CEU_ARDUINO_AWAKE_;
                 }
             }
-#if CEU_ARDUINO_SLEEP
+#ifdef CEU_FEATURES_ISR_SLEEP
             //sleep_mode();
             if (!CEU_ARDUINO.has_async) {
                 sleep_enable();
@@ -222,11 +194,20 @@ void loop ()
                 sleep_cpu();
                 sleep_disable();
             }
-            interrupts();
 #endif
+            interrupts();
 _CEU_ARDUINO_AWAKE_:;
         }
+#else // !CEU_FEATURES_ISR
+        /* WCLOCK */
+        {
+            s32 dt = ceu_callback_void_void(CEU_CALLBACK_WCLOCK_DT).value.num;
+            ceu_input(CEU_INPUT__WCLOCK, &dt);
+        }
+        /* PINS */
+        #include "pins_inputs.c.h"
 #endif
+
     }
     ceu_stop();
     ceu_dbg_assert(0);

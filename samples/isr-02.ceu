@@ -1,13 +1,16 @@
 /*
  * BUTTON => LED (ISR)
- * BUTTON => LED (POLL)
- * Reconciles interrupts and polling in the same example.
- * Same as `isr-01.ceu`. In addition, polls PIN_03 to set PIN_12.
+ * BUTTON => LED (ISR)
+ * Same as `isr-01.ceu` with additional PIN_03/PIN_12.
  */
+
+native/pre do
+    //##define CEU_FEATURES_ISR_SLEEP
+end
 
 #include "arduino/arduino.ceu"
 
-input  int INT_PIN_02;
+input  int PIN_02;
 output int PIN_13;
 
 input  int PIN_03;
@@ -17,12 +20,16 @@ emit PIN_13(LOW);
 emit PIN_12(LOW);
 
 spawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do
-    emit INT_PIN_02(_digitalRead(2));
+    emit PIN_02(_digitalRead(2));
+end
+
+spawn async/isr [_digitalPinToInterrupt(3),_CHANGE] do
+    emit PIN_03(_digitalRead(3));
 end
 
 par do
     var int v;
-    every v in INT_PIN_02 do
+    every v in PIN_02 do
         emit PIN_13(v);
     end
 with

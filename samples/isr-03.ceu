@@ -11,11 +11,11 @@
 #include "arduino/avr.ceu"
 #include "arduino/arduino.ceu"
 
-input  int INT_PIN_02;
+input  int PIN_02;
 output int PIN_13;
 
 native/pre do
-    ##define CEU_ARDUINO_SLEEP 1
+    //##define CEU_FEATURES_ISR_SLEEP
 end
 
 // initialize timer1 
@@ -34,11 +34,11 @@ spawn async/isr [_TIMER1_COMPA_vect_num, 0] do
 end
 
 spawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do
-    emit INT_PIN_02(_digitalRead(2));
+    emit PIN_02(_digitalRead(2));
 end
 
 loop do
-    watching INT_PIN_02 do
+    watching PIN_02 do
         var int x = 0;
         every 500ms do
             x = 1 - x;

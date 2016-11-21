@@ -52,10 +52,14 @@ static volatile tceu_isr isrs[_VECTORS_SIZE];
 #include "isrs.c.h"
 #endif
 
-static int is_terminating = 0;
-static int has_async      = 0;
-static u32 old;
-static u32 pins_bits      = 0;
+typedef struct tceu_arduino {
+    int is_term;
+    int has_async;
+    u32 old;
+    u32 pins_bits;
+} tceu_arduino;
+
+static tceu_arduino CEU_ARDUINO;
 
 tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1,
                                          tceu_callback_arg p2)
@@ -70,6 +74,13 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1,
 #endif
 
     switch (cmd) {
+        case CEU_CALLBACK_START:
+            CEU_ARDUINO.is_term   = 0;
+            CEU_ARDUINO.has_async = 0;
+            CEU_ARDUINO.old       = micros();
+            CEU_ARDUINO.pins_bits = 0;
+            break;
+
         case CEU_CALLBACK_ABORT: {
             noInterrupts();
             pinMode(13, OUTPUT);
@@ -85,10 +96,10 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1,
         }
 
         case CEU_CALLBACK_TERMINATING:
-            is_terminating = 1;
+            CEU_ARDUINO.is_term = 1;
             break;
         case CEU_CALLBACK_ASYNC_PENDING:
-            has_async = 1;
+            CEU_ARDUINO.has_async = 1;
             break;
 
 #ifdef CEU_FEATURES_ISR
@@ -139,7 +150,6 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1,
 
 void setup () {
     #include "pins_modes.c.h"
-    old = micros();
     //Serial.begin(9600);
 
 #ifdef CEU_FEATURES_ISR
@@ -164,11 +174,11 @@ void setup () {
 
 void loop ()
 {
-    while (!is_terminating)
+    while (!CEU_ARDUINO.is_term)
     {
         /* ASYNC */
-        if (has_async) {
-            has_async = 0;
+        if (CEU_ARDUINO.has_async) {
+            CEU_ARDUINO.has_async = 0;
             ceu_input(CEU_INPUT__ASYNC, NULL);
         }
 
@@ -176,9 +186,9 @@ void loop ()
         /* WCLOCK */
         {
             u32 now = micros();
-            s32 dt = now - old;     // no problems with overflow
+            s32 dt = now - CEU_ARDUINO.old;     // no problems with overflow
             ceu_input(CEU_INPUT__WCLOCK, &dt);
-            old = now;
+            CEU_ARDUINO.old = now;
         }
 #endif
 
@@ -206,7 +216,7 @@ void loop ()
             }
 #if CEU_ARDUINO_SLEEP
             //sleep_mode();
-            if (!has_async) {
+            if (!CEU_ARDUINO.has_async) {
                 sleep_enable();
                 interrupts();
                 sleep_cpu();
@@ -219,6 +229,7 @@ _CEU_ARDUINO_AWAKE_:;
 #endif
     }
     ceu_stop();
+    ceu_dbg_assert(0);
     while (1);
 }
 

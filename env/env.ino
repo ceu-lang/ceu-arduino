@@ -55,7 +55,9 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1,
         case CEU_CALLBACK_START:
             CEU_ARDUINO.is_term   = 0;
             CEU_ARDUINO.has_async = 0;
+#ifndef CEU_FEATURES_ISR
             CEU_ARDUINO.old       = micros();
+#endif
             CEU_ARDUINO.pins_bits = 0;
             break;
 

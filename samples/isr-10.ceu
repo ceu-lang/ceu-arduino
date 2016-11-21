@@ -1,10 +1,10 @@
+native/pre do
+    //##define CEU_FEATURES_ISR_SLEEP
+end
+
 #include "arduino/arduino.ceu"
 #include "arduino/avr.ceu"
 #include "arduino/isr/timer.ceu"
-
-native/pre do
-    ##define CEU_ARDUINO_SLEEP 1
-end
 
 native/pure _BAUD_USART;
 native/pre do

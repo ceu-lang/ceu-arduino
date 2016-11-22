@@ -1,5 +1,5 @@
 native/pre do
-    ##define CEU_ARDUINO_SLEEP 1
+    ##define CEU_FEATURES_ISR_SLEEP
 end
 
 #include "arduino/isr/timer.ceu"
@@ -8,7 +8,7 @@ end
 output int PIN_13;
 
 loop do
-    watching INT_PIN_02 do
+    watching PIN_02 do
         var int x = 0;
         every 500ms do
             x = 1 - x;
@@ -16,6 +16,6 @@ loop do
         end
     end
     await 1s;     // debouncing
-    await INT_PIN_02;
+    await PIN_02;
     await 1s;     // debouncing
 end

@@ -11,26 +11,37 @@
 #define US_TO_INCS(us)  ((us)*65536/US_PER_CYCLE)
 //#define US_TO_OVERFLOW(us) (65536 - US_TO_INCS(us))
 // all simplified goes to this:
-#define US_TO_OVERFLOW(us) (65536 - (us/64))
+#define US_TO_OVERFLOW(us) (65536 - (us/64) - 64)
+#define INCS_TO_US(incs) (((s32)(incs))*64)
 
-native _US;
 native/pos do
-    static s32 US = CEU_WCLOCK_INACTIVE;
+    static u16 CEU_ARDUINO_old;
     ##define ceu_callback_user _ceu_callback_user_
     tceu_callback_ret _ceu_callback_user_ (int cmd, tceu_callback_arg p1, tceu_callback_arg p2)
     {
         tceu_callback_ret ret = { .is_handled=1 };
 
         switch (cmd) {
+            case CEU_CALLBACK_START:
+                CEU_ARDUINO_old = TCNT1;
+                break;
+
+            case CEU_CALLBACK_WCLOCK_DT: {
+                u16 now = TCNT1;
+                s32 dt  = (now - CEU_ARDUINO_old);
+                CEU_ARDUINO_old = now;
+                ret.value.num = INCS_TO_US(dt);
+                break;
+            }
             case CEU_CALLBACK_WCLOCK_MIN: {
                 s32 us = p1.num;
                 if (us == CEU_WCLOCK_INACTIVE) {
                     TIMSK1 = TIMSK1 & ~(1 << TOIE1);
                 } else {
-                    US = us;
                     s32 v = US_TO_OVERFLOW(us);
                     ceu_dbg_assert(v > 0);
                     TCNT1 = v;
+                    CEU_ARDUINO_old = v;
                     TIMSK1 = TIMSK1 | (1 << TOIE1);
                 }
                 break;
@@ -47,5 +58,6 @@ end
 _TCCR1A = 0;
 _TCCR1B = (1 << _CS12) | (1 << _CS10); // 1024 prescaler
 spawn async/isr [_TIMER1_OVF_vect_num, 0] do
-    emit (_US)us;
+    var s32 dt = {ceu_callback_void_void(CEU_CALLBACK_WCLOCK_DT).value.num};
+    emit (dt)us;
 end

@@ -118,7 +118,7 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1,
 #else
         case CEU_CALLBACK_WCLOCK_DT: {
             u32 now = micros();
-            s32 dt  = (u32)(now - CEU_ARDUINO.old);  // no problems with overflow
+            u32 dt  = (now - CEU_ARDUINO.old);  // no problems with overflow
             CEU_ARDUINO.old = now;
 
             ret.value.num = dt;

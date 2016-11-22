@@ -1,5 +1,5 @@
-input int INT_PIN_02;
+input int PIN_02;
 
 spawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do
-    emit INT_PIN_02(_digitalRead(2));
+    emit PIN_02(_digitalRead(2));
 end

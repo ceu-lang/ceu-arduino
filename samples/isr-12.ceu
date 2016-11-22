@@ -1,10 +1,10 @@
+native/pre do
+    //##define CEU_FEATURES_ISR_SLEEP
+end
+
 #include "arduino/isr/timer.ceu"
 #include "arduino/isr/usart.ceu"
 #include "arduino/isr/pin-02.ceu"
-
-native/pre do
-    ##define CEU_ARDUINO_SLEEP 1
-end
 
 var& IUsart usart;
 vector[20] byte rx = [];
@@ -13,6 +13,7 @@ spawn Usart(9600, &rx) -> (&usart);
 output int PIN_13;
 
 // heavy loop to evaluate ISR responsiveness
+#if 0
 spawn do
     await async     // comment to freeze synchronous code in tight loop
     do
@@ -25,8 +26,9 @@ spawn do
         end
     end
 end
+#endif
 
-watching INT_PIN_02 do
+watching PIN_02 do
     loop do
         par/and do
             await 1s;
@@ -39,7 +41,17 @@ end
 
 await 1s;
 
-watching INT_PIN_02 do
+watching PIN_02 do
+    loop do
+        if $rx == 0 then
+            await usart.ok_rx;
+        end
+        //vector[20] byte tx;
+    end
+end
+
+#if 0
+watching PIN_02 do
     loop do
         if $rx == 0 then
             await usart.ok_rx;
@@ -69,5 +81,5 @@ end
 
 vector[20] byte str = [].."ok!\n";
 await Usart_TX(&usart, &str);
-
+#endif
 await FOREVER;

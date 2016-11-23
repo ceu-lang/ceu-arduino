@@ -1,0 +1,30 @@
+native/pre do
+    //##define CEU_FEATURES_ISR_SLEEP
+end
+
+#include "arduino/isr/timer.ceu"
+#include "arduino/isr/pin-02.ceu"
+
+output int PIN_13;
+output int PIN_12;
+output int PIN_11;
+
+spawn do
+    loop do
+        emit PIN_11(1);
+        await 1s;
+        emit PIN_11(0);
+        await 1s;
+    end
+end
+
+watching 4s do
+    loop do
+        emit PIN_13(1);
+        await 500ms;
+        emit PIN_13(0);
+        await PIN_02;
+    end
+end
+
+emit PIN_12(1);

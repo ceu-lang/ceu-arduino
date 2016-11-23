@@ -46,16 +46,6 @@ watching PIN_02 do
         if $rx == 0 then
             await usart.ok_rx;
         end
-        //vector[20] byte tx;
-    end
-end
-
-#if 0
-watching PIN_02 do
-    loop do
-        if $rx == 0 then
-            await usart.ok_rx;
-        end
         vector[20] byte tx;
         atomic do
             tx = []..rx;
@@ -65,8 +55,8 @@ watching PIN_02 do
     end
 end
 
-// should tx up to 1-5
-watching 6ms do
+// should tx up to 1-5\n
+watching 8ms do
     vector[20] byte str = [].."12345\n67890";
     await Usart_TX(&usart, &str);
 end
@@ -81,5 +71,5 @@ end
 
 vector[20] byte str = [].."ok!\n";
 await Usart_TX(&usart, &str);
-#endif
+
 await FOREVER;

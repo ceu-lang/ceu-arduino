@@ -11,7 +11,7 @@
 #define US_TO_INCS(us)  ((us)*65536/US_PER_CYCLE)
 //#define US_TO_OVERFLOW(us) (65536 - US_TO_INCS(us))
 // all simplified goes to this:
-#define US_TO_OVERFLOW(us) (65536 - (us/64) - 64)
+#define US_TO_OVERFLOW(us) (65536 - (us/64) - 1)
 #define INCS_TO_US(incs) (((s32)(incs))*64)
 
 native/pos do

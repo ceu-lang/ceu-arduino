@@ -24,9 +24,9 @@ do
     var IUsart usart_ = _;
     usart = &usart_;
 
-    spawn async/isr [_USART_RX_vect_num,0] (rx) do
+    spawn async/isr [_USART_RX_vect_num,0] do
         var byte c = _UDR0;
-        rx = rx..[c];
+        outer.rx = outer.rx..[c];
         emit USART_RX;
     end
 

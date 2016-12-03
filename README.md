@@ -177,6 +177,45 @@ The <tt>par</tt> statement of Céu allows that multiple lines of execution run
 concurrently in the same program.
 -->
 
+Switching a LED with Interrupts
+-------------------------------
+
+The example `isr-01.ceu` is equivalent to `button-01.ceu` but uses interrupts
+instead of polling:
+
+```
+#include "arduino/arduino.ceu"
+
+input  int PIN_02;
+output int PIN_13;
+
+spawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do
+    emit PIN_02(_digitalRead(2));
+end
+
+emit PIN_13(LOW);
+
+loop do
+    var int v = await PIN_02;
+    emit PIN_13(v);
+end
+```
+
+The `async/isr` is an interrupt service routine written in Céu.
+It is attached to the interrupt number for *pin 2*
+(`_digitalPinToInterrupt(2))` and is triggered whenever the pin changes value
+(`_CHANGE`).
+The routine emits a `PIN_02` input to the application.
+
+C symbols like `CHANGE` and `digitalPinToInterrupt` must be preceded with an
+underscore to be used directly from Céu.
+
+Examples that use interrupts have to be compiled with `CEU_ISR=true`:
+
+```
+make CEU_ISR=true CEU_SRC=samples/isr-01.ceu
+```
+
 Applications
 ============
 

@@ -14,13 +14,13 @@ end
 input  int PIN_02;
 output int PIN_13;
 
-emit PIN_13(LOW);
-
 spawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do
     emit PIN_02(_digitalRead(2));
 end
 
-var int v;
-every v in PIN_02 do
+emit PIN_13(LOW);
+
+loop do
+    var int v = await PIN_02;
     emit PIN_13(v);
 end

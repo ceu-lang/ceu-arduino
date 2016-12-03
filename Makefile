@@ -1,5 +1,6 @@
 CEU_DIR  = $(error set absolute path to "<ceu>" repository)
 CEU_SRC ?= samples/blink-01.ceu
+CEU_ISR ?= false
 
 ARD_EXE = arduino
 ARD_ARCH  = avr
@@ -20,7 +21,7 @@ ceu:
 	          --pre-input=$(CEU_SRC)                                \
 	    --ceu --ceu-err-unused=pass --ceu-err-uninitialized=pass    \
 	          --ceu-features-lua=false --ceu-features-thread=false  \
-	          --ceu-features-isr=false                              \
+	          --ceu-features-isr=$(CEU_ISR)                         \
 	    --env --env-types=env/types.h                               \
 	          --env-output=env/_ceu_app.c.h
 

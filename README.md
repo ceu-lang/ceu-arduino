@@ -203,7 +203,7 @@ end
 
 The `async/isr` is an interrupt service routine written in Céu.
 It is attached to the interrupt number for *pin 2*
-(`_digitalPinToInterrupt(2))` and is triggered whenever the pin changes value
+(`_digitalPinToInterrupt(2)`) and is triggered whenever the pin changes value
 (`_CHANGE`).
 The routine emits a `PIN_02` input to the application.
 
@@ -219,8 +219,8 @@ make CEU_ISR=true CEU_SRC=samples/isr-01.ceu
 Applications
 ============
 
-Ship Game
----------
+The Game "Ship"
+---------------
 
 The game `ship.ceu` is described in a blog post:
 

@@ -1,0 +1,15 @@
+#include "arduino/arduino.ceu"
+
+output u8 PWM_11;
+
+loop do
+    var int i;
+    loop i in [0->255] do
+        emit PWM_11(i);
+        await 5ms;
+    end
+    loop i in [0<-255] do
+        emit PWM_11(i);
+        await 5ms;
+    end
+end

@@ -67,7 +67,7 @@ Blinking a LED
 Observe the behavior of the program in the video on the right.
 -->
 
-The example `blink-01.ceu` assumes that a LED is connected to pin 13.
+The example `blink-01.ceu` assumes that a LED is connected to *pin 13*.
 The program is an infinite `loop` that intercalates between turning the LED
 *on* and *off* in intervals of 1 second:
 
@@ -106,7 +106,7 @@ Switching a LED
 -->
 
 The example `button-01.ceu` requires a simple circuit with a switch button
-connected to pin 2.
+connected to *pin 2*.
 The program waits for changes on *pin 2* (the switch), copying its value to
 *pin 13* (the LED):
 
@@ -137,8 +137,8 @@ Blinking in Parallel
 {{#ev:youtube|6ZsF6X1wn84|300|right}}
 -->
 
-The example `blink-03.ceu` requires two additional LEDs connected to pins 11
-and 12.
+The example `blink-03.ceu` requires two additional LEDs connected to
+*pins 11 and 12*.
 The program blinks the LEDs with different frequencies, in parallel:
 
 ```
@@ -176,6 +176,31 @@ end
 The <tt>par</tt> statement of Céu allows that multiple lines of execution run
 concurrently in the same program.
 -->
+
+Fading a LED
+------------
+
+The example `pwm-01.ceu` assumes that a LED is connected to *pin 11*.
+The program fades the LED from `0` to `255` and from `255` to `0` in two
+consecutive loops:
+
+```
+#include "arduino/arduino.ceu"
+
+output int PWM_11;
+
+loop do
+    var int i;
+    loop i in [0->255] do
+        emit PWM_11(i);
+        await 5ms;
+    end
+    loop i in [0<-255] do
+        emit PWM_11(i);
+        await 5ms;
+    end
+end
+```
 
 Switching a LED with Interrupts
 -------------------------------

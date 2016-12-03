@@ -68,3 +68,75 @@ case CEU_OUTPUT_PIN_13:
     digitalWrite(13, *((int*)p2.ptr));
     break;
 #endif
+
+#ifdef _CEU_OUTPUT_PWM_00_
+case CEU_OUTPUT_PWM_00:
+    analogWrite(0, *((int*)p2.ptr));
+    break;
+#endif
+#ifdef _CEU_OUTPUT_PWM_01_
+case CEU_OUTPUT_PWM_01:
+    analogWrite(1, *((int*)p2.ptr));
+    break;
+#endif
+#ifdef _CEU_OUTPUT_PWM_02_
+case CEU_OUTPUT_PWM_02:
+    analogWrite(2, *((int*)p2.ptr));
+    break;
+#endif
+#ifdef _CEU_OUTPUT_PWM_03_
+case CEU_OUTPUT_PWM_03:
+    analogWrite(3, *((int*)p2.ptr));
+    break;
+#endif
+#ifdef _CEU_OUTPUT_PWM_04_
+case CEU_OUTPUT_PWM_04:
+    analogWrite(4, *((int*)p2.ptr));
+    break;
+#endif
+#ifdef _CEU_OUTPUT_PWM_05_
+case CEU_OUTPUT_PWM_05:
+    analogWrite(5, *((int*)p2.ptr));
+    break;
+#endif
+#ifdef _CEU_OUTPUT_PWM_06_
+case CEU_OUTPUT_PWM_06:
+    analogWrite(6, *((int*)p2.ptr));
+    break;
+#endif
+#ifdef _CEU_OUTPUT_PWM_07_
+case CEU_OUTPUT_PWM_07:
+    analogWrite(7, *((int*)p2.ptr));
+    break;
+#endif
+#ifdef _CEU_OUTPUT_PWM_08_
+case CEU_OUTPUT_PWM_08:
+    analogWrite(8, *((int*)p2.ptr));
+    break;
+#endif
+#ifdef _CEU_OUTPUT_PWM_09_
+case CEU_OUTPUT_PWM_09:
+    analogWrite(9, *((int*)p2.ptr));
+    break;
+#endif
+#ifdef _CEU_OUTPUT_PWM_10_
+case CEU_OUTPUT_PWM_10:
+    analogWrite(10, *((int*)p2.ptr));
+    break;
+#endif
+#ifdef _CEU_OUTPUT_PWM_11_
+case CEU_OUTPUT_PWM_11:
+    analogWrite(11, *((int*)p2.ptr));
+    break;
+#endif
+#ifdef _CEU_OUTPUT_PWM_12_
+case CEU_OUTPUT_PWM_12:
+    analogWrite(12, *((int*)p2.ptr));
+    break;
+#endif
+#ifdef _CEU_OUTPUT_PWM_13_
+case CEU_OUTPUT_PWM_13:
+    analogWrite(13, *((int*)p2.ptr));
+    break;
+#endif
+

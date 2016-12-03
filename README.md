@@ -21,8 +21,8 @@ Join our chat:
 
 https://gitter.im/fsantanna/ceu
 
-INSTALLATION
-============
+Install
+=======
 
 
 ## Install Arduino
@@ -48,7 +48,7 @@ Certify that your Arduino is connected to the USB.
 If necessary, configure the variables in the `Makefile`.
 The default example blinks the on-board LED every second.
 
-EXAMPLES
+Examples
 ========
 
 The `samples/` directory contains a number of examples.
@@ -68,7 +68,7 @@ Observe the behavior of the program in the video on the right.
 -->
 
 The example `blink-01.ceu` assumes that a LED is connected to pin 13.
-The program is an infinite `loop` that intercalates between switching the LED
+The program is an infinite `loop` that intercalates between turning the LED
 *on* and *off* in intervals of 1 second:
 
 ```

@@ -1,0 +1,9 @@
+site_name: Céu-Arduino v0.20 - Reference Manual
+theme:     readthedocs
+#site_dir:  site/v0.20
+
+pages:
+- Home:            index.md
+- Introduction:    010-introduction.md
+- License:         license.md
+

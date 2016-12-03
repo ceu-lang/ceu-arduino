@@ -183,9 +183,10 @@ Applications
 Ship Game
 ---------
 
-For a complete application, see `ship.ceu` and the following blog post:
+The game `ship.ceu` is described in a blog post:
 
 * https://github.com/fsantanna/ceu-arduino/blob/master/samples/ship.ceu
+* http://thesynchronousblog.wordpress.com/2012/07/08/ceu-arduino/
 
 <!--
 [[http://www.ceu-lang.org/downloads/ceu_arduino_current.tgz download]] The current version of Céu for Arduino.

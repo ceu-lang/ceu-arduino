@@ -8,7 +8,7 @@
   
   
   
-  <title>License - Céu-Arduino v0.20 - Reference Manual</title>
+  <title>Pins - Céu-Arduino v0.20 - Reference Manual</title>
   
 
   <link rel="shortcut icon" href="../img/favicon.ico">
@@ -23,9 +23,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "License";
-    var mkdocs_page_input_path = "license.md";
-    var mkdocs_page_url = "/license/";
+    var mkdocs_page_name = "Pins";
+    var mkdocs_page_input_path = "020-pins.md";
+    var mkdocs_page_url = "/020-pins/";
   </script>
   
   <script src="../js/jquery-2.1.1.min.js"></script>
@@ -69,8 +69,19 @@
 <li>
           
             <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../020-pins/">Pins</a>
+    <li class="toctree-l1 current">
+        <a class="current" href="./">Pins</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#pins">Pins</a></li>
+                
+                    <li><a class="toctree-l4" href="#digital-pins">Digital Pins</a></li>
+                
+                    <li><a class="toctree-l4" href="#analog-pins">Analog Pins</a></li>
+                
+            
+            </ul>
         
     </li>
 <li>
@@ -83,15 +94,8 @@
 <li>
           
             <li>
-    <li class="toctree-l1 current">
-        <a class="current" href="./">License</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#license">License</a></li>
-                
-            
-            </ul>
+    <li class="toctree-l1 ">
+        <a class="" href="../license/">License</a>
         
     </li>
 <li>
@@ -118,7 +122,7 @@
     
       
     
-    <li>License</li>
+    <li>Pins</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -128,28 +132,28 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="license">License</h1>
-<p>Céu-Arduino is distributed under the MIT license reproduced below:</p>
-<pre><code> Copyright (C) 2012-2016 Francisco Sant'Anna
-
- Permission is hereby granted, free of charge, to any person obtaining a copy of
- this software and associated documentation files (the &quot;Software&quot;), to deal in
- the Software without restriction, including without limitation the rights to
- use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
- of the Software, and to permit persons to whom the Software is furnished to do
- so, subject to the following conditions:
-
- The above copyright notice and this permission notice shall be included in all
- copies or substantial portions of the Software.
-
- THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- SOFTWARE.
-</code></pre>
+                <h1 id="pins">Pins</h1>
+<h2 id="digital-pins">Digital Pins</h2>
+<h3 id="input-pins">Input Pins</h3>
+<ul>
+<li>input PIN_*<ul>
+<li>only polling</li>
+<li>set as input</li>
+<li>poll as fast as possible</li>
+</ul>
+</li>
+</ul>
+<h3 id="output-pins">Output Pins</h3>
+<h4 id="digital-output">Digital Output</h4>
+<ul>
+<li>PIN_*</li>
+</ul>
+<h4 id="pwm-output">PWM Output</h4>
+<ul>
+<li>PWM_*</li>
+</ul>
+<h2 id="analog-pins">Analog Pins</h2>
+<p><code>TODO</code></p>
               
             </div>
           </div>
@@ -157,8 +161,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
+        <a href="../030-modes/" class="btn btn-neutral float-right" title="Modes">Next <span class="icon icon-circle-arrow-right"></span></a>
       
-        <a href="../030-modes/" class="btn btn-neutral" title="Modes"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+        <a href="../010-introduction/" class="btn btn-neutral" title="Introduction"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -184,8 +190,10 @@
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../030-modes/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../010-introduction/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
+      
+        <span style="margin-left: 15px"><a href="../030-modes/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

@@ -187,7 +187,7 @@ consecutive loops:
 ```
 #include "arduino/arduino.ceu"
 
-output int PWM_11;
+output u8 PWM_11;
 
 loop do
     var int i;

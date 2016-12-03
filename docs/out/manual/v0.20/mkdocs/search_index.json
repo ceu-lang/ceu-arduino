@@ -2,23 +2,88 @@
     "docs": [
         {
             "location": "/", 
-            "text": "C\u00e9u-Arduino v0.20 - Reference Manual\n\n\n\n\nIntroduction\n\n\nLicense", 
+            "text": "C\u00e9u-Arduino v0.20 - Reference Manual\n\n\nArduino binding for C\u00e9u:\n\n\nhttps://github.com/fsantanna/ceu-arduino\n\n\n\n\nIntroduction\n\n\nPins\n\n\nModes\n\n\nLicense", 
             "title": "Home"
         }, 
         {
             "location": "/#ceu-arduino-v020-reference-manual", 
-            "text": "Introduction  License", 
+            "text": "Arduino binding for C\u00e9u:  https://github.com/fsantanna/ceu-arduino   Introduction  Pins  Modes  License", 
             "title": "C\u00e9u-Arduino v0.20 - Reference Manual"
         }, 
         {
             "location": "/010-introduction/", 
-            "text": "Introduction\n\n\nC\u00e9u-Arduino ...", 
+            "text": "Introduction\n\n\nTODO", 
             "title": "Introduction"
         }, 
         {
             "location": "/010-introduction/#introduction", 
-            "text": "C\u00e9u-Arduino ...", 
+            "text": "TODO", 
             "title": "Introduction"
+        }, 
+        {
+            "location": "/020-pins/", 
+            "text": "Pins\n\n\nDigital Pins\n\n\nInput Pins\n\n\n\n\ninput PIN_*\n\n\nonly polling\n\n\nset as input\n\n\npoll as fast as possible\n\n\n\n\n\n\n\n\nOutput Pins\n\n\nDigital Output\n\n\n\n\nPIN_*\n\n\n\n\nPWM Output\n\n\n\n\nPWM_*\n\n\n\n\nAnalog Pins\n\n\nTODO", 
+            "title": "Pins"
+        }, 
+        {
+            "location": "/020-pins/#pins", 
+            "text": "", 
+            "title": "Pins"
+        }, 
+        {
+            "location": "/020-pins/#digital-pins", 
+            "text": "", 
+            "title": "Digital Pins"
+        }, 
+        {
+            "location": "/020-pins/#input-pins", 
+            "text": "input PIN_*  only polling  set as input  poll as fast as possible", 
+            "title": "Input Pins"
+        }, 
+        {
+            "location": "/020-pins/#output-pins", 
+            "text": "", 
+            "title": "Output Pins"
+        }, 
+        {
+            "location": "/020-pins/#digital-output", 
+            "text": "PIN_*", 
+            "title": "Digital Output"
+        }, 
+        {
+            "location": "/020-pins/#pwm-output", 
+            "text": "PWM_*", 
+            "title": "PWM Output"
+        }, 
+        {
+            "location": "/020-pins/#analog-pins", 
+            "text": "TODO", 
+            "title": "Analog Pins"
+        }, 
+        {
+            "location": "/030-modes/", 
+            "text": "Modes\n\n\nPolling Mode\n\n\nThe \npolling mode\n of C\u00e9u-Arduino .\n\n\n\n\n100% cpu\n\n\n\n\nCompilation\n\n\nExamples that use interrupts have to be compiled with \nCEU_ISR=true\n:\n\n\nmake CEU_ISR=true CEU_SRC=samples/isr-01.ceu\n\n\n\n\nInterrupt Mode\n\n\nThe \ninterrupt mode\n of C\u00e9u-Arduino .\n\n\n\n\n[a,b]\n\n\nscope", 
+            "title": "Modes"
+        }, 
+        {
+            "location": "/030-modes/#modes", 
+            "text": "", 
+            "title": "Modes"
+        }, 
+        {
+            "location": "/030-modes/#polling-mode", 
+            "text": "The  polling mode  of C\u00e9u-Arduino .   100% cpu", 
+            "title": "Polling Mode"
+        }, 
+        {
+            "location": "/030-modes/#compilation", 
+            "text": "Examples that use interrupts have to be compiled with  CEU_ISR=true :  make CEU_ISR=true CEU_SRC=samples/isr-01.ceu", 
+            "title": "Compilation"
+        }, 
+        {
+            "location": "/030-modes/#interrupt-mode", 
+            "text": "The  interrupt mode  of C\u00e9u-Arduino .   [a,b]  scope", 
+            "title": "Interrupt Mode"
         }, 
         {
             "location": "/license/", 

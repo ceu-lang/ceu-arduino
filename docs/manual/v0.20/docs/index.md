@@ -5,7 +5,7 @@ Arduino binding for Céu:
 <https://github.com/fsantanna/ceu-arduino>
 
 * [Introduction](010-introduction.md)
-* [Pins](020-pins.md)
-* [Modes](030-modes.md)
+* [Modes](020-modes.md)
+* [Pins](030-pins.md)
 * [License](license.md)
 

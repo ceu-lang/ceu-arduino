@@ -1,4 +1,4 @@
-Céu-Arduino supports developing Arduino applications in the programming
+Céu-Arduino supports the development of Arduino applications in the programming
 language Céu:
 
 - Source Code:   https://github.com/fsantanna/ceu-arduino/
@@ -41,14 +41,14 @@ https://www.arduino.cc/
 
 https://github.com/fsantanna/ceu/
 
-## Clone the repository of Céu-Arduino:
+## Clone Céu-Arduino:
 
 ```
 $ git clone https://github.com/fsantanna/ceu-arduino
 $ cd ceu-arduino/
 ```
 
-## Run the examples
+## Compile and Upload
 
 Edit the `Makefile` to point to your `ceu` directory and then run `make`:
 
@@ -61,16 +61,16 @@ Certify that your Arduino is connected to the USB.
 If necessary, configure the variables in the `Makefile`.
 The default example blinks the on-board LED every second.
 
+To compile and upload another application, run `make` and set `CEU_SRC`:
+
+```
+$ make CEU_SRC=<path-to-ceu-application>
+```
+
 Examples
 ========
 
 The `samples/` directory contains a number of examples.
-
-To compile and upload an example, run `make` and set `CEU_SRC`:
-
-```
-$ make CEU_SRC=samples/blink-01.ceu
-```
 
 Blinking a LED
 --------------
@@ -296,8 +296,8 @@ The Game "Ship"
 
 The game `ship.ceu` is described in a blog post:
 
-* https://github.com/fsantanna/ceu-arduino/blob/master/samples/ship.ceu
-* http://thesynchronousblog.wordpress.com/2012/07/08/ceu-arduino/
+- https://github.com/fsantanna/ceu-arduino/blob/master/samples/ship.ceu
+- http://thesynchronousblog.wordpress.com/2012/07/08/ceu-arduino/
 
 <!--
 [[http://www.ceu-lang.org/downloads/ceu_arduino_current.tgz download]] The current version of Céu for Arduino.

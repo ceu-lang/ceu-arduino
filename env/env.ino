@@ -28,6 +28,9 @@
     #ifdef CEU_FEATURES_ISR_SLEEP
         #error "Invalid option!"
     #endif
+    #ifndef CEU_ARDUINO_SERIAL_SPEED
+        #define CEU_ARDUINO_SERIAL_SPEED 9600
+    #endif
 #endif
 
 #ifndef CEU_FEATURES_ISR
@@ -131,6 +134,10 @@ s32 ceu_arduino_dt (void) {
 void setup () {
     #include "pins_modes.c.h"
 
+#ifdef _CEU_INPUT_SERIAL_
+    Serial.begin(CEU_ARDUINO_SERIAL_SPEED);
+#endif
+
 #ifdef CEU_FEATURES_ISR
 
     memset((void*)&isrs, 0, sizeof(isrs));
@@ -187,6 +194,12 @@ _CEU_ARDUINO_AWAKE_:;
 
         ceu_input(CEU_INPUT__NONE, NULL, ceu_arduino_dt());
         #include "pins_inputs.c.h"
+#ifdef _CEU_INPUT_SERIAL_
+        if (Serial.available()) {
+            byte c = Serial.read();
+            ceu_input(CEU_INPUT_SERIAL, &c, ceu_arduino_dt());
+        }
+#endif
 
 #endif
     }

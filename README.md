@@ -24,7 +24,7 @@ extensions:
 - Parallel lines of execution with
     - safe abortion;
     - deterministic behavior (in contrast with threads).
-- Asynchronous loops (for heavy computations).
+- Asynchronous loops for heavy computations.
 - Interrupt-driven operation mode (optional).
 - Seamless integration with standard Arduino (e.g., `analogRead`, `random`, etc).
 
@@ -43,8 +43,10 @@ https://github.com/fsantanna/ceu/
 
 ## Clone the repository of Céu-Arduino:
 
+```
 $ git clone https://github.com/fsantanna/ceu-arduino
 $ cd ceu-arduino/
+```
 
 ## Run the examples
 

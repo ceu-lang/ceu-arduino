@@ -2,17 +2,19 @@ Céu-Arduino binding for Céu:
 
 - Source Code:   https://github.com/fsantanna/ceu-arduino/
 - Documentation: http://fsantanna.github.io/ceu-arduino/
+- Chat:          https://gitter.im/fsantanna/ceu
 
+<!--
 [Arduino](https://www.arduino.cc/) is an open-source electronics platform based
 on easy-to-use hardware and software. It's intended for anyone making
 interactive projects.
+-->
 
 Céu is a reactive language that aims to offer a higher-level and safer
 alternative to C:
 
 - Home Page:   http://www.ceu-lang.org/
 - Source code: https://github.com/fsantanna/ceu/
-- Chat:        https://gitter.im/fsantanna/ceu
 
 Céu-Arduino empowers the development of Arduino applications with the following
 extensions:
@@ -20,7 +22,7 @@ extensions:
 - parallel lines of execution with
     - safe abortion
     - deterministic behavior (in contrast with threads)
-- non-instantaneous loops (i.e., heavy computations)
+- time-consuming loops (for heavy computations)
 - interrupt-driven operation mode (optional)
 - seamless integration with standard Arduino (e.g., `_analogRead`, etc.)
 

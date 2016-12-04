@@ -2,12 +2,12 @@
     "docs": [
         {
             "location": "/", 
-            "text": "C\u00e9u-Arduino v0.20 - Reference Manual\n\n\nArduino binding for C\u00e9u:\n\n\nhttps://github.com/fsantanna/ceu-arduino\n\n\n\n\nIntroduction\n\n\nModes\n\n\nPins\n\n\nLicense", 
+            "text": "C\u00e9u-Arduino v0.20 - Reference Manual\n\n\nC\u00e9u-Arduino supports the development of Arduino applications in the programming\nlanguage C\u00e9u:\n\n\nhttps://github.com/fsantanna/ceu-arduino\n\n\n\n\nIntroduction\n\n\nModes of Operation\n\n\nPins\n\n\nLicense", 
             "title": "Home"
         }, 
         {
             "location": "/#ceu-arduino-v020-reference-manual", 
-            "text": "Arduino binding for C\u00e9u:  https://github.com/fsantanna/ceu-arduino   Introduction  Modes  Pins  License", 
+            "text": "C\u00e9u-Arduino supports the development of Arduino applications in the programming\nlanguage C\u00e9u:  https://github.com/fsantanna/ceu-arduino   Introduction  Modes of Operation  Pins  License", 
             "title": "C\u00e9u-Arduino v0.20 - Reference Manual"
         }, 
         {
@@ -23,7 +23,7 @@
         {
             "location": "/020-modes/", 
             "text": "Modes\n\n\nC\u00e9u-Arduino supports the \npolling\n and \ninterrupt\n modes of operation.\n\n\nPolling Mode\n\n\nThe \npolling mode\n of C\u00e9u-Arduino continually checks for changes in the\nenvironment in an infinite loop:\n\n\nvoid setup () {\n    ceu_start();\n    while (\nprogram-is-running\n) {\n        ceu_input(CEU_INPUT__NONE, NULL, \ntime\n);   /* input async and timer */\n        if (\npin-*-changed\n) {\n            ceu_input(CEU_INPUT__PIN_*, \n...\n);     /* input pins */\n        }\n        \n...\n   // for each pin\n    }\n    ceu_stop();\n    while (1);                                      /* freezes arduino */\n}\n\nvoid loop () { /* never reached */ }\n\n\n\n\nThe inputs are polled on each loop iteration and changes are notified to the\nC\u00e9u application through \nceu_input\n calls.\n\n\nThe polling mode uses \n100%\n of the CPU time.\n\n\nThe polling mode is the default mode of operation of C\u00e9u-Arduino.\n\n\nInput Events\n\n\nCurrently, the polling mode supports the following input events:\n\n\n\n\ntimer\n\n\nasync\n\n\ndigital pins\n\n\n\n\nCompilation\n\n\nSince polling is the default mode of operation, compilation only needs to\nprovide the C\u00e9u application:\n\n\nmake CEU_SRC=\npath-to-ceu-application\n\n\n\n\n\nInterrupt Mode\n\n\nIn the \ninterrupt mode\n of C\u00e9u-Arduino, all input is done in C\u00e9u itself through\n\nasync/isr\n blocks\n.\nEmitting an input event from an \nasync/isr\n only sets a flag which is then\nchecked in the Arduino loop:\n\n\nvoid setup () {\n    ceu_start();\n    while (\nprogram-is-running\n) {\n        ceu_input(CEU_INPUT__NONE, NULL, CEU_WCLOCK_INACTIVE);\n        if (\nany-isr-evt-occurred\n) {               // interrupts off\n            ceu_input(\nisr-evt-occuring\n, \n...\n);   // interrupts on\n        }\n#ifdef CEU_FEATURES_ISR_SLEEP\n        else if (!\nprogram-has-pending-async\n) {\n            \nenter-sleep-mode\n\n        }\n#endif\n    }\n    ceu_stop();\n    while (1);                                      /* freezes arduino */\n}\n\nvoid loop () { /* never reached */ }\n\n\n\n\nTo comply with the synchronous semantics of C\u00e9u, all \nceu_input\n calls are\nserialized in the loop.\n\n\nIf the macro \nCEU_FEATURES_ISR_SLEEP\n is defined, the Arduino enters in the\n\nSLEEP_MODE_IDLE\n\n\nsleep mode\n\nafter each reaction.\n\n\nInterrupts are disabled only while checking for occurring inputs.\nHence, \nasync/isr\n blocks and synchronous code may be concurrent and require\n\natomic\n blocks\n.\n\n\nAn \nasync/isr\n in C\u00e9u-Arduino requires two arguments:\n\n\n\n\nthe interrupt number (i.e., the index in the interrupt vector)\n\n\nthe interrupt mode (i.e., when the interrupt should be triggered)\n\n\n\n\nThe interrupt mode is only used for digital pin interrupts:\n\n\nhttps://www.arduino.cc/en/Reference/AttachInterrupt\n\n\nThe example that follows executes the code marked as \n...\n whenever the value\nof \npin 2\n changes:\n\n\nspawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do\n    \n...\n\nend\n\n\n\n\nInput Events\n\n\nDrivers:\n\n\n\n\npin-02\n:\n    \nTODO\n\n\ntimer\n:\n    \nTODO\n\n\nusart\n:\n    \nTODO\n\n\n\n\nCompilation\n\n\nApplications that use interrupts have to be compiled with \nCEU_ISR=true\n:\n\n\nmake CEU_ISR=true CEU_SRC=\npath-to-ceu-application", 
-            "title": "Modes"
+            "title": "Modes of Operation"
         }, 
         {
             "location": "/020-modes/#modes", 

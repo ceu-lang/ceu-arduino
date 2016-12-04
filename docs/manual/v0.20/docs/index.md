@@ -1,11 +1,12 @@
 # Céu-Arduino v0.20 - Reference Manual
 
-Arduino binding for Céu:
+Céu-Arduino supports the development of Arduino applications in the programming
+language Céu:
 
 <https://github.com/fsantanna/ceu-arduino>
 
 * [Introduction](010-introduction.md)
-* [Modes](020-modes.md)
+* [Modes of Operation](020-modes.md)
 * [Pins](030-pins.md)
 * [License](license.md)
 

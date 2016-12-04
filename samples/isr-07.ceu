@@ -18,25 +18,17 @@ end
 #define US_TO_OVERFLOW(us) (65536 - (us/64) - 64)
 #define INCS_TO_US(incs) (((s32)(incs))*64)
 
+native _ceu_arduino_dt;
 native/pos do
     static u16 CEU_ARDUINO_old;
     ##define ceu_callback_user _ceu_callback_user_
     tceu_callback_ret _ceu_callback_user_ (int cmd, tceu_callback_arg p1, tceu_callback_arg p2)
     {
         tceu_callback_ret ret = { .is_handled=1 };
-
         switch (cmd) {
             case CEU_CALLBACK_START:
                 CEU_ARDUINO_old = TCNT1;
                 break;
-
-            case CEU_CALLBACK_WCLOCK_DT: {
-                u16 now = TCNT1;
-                s32 dt  = (now - CEU_ARDUINO_old);
-                CEU_ARDUINO_old = now;
-                ret.value.num = INCS_TO_US(dt);
-                break;
-            }
             case CEU_CALLBACK_WCLOCK_MIN: {
                 s32 us = p1.num;
                 if (us == CEU_WCLOCK_INACTIVE) {
@@ -50,20 +42,24 @@ native/pos do
                 }
                 break;
             }
-
             default:
                 ret.is_handled = 0;
         }
-
         return ret;
+    }
+
+    s32 ceu_arduino_dt (void) {
+        u16 now = TCNT1;
+        s32 dt  = (now - CEU_ARDUINO_old);
+        CEU_ARDUINO_old = now;
+        return INCS_TO_US(dt);
     }
 end
 
 _TCCR1A = 0;
 _TCCR1B = (1 << _CS12) | (1 << _CS10); // 1024 prescaler
 spawn async/isr [_TIMER1_OVF_vect_num, 0] do
-    var s32 dt = {ceu_callback_void_void(CEU_CALLBACK_WCLOCK_DT).value.num};
-    emit (dt)us;
+    emit (_ceu_arduino_dt())us;
 end
 
 input  int PIN_02;

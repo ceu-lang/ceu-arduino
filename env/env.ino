@@ -30,14 +30,14 @@
     #endif
 #endif
 
+#ifndef CEU_FEATURES_ISR
 typedef struct tceu_arduino {
-    int is_term;
-    int has_async;
     u32 old;
     u32 pins_bits;
 } tceu_arduino;
 
 static tceu_arduino CEU_ARDUINO;
+#endif
 
 tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1,
                                          tceu_callback_arg p2)
@@ -53,12 +53,10 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1,
 
     switch (cmd) {
         case CEU_CALLBACK_START:
-            CEU_ARDUINO.is_term   = 0;
-            CEU_ARDUINO.has_async = 0;
 #ifndef CEU_FEATURES_ISR
             CEU_ARDUINO.old       = micros();
-#endif
             CEU_ARDUINO.pins_bits = 0;
+#endif
             break;
 
         case CEU_CALLBACK_ABORT: {
@@ -74,13 +72,6 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1,
             }
             interrupts();
         }
-
-        case CEU_CALLBACK_TERMINATING:
-            CEU_ARDUINO.is_term = 1;
-            break;
-        case CEU_CALLBACK_ASYNC_PENDING:
-            CEU_ARDUINO.has_async = 1;
-            break;
 
 #ifdef CEU_FEATURES_ISR
         case CEU_CALLBACK_ISR_ENABLE: {
@@ -115,16 +106,6 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1,
             isrs[p1.num].evt = *((tceu_evt_id_params*) p2.ptr);
             break;
         }
-#else
-        case CEU_CALLBACK_WCLOCK_DT: {
-            u32 now = micros();
-            u32 dt  = (now - CEU_ARDUINO.old);  // no problems with overflow
-            CEU_ARDUINO.old = now;
-
-            ret.value.num = dt;
-            ret.is_handled = 1;
-            break;
-        }
 #endif
 
         case CEU_CALLBACK_OUTPUT:
@@ -137,6 +118,15 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1,
     }
     return ret;
 }
+
+#ifndef CEU_FEATURES_ISR
+s32 ceu_arduino_dt (void) {
+    u32 now = micros();
+    u32 dt  = (now - CEU_ARDUINO.old);  // no problems with overflow
+    CEU_ARDUINO.old = now;
+    return dt;
+}
+#endif
 
 void setup () {
     #include "pins_modes.c.h"
@@ -163,15 +153,10 @@ void setup () {
 
 void loop ()
 {
-    while (!CEU_ARDUINO.is_term)
+    while (!CEU_APP.end_ok)
     {
-        /* ASYNC */
-        if (CEU_ARDUINO.has_async) {
-            CEU_ARDUINO.has_async = 0;
-            ceu_input(CEU_INPUT__ASYNC, NULL);
-        }
-
 #ifdef CEU_FEATURES_ISR
+        ceu_input(CEU_INPUT__NONE, NULL, CEU_WCLOCK_INACTIVE);
         {
             tceu_evt_id_params evt;
             int i;
@@ -184,13 +169,13 @@ void loop ()
                     interrupts();
                     //pinMode(12, 1);
                     //digitalWrite(12, !digitalRead(12));
-                    ceu_input(evt.id, evt.params);
+                    ceu_input(evt.id, evt.params, CEU_WCLOCK_INACTIVE);
                     goto _CEU_ARDUINO_AWAKE_;
                 }
             }
 #ifdef CEU_FEATURES_ISR_SLEEP
             //sleep_mode();
-            if (!CEU_ARDUINO.has_async) {
+            if (!CEU_APP.async_pending) {
                 sleep_enable();
                 interrupts();
                 sleep_cpu();
@@ -200,14 +185,12 @@ void loop ()
             interrupts();
 _CEU_ARDUINO_AWAKE_:;
         }
+
 #else // !CEU_FEATURES_ISR
-        /* WCLOCK */
-        {
-            s32 dt = ceu_callback_void_void(CEU_CALLBACK_WCLOCK_DT).value.num;
-            ceu_input(CEU_INPUT__WCLOCK, &dt);
-        }
-        /* PINS */
+
+        ceu_input(CEU_INPUT__NONE, NULL, ceu_arduino_dt());
         #include "pins_inputs.c.h"
+
 #endif
 
     }

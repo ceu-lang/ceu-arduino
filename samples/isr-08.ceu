@@ -15,7 +15,7 @@ loop do
             emit PIN_13(x);
         end
     end
-    await 1s;     // debouncing
+    await 500ms;     // debouncing
     await PIN_02;
-    await 1s;     // debouncing
+    await 500ms;     // debouncing
 end

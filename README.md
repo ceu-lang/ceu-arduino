@@ -68,6 +68,7 @@ Observe the behavior of the program in the video on the right.
 -->
 
 The example `blink-01.ceu` assumes that a LED is connected to *pin 13*.
+
 The program is an infinite `loop` that intercalates between turning the LED
 *on* and *off* in intervals of 1 second:
 
@@ -107,6 +108,7 @@ Switching a LED
 
 The example `button-01.ceu` requires a simple circuit with a switch button
 connected to *pin 2*.
+
 The program waits for changes on *pin 2* (the switch), copying its value to
 *pin 13* (the LED):
 
@@ -139,6 +141,7 @@ Blinking in Parallel
 
 The example `blink-03.ceu` requires two additional LEDs connected to
 *pins 11 and 12*.
+
 The program blinks the LEDs with different frequencies, in parallel:
 
 ```
@@ -181,6 +184,7 @@ Fading a LED
 ------------
 
 The example `pwm-01.ceu` assumes that a LED is connected to *pin 11*.
+
 The program fades the LED from `0` to `255` and from `255` to `0` in two
 consecutive loops:
 
@@ -239,6 +243,36 @@ Examples that use interrupts have to be compiled with `CEU_ISR=true`:
 
 ```
 make CEU_ISR=true CEU_SRC=samples/isr-01.ceu
+```
+
+Interrupts with Drivers
+-----------------------
+
+The example `isr-08.ceu` uses the interrupt drivers `timer.ceu` and
+`pin-02.ceu` from the library.
+
+The program blinks the LED connected to *pin 13* until the button connected to
+*pin 02* is clicked.
+After another click, the blinking restarts.
+
+```
+#include "arduino/isr/timer.ceu"        // timer ISR
+#include "arduino/isr/pin-02.ceu"       // pin-02 ISR
+
+output int PIN_13;
+
+loop do
+    watching PIN_02 do                  // aborts on click
+        var int x = 0;
+        every 500ms do                  // blinks every 500ms
+            x = 1 - x;
+            emit PIN_13(x);
+        end
+    end
+    await 500ms;                        // debouncing
+    await PIN_02;                       // restarts
+    await 500ms;                        // debouncing
+end
 ```
 
 Applications

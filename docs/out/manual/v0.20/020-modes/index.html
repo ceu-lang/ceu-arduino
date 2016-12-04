@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  
+  <title>Modes - Céu-Arduino v0.20 - Reference Manual</title>
+  
+
+  <link rel="shortcut icon" href="../img/favicon.ico">
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../css/highlight.css">
+
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Modes";
+    var mkdocs_page_input_path = "020-modes.md";
+    var mkdocs_page_url = "/020-modes/";
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js"></script>
+  <script src="../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../js/highlight.pack.js"></script>
+  <script src="../js/theme.js"></script> 
+
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Céu-Arduino v0.20 - Reference Manual</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        <ul class="current">
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="..">Home</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../010-introduction/">Introduction</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 current">
+        <a class="current" href="./">Modes</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#modes">Modes</a></li>
+                
+                    <li><a class="toctree-l4" href="#polling-mode">Polling Mode</a></li>
+                
+                    <li><a class="toctree-l4" href="#interrupt-mode">Interrupt Mode</a></li>
+                
+            
+            </ul>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../030-pins/">Pins</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../license/">License</a>
+        
+    </li>
+<li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Céu-Arduino v0.20 - Reference Manual</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Modes</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="modes">Modes</h1>
+<p>Céu-Arduino supports the <em>polling</em> and <em>interrupt</em> modes of operation.</p>
+<h2 id="polling-mode">Polling Mode</h2>
+<p>The <em>polling mode</em> of Céu-Arduino continually checks for changes in the
+environment in an infinite loop:</p>
+<pre><code class="c">void setup () {
+    ceu_start();
+    while (&lt;program-is-running&gt;) {
+        ceu_input(CEU_INPUT__NONE, NULL, &lt;time&gt;);   /* input async and timer */
+        if (&lt;pin-*-changed&gt;) {
+            ceu_input(CEU_INPUT__PIN_*, &lt;...&gt;);     /* input pins */
+        }
+        &lt;...&gt;   // for each pin
+    }
+    ceu_stop();
+    while (1);                                      /* freezes arduino */
+}
+
+void loop () { /* never reached */ }
+</code></pre>
+
+<p>The inputs are polled on each loop iteration and changes are notified to the
+Céu application through <code>ceu_input</code> calls.</p>
+<p>The polling mode uses <em>100%</em> of the CPU time.</p>
+<p>The polling mode is the default mode of operation of Céu-Arduino.</p>
+<h3 id="input-events">Input Events</h3>
+<p>Currently, the polling mode supports the following input events:</p>
+<ul>
+<li><a href="../TODO">timer</a></li>
+<li><a href="../TODO">async</a></li>
+<li><a href="#TODO">digital pins</a></li>
+</ul>
+<h3 id="compilation">Compilation</h3>
+<p>Since polling is the default mode of operation, compilation only needs to
+provide the Céu application:</p>
+<pre><code>make CEU_SRC=&lt;path-to-ceu-application&gt;
+</code></pre>
+
+<h2 id="interrupt-mode">Interrupt Mode</h2>
+<p>In the <em>interrupt mode</em> of Céu-Arduino, all input is done in Céu itself through
+<a href="../TODO"><code>async/isr</code> blocks</a>.
+Emitting an input event from an <code>async/isr</code> only sets a flag which is then
+checked in the Arduino loop:</p>
+<pre><code class="c">void setup () {
+    ceu_start();
+    while (&lt;program-is-running&gt;) {
+        ceu_input(CEU_INPUT__NONE, NULL, CEU_WCLOCK_INACTIVE);
+        if (&lt;any-isr-evt-occurred&gt;) {               // interrupts off
+            ceu_input(&lt;isr-evt-occuring&gt;, &lt;...&gt;);   // interrupts on
+        }
+#ifdef CEU_FEATURES_ISR_SLEEP
+        else if (!&lt;program-has-pending-async&gt;) {
+            &lt;enter-sleep-mode&gt;
+        }
+#endif
+    }
+    ceu_stop();
+    while (1);                                      /* freezes arduino */
+}
+
+void loop () { /* never reached */ }
+</code></pre>
+
+<p>To comply with the synchronous semantics of Céu, all <code>ceu_input</code> calls are
+serialized in the loop.</p>
+<p>If the macro <code>CEU_FEATURES_ISR_SLEEP</code> is defined, the Arduino enters in the
+<code>SLEEP_MODE_IDLE</code>
+<a href="http://playground.arduino.cc/Learning/ArduinoSleepCode">sleep mode</a>
+after each reaction.</p>
+<p>Interrupts are disabled only while checking for occurring inputs.
+Hence, <code>async/isr</code> blocks and synchronous code may be concurrent and require
+<a href="../TODO"><code>atomic</code> blocks</a>.</p>
+<p>An <code>async/isr</code> in Céu-Arduino requires two arguments:</p>
+<ul>
+<li>the interrupt number (i.e., the index in the interrupt vector)</li>
+<li>the interrupt mode (i.e., when the interrupt should be triggered)</li>
+</ul>
+<p>The interrupt mode is only used for digital pin interrupts:</p>
+<p><a href="https://www.arduino.cc/en/Reference/AttachInterrupt">https://www.arduino.cc/en/Reference/AttachInterrupt</a></p>
+<p>The example that follows executes the code marked as <code>&lt;...&gt;</code> whenever the value
+of <em>pin 2</em> changes:</p>
+<pre><code>spawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do
+    &lt;...&gt;
+end
+</code></pre>
+
+<h3 id="input-events_1">Input Events</h3>
+<p>Drivers:</p>
+<ul>
+<li><a href="https://github.com/fsantanna/ceu-arduino/blob/master/include/arduino/isr/pin-02.ceu"><code>pin-02</code></a>:
+    <code>TODO</code></li>
+<li><a href="https://github.com/fsantanna/ceu-arduino/blob/master/include/arduino/isr/timer.ceu"><code>timer</code></a>:
+    <code>TODO</code></li>
+<li><a href="https://github.com/fsantanna/ceu-arduino/blob/master/include/arduino/isr/usart.ceu"><code>usart</code></a>:
+    <code>TODO</code></li>
+</ul>
+<h3 id="compilation_1">Compilation</h3>
+<p>Applications that use interrupts have to be compiled with <code>CEU_ISR=true</code>:</p>
+<pre><code>make CEU_ISR=true CEU_SRC=&lt;path-to-ceu-application&gt;
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../030-pins/" class="btn btn-neutral float-right" title="Pins">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../010-introduction/" class="btn btn-neutral" title="Introduction"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+<div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../010-introduction/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../030-pins/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+
+</body>
+</html>

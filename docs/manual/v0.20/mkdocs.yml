@@ -6,6 +6,6 @@ pages:
 - Home:            index.md
 - Introduction:    010-introduction.md
 - Modes:           020-modes.md
-- Pins:            010-pins.md
+- Pins:            030-pins.md
 - License:         license.md
 

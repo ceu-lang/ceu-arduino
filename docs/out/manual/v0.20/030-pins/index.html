@@ -8,7 +8,7 @@
   
   
   
-  <title>Modes - Céu-Arduino v0.20 - Reference Manual</title>
+  <title>Pins - Céu-Arduino v0.20 - Reference Manual</title>
   
 
   <link rel="shortcut icon" href="../img/favicon.ico">
@@ -23,9 +23,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Modes";
-    var mkdocs_page_input_path = "030-modes.md";
-    var mkdocs_page_url = "/030-modes/";
+    var mkdocs_page_name = "Pins";
+    var mkdocs_page_input_path = "030-pins.md";
+    var mkdocs_page_url = "/030-pins/";
   </script>
   
   <script src="../js/jquery-2.1.1.min.js"></script>
@@ -70,22 +70,22 @@
           
             <li>
     <li class="toctree-l1 ">
-        <a class="" href="../020-pins/">Pins</a>
+        <a class="" href="../020-modes/">Modes</a>
         
     </li>
 <li>
           
             <li>
     <li class="toctree-l1 current">
-        <a class="current" href="./">Modes</a>
+        <a class="current" href="./">Pins</a>
         
             <ul>
             
-                <li class="toctree-l3"><a href="#modes">Modes</a></li>
+                <li class="toctree-l3"><a href="#digital-pins">Digital Pins</a></li>
                 
-                    <li><a class="toctree-l4" href="#polling-mode">Polling Mode</a></li>
+                    <li><a class="toctree-l4" href="#input-pins">Input Pins</a></li>
                 
-                    <li><a class="toctree-l4" href="#interrupt-mode">Interrupt Mode</a></li>
+                    <li><a class="toctree-l4" href="#output-pins">Output Pins</a></li>
                 
             
             </ul>
@@ -122,7 +122,7 @@
     
       
     
-    <li>Modes</li>
+    <li>Pins</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -132,23 +132,35 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="modes">Modes</h1>
-<h2 id="polling-mode">Polling Mode</h2>
-<p>The <em>polling mode</em> of Céu-Arduino .</p>
-<ul>
-<li>100% cpu</li>
-</ul>
-<h3 id="compilation">Compilation</h3>
-<p>Examples that use interrupts have to be compiled with <code>CEU_ISR=true</code>:</p>
-<pre><code>make CEU_ISR=true CEU_SRC=samples/isr-01.ceu
+                <h1 id="digital-pins">Digital Pins</h1>
+<p>Céu-Arduino supports <a href="../TODO"><code>emit</code></a> and <a href="../TODO"><code>await</code></a> statements for digital
+pins in output and input modes, respectively.</p>
+<h2 id="input-pins">Input Pins</h2>
+<p>A program can <code>await</code> a change in a digital pin configured as input and acquire
+its current value:</p>
+<pre><code>input int PIN_02;
+var int v = await PIN_02;
 </code></pre>
 
-<h2 id="interrupt-mode">Interrupt Mode</h2>
-<p>The <em>interrupt mode</em> of Céu-Arduino .</p>
-<ul>
-<li>[a,b]</li>
-<li>scope</li>
-</ul>
+<p>In the <a href="#TODO">interrupt mode</a>, the pin requires a driver to generate the input:</p>
+<pre><code class="ceu">#include &quot;arduino/isr/pin-02.ceu&quot;
+input int PIN_02;
+var int v = await PIN_02;
+</code></pre>
+
+<h2 id="output-pins">Output Pins</h2>
+<p>A program can <code>emit</code> a change to a digital pin configured as output.</p>
+<h3 id="digital-output">Digital Output</h3>
+<p>For digital output, the pin number requires the prefix <code>PIN_</code>:</p>
+<pre><code>output int PIN_13;
+emit PIN_13(HIGH);
+</code></pre>
+
+<h3 id="pwm-output">PWM Output</h3>
+<p>For PWM output, the pin number requires the prefix <code>PWM_</code>:</p>
+<pre><code>output u8 PWM_13;
+emit PWM_13(127);
+</code></pre>
               
             </div>
           </div>
@@ -159,7 +171,7 @@
         <a href="../license/" class="btn btn-neutral float-right" title="License">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../020-pins/" class="btn btn-neutral" title="Pins"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../020-modes/" class="btn btn-neutral" title="Modes"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -185,7 +197,7 @@
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../020-pins/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../020-modes/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
         <span style="margin-left: 15px"><a href="../license/" style="color: #fcfcfc">Next &raquo;</a></span>

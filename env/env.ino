@@ -149,10 +149,7 @@ void setup () {
 #endif
 
     ceu_start();
-}
 
-void loop ()
-{
     while (!CEU_APP.end_ok)
     {
 #ifdef CEU_FEATURES_ISR
@@ -192,10 +189,10 @@ _CEU_ARDUINO_AWAKE_:;
         #include "pins_inputs.c.h"
 
 #endif
-
     }
     ceu_stop();
     ceu_dbg_assert(0);
     while (1);
 }
 
+void loop () {}

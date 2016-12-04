@@ -1,4 +1,5 @@
-Céu-Arduino: developing Arduino applications in the programming language Céu:
+Céu-Arduino supports developing Arduino applications in the programming
+language Céu:
 
 - Source Code:   https://github.com/fsantanna/ceu-arduino/
 - Documentation: http://fsantanna.github.io/ceu-arduino/
@@ -19,13 +20,13 @@ alternative to C:
 Céu-Arduino empowers the development of Arduino applications with the following
 extensions:
 
-- awaiting events (e.g., timers, pin changes, serial inputs, etc.)
-- parallel lines of execution with
-    - safe abortion
-    - deterministic behavior (in contrast with threads)
-- time-consuming loops (for heavy computations)
-- interrupt-driven operation mode (optional)
-- seamless integration with standard Arduino (e.g., `analogRead`, `random`, etc.)
+- Awaiting events (e.g., timers, pin changes, serial input, etc).
+- Parallel lines of execution with
+    - safe abortion;
+    - deterministic behavior (in contrast with threads).
+- Asynchronous loops (for heavy computations).
+- Interrupt-driven operation mode (optional).
+- Seamless integration with standard Arduino (e.g., `analogRead`, `random`, etc).
 
 Install
 =======

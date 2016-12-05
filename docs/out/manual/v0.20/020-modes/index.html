@@ -8,7 +8,7 @@
   
   
   
-  <title>Modes of Operation - Céu-Arduino v0.20 - Reference Manual</title>
+  <title>Modes of Operation - Céu-SDL v0.20 - Reference Manual</title>
   
 
   <link rel="shortcut icon" href="../img/favicon.ico">
@@ -43,7 +43,7 @@
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
       <div class="wy-side-nav-search">
-        <a href=".." class="icon icon-home"> Céu-Arduino v0.20 - Reference Manual</a>
+        <a href=".." class="icon icon-home"> Céu-SDL v0.20 - Reference Manual</a>
         <div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -78,7 +78,7 @@
                 
                     <li><a class="toctree-l4" href="#polling-mode">Polling Mode</a></li>
                 
-                    <li><a class="toctree-l4" href="#interrupt-mode">Interrupt Mode</a></li>
+                    <li><a class="toctree-l4" href="#interrupt-base-mode">Interrupt-Base Mode</a></li>
                 
             
             </ul>
@@ -117,7 +117,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="..">Céu-Arduino v0.20 - Reference Manual</a>
+        <a href="..">Céu-SDL v0.20 - Reference Manual</a>
       </nav>
 
       
@@ -140,7 +140,7 @@
             <div class="section">
               
                 <h1 id="modes-of-operation">Modes of Operation</h1>
-<p>Céu-Arduino supports the <em>polling</em> and <em>interrupt</em> modes of operation.</p>
+<p>Céu-Arduino supports the <em>polling</em> and <em>interrupt-based</em> modes of operation.</p>
 <h2 id="polling-mode">Polling Mode</h2>
 <p>The <em>polling mode</em> of Céu-Arduino continually checks for changes in the
 environment in an infinite loop:</p>
@@ -174,12 +174,12 @@ Céu application through <code>ceu_input</code> calls.</p>
 <h3 id="compilation">Compilation</h3>
 <p>Since polling is the default mode of operation, compilation only needs to
 provide the Céu application:</p>
-<pre><code>make CEU_SRC=&lt;path-to-ceu-application&gt;
+<pre><code>$ make CEU_SRC=&lt;path-to-ceu-application&gt;
 </code></pre>
 
-<h2 id="interrupt-mode">Interrupt Mode</h2>
-<p>In the <em>interrupt mode</em> of Céu-Arduino, all input is done in Céu itself through
-<a href="../TODO"><code>async/isr</code> blocks</a>.
+<h2 id="interrupt-base-mode">Interrupt-Base Mode</h2>
+<p>In the <em>interrupt-based mode</em> of Céu-Arduino, all input is done in Céu itself
+through <a href="../TODO"><code>async/isr</code> blocks</a>.
 Emitting an input event from an <code>async/isr</code> only sets a flag which is then
 checked in the Arduino loop:</p>
 <pre><code class="c">void setup () {
@@ -214,9 +214,9 @@ Hence, <code>async/isr</code> blocks and synchronous code may be concurrent and 
 <p>An <code>async/isr</code> in Céu-Arduino requires two arguments:</p>
 <ul>
 <li>the interrupt number (i.e., the index in the interrupt vector)</li>
-<li>the interrupt mode (i.e., when the interrupt should be triggered)</li>
+<li>the interrupt trigger mode (i.e., when the interrupt should be triggered)</li>
 </ul>
-<p>The interrupt mode is only used for digital pin interrupts:</p>
+<p>The interrupt trigger mode is only used for digital pin interrupts:</p>
 <p><a href="https://www.arduino.cc/en/Reference/AttachInterrupt">https://www.arduino.cc/en/Reference/AttachInterrupt</a></p>
 <p>The example that follows executes the code marked as <code>&lt;...&gt;</code> whenever the value
 of <em>pin 2</em> changes:</p>
@@ -237,7 +237,7 @@ end
 </ul>
 <h3 id="compilation_1">Compilation</h3>
 <p>Applications that use interrupts have to be compiled with <code>CEU_ISR=true</code>:</p>
-<pre><code>make CEU_ISR=true CEU_SRC=&lt;path-to-ceu-application&gt;
+<pre><code>$ make CEU_ISR=true CEU_SRC=&lt;path-to-ceu-application&gt;
 </code></pre>
               
             </div>

@@ -1,7 +1,7 @@
 Modes of Operation
 ==================
 
-Céu-Arduino supports the *polling* and *interrupt* modes of operation.
+Céu-Arduino supports the *polling* and *interrupt-based* modes of operation.
 
 Polling Mode
 ------------
@@ -47,14 +47,14 @@ Since polling is the default mode of operation, compilation only needs to
 provide the Céu application:
 
 ```
-make CEU_SRC=<path-to-ceu-application>
+$ make CEU_SRC=<path-to-ceu-application>
 ```
 
-Interrupt Mode
---------------
+Interrupt-Base Mode
+-------------------
 
-In the *interrupt mode* of Céu-Arduino, all input is done in Céu itself through
-[`async/isr` blocks](TODO).
+In the *interrupt-based mode* of Céu-Arduino, all input is done in Céu itself
+through [`async/isr` blocks](TODO).
 Emitting an input event from an `async/isr` only sets a flag which is then
 checked in the Arduino loop:
 
@@ -94,9 +94,9 @@ Hence, `async/isr` blocks and synchronous code may be concurrent and require
 An `async/isr` in Céu-Arduino requires two arguments:
 
 - the interrupt number (i.e., the index in the interrupt vector)
-- the interrupt mode (i.e., when the interrupt should be triggered)
+- the interrupt trigger mode (i.e., when the interrupt should be triggered)
 
-The interrupt mode is only used for digital pin interrupts:
+The interrupt trigger mode is only used for digital pin interrupts:
 
 <https://www.arduino.cc/en/Reference/AttachInterrupt>
 
@@ -125,6 +125,6 @@ Drivers:
 Applications that use interrupts have to be compiled with `CEU_ISR=true`:
 
 ```
-make CEU_ISR=true CEU_SRC=<path-to-ceu-application>
+$ make CEU_ISR=true CEU_SRC=<path-to-ceu-application>
 ```
 

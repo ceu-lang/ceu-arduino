@@ -1,9 +1,6 @@
 Serial
 ======
 
-Céu-Arduino supports [`emit`](TODO) and [`await`](TODO) statements for the
-serial port.
-
 Polling Mode
 ------------
 

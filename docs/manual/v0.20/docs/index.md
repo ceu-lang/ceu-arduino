@@ -7,7 +7,7 @@ language Céu:
 
 * [Introduction](010-introduction.md)
 * [Modes of Operation](020-modes.md)
-* [Pins](030-pins.md)
-* [Serial](040-serial.md)
+* [Digital Pins](030-pins.md)
+* [Serial Communication](040-serial.md)
 * [License](license.md)
 

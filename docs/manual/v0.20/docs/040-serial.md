@@ -1,5 +1,5 @@
-Serial
-======
+Serial Communication
+====================
 
 Polling Mode
 ------------

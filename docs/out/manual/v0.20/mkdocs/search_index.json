@@ -2,12 +2,12 @@
     "docs": [
         {
             "location": "/", 
-            "text": "C\u00e9u-Arduino v0.20 - Reference Manual\n\n\nC\u00e9u-Arduino supports the development of Arduino applications in the programming\nlanguage C\u00e9u:\n\n\nhttps://github.com/fsantanna/ceu-arduino\n\n\n\n\nIntroduction\n\n\nModes of Operation\n\n\nPins\n\n\nSerial\n\n\nLicense", 
+            "text": "C\u00e9u-Arduino v0.20 - Reference Manual\n\n\nC\u00e9u-Arduino supports the development of Arduino applications in the programming\nlanguage C\u00e9u:\n\n\nhttps://github.com/fsantanna/ceu-arduino\n\n\n\n\nIntroduction\n\n\nModes of Operation\n\n\nDigital Pins\n\n\nSerial Communication\n\n\nLicense", 
             "title": "Home"
         }, 
         {
             "location": "/#ceu-arduino-v020-reference-manual", 
-            "text": "C\u00e9u-Arduino supports the development of Arduino applications in the programming\nlanguage C\u00e9u:  https://github.com/fsantanna/ceu-arduino   Introduction  Modes of Operation  Pins  Serial  License", 
+            "text": "C\u00e9u-Arduino supports the development of Arduino applications in the programming\nlanguage C\u00e9u:  https://github.com/fsantanna/ceu-arduino   Introduction  Modes of Operation  Digital Pins  Serial Communication  License", 
             "title": "C\u00e9u-Arduino v0.20 - Reference Manual"
         }, 
         {
@@ -63,7 +63,7 @@
         {
             "location": "/030-pins/", 
             "text": "Digital Pins\n\n\nC\u00e9u-Arduino supports \nemit\n and \nawait\n statements for digital\npins in output and input modes, respectively.\n\n\nInput Pins\n\n\nA program can \nawait\n a change in a digital pin configured as input and acquire\nits current value:\n\n\ninput int PIN_02;\nvar int v = await PIN_02;\n\n\n\n\nIn the \ninterrupt mode\n, the pin requires a driver to generate the input:\n\n\n#include \narduino/isr/pin-02.ceu\n\ninput int PIN_02;\nvar int v = await PIN_02;\n\n\n\n\nOutput Pins\n\n\nA program can \nemit\n a change to a digital pin configured as output.\n\n\nDigital Output\n\n\nFor digital output, the pin number requires the prefix \nPIN_\n:\n\n\noutput int PIN_13;\nemit PIN_13(HIGH);\n\n\n\n\nPWM Output\n\n\nFor PWM output, the pin number requires the prefix \nPWM_\n:\n\n\noutput u8 PWM_13;\nemit PWM_13(127);", 
-            "title": "Pins"
+            "title": "Digital Pins"
         }, 
         {
             "location": "/030-pins/#digital-pins", 
@@ -92,13 +92,13 @@
         }, 
         {
             "location": "/040-serial/", 
-            "text": "Serial\n\n\nC\u00e9u-Arduino supports \nemit\n and \nawait\n statements for the\nserial port.\n\n\nPolling Mode\n\n\nA program can \nawait\n incoming bytes from the serial as follows:\n\n\ninput byte SERIAL;\nvar byte c = await SERIAL;\n\n\n\n\nThe macro \nCEU_ARDUINO_SERIAL_SPEED\n specifies the data transmission speed\n(it defaults to \n9600\n).\n\n\nIn the polling mode, writing to the serial is the same as in Arduino:\n\n\nhttps://www.arduino.cc/en/Reference/Serial\n\n\nNote that variable and function names from Arduino must be prefixed with an\nunderscore to be used from C\u00e9u (e.g., \n_Serial.write()\n).\n\n\nInterrupt Mode\n\n\nTODO", 
-            "title": "Serial"
+            "text": "Serial Communication\n\n\nPolling Mode\n\n\nA program can \nawait\n incoming bytes from the serial as follows:\n\n\ninput byte SERIAL;\nvar byte c = await SERIAL;\n\n\n\n\nThe macro \nCEU_ARDUINO_SERIAL_SPEED\n specifies the data transmission speed\n(it defaults to \n9600\n).\n\n\nIn the polling mode, writing to the serial is the same as in Arduino:\n\n\nhttps://www.arduino.cc/en/Reference/Serial\n\n\nNote that variable and function names from Arduino must be prefixed with an\nunderscore to be used from C\u00e9u (e.g., \n_Serial.write()\n).\n\n\nInterrupt Mode\n\n\nTODO", 
+            "title": "Serial Communication"
         }, 
         {
-            "location": "/040-serial/#serial", 
-            "text": "C\u00e9u-Arduino supports  emit  and  await  statements for the\nserial port.", 
-            "title": "Serial"
+            "location": "/040-serial/#serial-communication", 
+            "text": "", 
+            "title": "Serial Communication"
         }, 
         {
             "location": "/040-serial/#polling-mode", 

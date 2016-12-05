@@ -1,7 +1,15 @@
 Modes of Operation
 ==================
 
+A mode of operation specifies how Céu-Arduino captures events from the
+environment (e.g., pin changes) and redirects them to the Céu application.
+
 Céu-Arduino supports the *polling* and *interrupt-based* modes of operation.
+
+The polling mode is the default mode of operation.
+
+The modes of operation are implemented in C and are part of Céu-Arduino.
+Each mode is described in pseudo-code as follows.
 
 Polling Mode
 ------------
@@ -30,8 +38,6 @@ The inputs are polled on each loop iteration and changes are notified to the
 Céu application through `ceu_input` calls.
 
 The polling mode uses *100%* of the CPU time.
-
-The polling mode is the default mode of operation of Céu-Arduino.
 
 ### Input Events
 

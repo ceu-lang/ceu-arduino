@@ -140,7 +140,12 @@
             <div class="section">
               
                 <h1 id="modes-of-operation">Modes of Operation</h1>
+<p>A mode of operation specifies how Céu-Arduino captures events from the
+environment (e.g., pin changes) and redirects them to the Céu application.</p>
 <p>Céu-Arduino supports the <em>polling</em> and <em>interrupt-based</em> modes of operation.</p>
+<p>The polling mode is the default mode of operation.</p>
+<p>The modes of operation are implemented in C and are part of Céu-Arduino.
+Each mode is described in pseudo-code as follows.</p>
 <h2 id="polling-mode">Polling Mode</h2>
 <p>The <em>polling mode</em> of Céu-Arduino continually checks for changes in the
 environment in an infinite loop:</p>
@@ -163,7 +168,6 @@ void loop () { /* never reached */ }
 <p>The inputs are polled on each loop iteration and changes are notified to the
 Céu application through <code>ceu_input</code> calls.</p>
 <p>The polling mode uses <em>100%</em> of the CPU time.</p>
-<p>The polling mode is the default mode of operation of Céu-Arduino.</p>
 <h3 id="input-events">Input Events</h3>
 <p>Currently, the polling mode supports the following input events:</p>
 <ul>

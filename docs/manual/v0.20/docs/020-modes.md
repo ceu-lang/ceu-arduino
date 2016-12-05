@@ -1,5 +1,5 @@
-Modes
-=====
+Modes of Operation
+==================
 
 Céu-Arduino supports the *polling* and *interrupt* modes of operation.
 

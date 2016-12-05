@@ -25,7 +25,7 @@ extensions:
     - safe abortion;
     - deterministic behavior (in contrast with threads).
 - Asynchronous loops for heavy computations.
-- Interrupt-driven operation mode (optional).
+- Interrupt-driven operation mode (optional and experimental).
 - Seamless integration with standard Arduino (e.g., `analogRead`, `random`, etc).
 
 Install
@@ -219,6 +219,26 @@ loop do
 end
 ```
 
+Serial Echo
+-----------
+
+The example `serial-01.ceu` reads and write bytes from and to the serial in a
+continuous loop:
+
+```
+#include "arduino/arduino.ceu"
+
+input byte SERIAL;
+
+loop do
+    var byte c = await SERIAL;
+    _Serial.write(c);
+end
+```
+
+Céu can directly use standard Arduino functionality by prefixing its symbols
+with an underscore (e.g., `_Serial.write(c)`).
+
 Switching a LED with Interrupts
 -------------------------------
 
@@ -248,9 +268,6 @@ It is attached to the interrupt number for *pin 2*
 (`_digitalPinToInterrupt(2)`) and is triggered whenever the pin changes value
 (`_CHANGE`).
 The routine emits a `PIN_02` input to the application.
-
-C symbols like `CHANGE` and `digitalPinToInterrupt` must be preceded with an
-underscore to be used directly from Céu.
 
 Examples that use interrupts have to be compiled with `CEU_ISR=true`:
 

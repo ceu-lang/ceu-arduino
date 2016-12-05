@@ -35,6 +35,14 @@
 
     
     <url>
+     <loc>None/040-serial/</loc>
+     <lastmod>2016-12-04</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    
+
+    
+    <url>
      <loc>None/license/</loc>
      <lastmod>2016-12-04</lastmod>
      <changefreq>daily</changefreq>

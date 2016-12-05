@@ -16,7 +16,7 @@ The macro `CEU_ARDUINO_SERIAL_SPEED` specifies the data transmission speed
 
 In the polling mode, writing to the serial is the same as in Arduino:
 
-https://www.arduino.cc/en/Reference/Serial
+<https://www.arduino.cc/en/Reference/Serial>
 
 Note that variable and function names from Arduino must be prefixed with an
 underscore to be used from Céu (e.g., `_Serial.write()`).

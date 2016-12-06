@@ -109,6 +109,13 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1,
             isrs[p1.num].evt = *((tceu_evt_id_params*) p2.ptr);
             break;
         }
+        case CEU_CALLBACK_WCLOCK_DT:
+            ret.value.num = CEU_WCLOCK_INACTIVE;
+            break;
+#else
+        case CEU_CALLBACK_WCLOCK_DT:
+            ret.value.num = ceu_arduino_dt();
+            break;
 #endif
 
         case CEU_CALLBACK_OUTPUT:
@@ -160,7 +167,7 @@ void setup () {
     while (!CEU_APP.end_ok)
     {
 #ifdef CEU_FEATURES_ISR
-        ceu_input(CEU_INPUT__NONE, NULL, CEU_WCLOCK_INACTIVE);
+        ceu_input(CEU_INPUT__ASYNC, NULL);
         {
             tceu_evt_id_params evt;
             int i;
@@ -173,7 +180,7 @@ void setup () {
                     interrupts();
                     //pinMode(12, 1);
                     //digitalWrite(12, !digitalRead(12));
-                    ceu_input(evt.id, evt.params, CEU_WCLOCK_INACTIVE);
+                    ceu_input(evt.id, evt.params);
                     goto _CEU_ARDUINO_AWAKE_;
                 }
             }
@@ -192,12 +199,12 @@ _CEU_ARDUINO_AWAKE_:;
 
 #else // !CEU_FEATURES_ISR
 
-        ceu_input(CEU_INPUT__NONE, NULL, ceu_arduino_dt());
+        ceu_input(CEU_INPUT__ASYNC, NULL);
         #include "pins_inputs.c.h"
 #ifdef _CEU_INPUT_SERIAL_
         if (Serial.available()) {
             byte c = Serial.read();
-            ceu_input(CEU_INPUT_SERIAL, &c, ceu_arduino_dt());
+            ceu_input(CEU_INPUT_SERIAL, &c);
         }
 #endif
 

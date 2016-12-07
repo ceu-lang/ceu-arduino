@@ -5,11 +5,9 @@ language Céu:
 - Documentation: http://fsantanna.github.io/ceu-arduino/
 - Chat:          https://gitter.im/fsantanna/ceu
 
-<!--
-[Arduino](https://www.arduino.cc/) is an open-source electronics platform based
-on easy-to-use hardware and software. It's intended for anyone making
-interactive projects.
--->
+[Arduino](https://www.arduino.cc/) Arduino is an open-source project that
+created microcontroller-based kits for building digital devices and interactive
+objects that can sense and control physical devices.
 
 Céu is a reactive language that aims to offer a higher-level and safer
 alternative to C:
@@ -20,13 +18,15 @@ alternative to C:
 Céu-Arduino empowers the development of Arduino applications with the following
 extensions:
 
-- Awaiting events (e.g., timers, pin changes, serial input, etc).
+- Awaiting events in direct/sequential style.
+  <!--(e.g., timers, pin changes, serial input, etc).-->
 - Parallel lines of execution with
     - safe abortion;
     - deterministic behavior (in contrast with threads).
 - Asynchronous loops for heavy computations.
 - Interrupt-driven operation mode (optional and experimental).
-- Seamless integration with standard Arduino (e.g., `analogRead`, `random`, etc).
+- Seamless integration with standard Arduino (e.g., `analogRead`, `random`,
+  etc).
 
 Install
 =======

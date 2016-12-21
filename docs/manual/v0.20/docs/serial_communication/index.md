@@ -1,8 +1,6 @@
-Serial Communication
-====================
+# Serial Communication
 
-Polling Mode
-------------
+## Polling Mode
 
 A program can `await` incoming bytes from the serial as follows:
 
@@ -21,7 +19,6 @@ In the polling mode, writing to the serial is the same as in Arduino:
 Note that variable and function names from Arduino must be prefixed with an
 underscore to be used from Céu (e.g., `_Serial.write()`).
 
-Interrupt Mode
---------------
+## Interrupt Mode
 
 `TODO`

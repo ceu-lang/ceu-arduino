@@ -2,111 +2,121 @@
     "docs": [
         {
             "location": "/", 
-            "text": "C\u00e9u-Arduino v0.20 - Reference Manual\n\n\nC\u00e9u-Arduino supports the development of Arduino applications in the programming\nlanguage C\u00e9u:\n\n\nhttps://github.com/fsantanna/ceu-arduino\n\n\n\n\nIntroduction\n\n\nModes of Operation\n\n\nDigital Pins\n\n\nSerial Communication\n\n\nLicense", 
+            "text": "C\u00e9u-Arduino v0.20 - Reference Manual\n\n\nC\u00e9u-Arduino supports the development of Arduino applications in the programming\nlanguage C\u00e9u:\n\n\nhttps://github.com/fsantanna/ceu-arduino", 
             "title": "Home"
         }, 
         {
             "location": "/#ceu-arduino-v020-reference-manual", 
-            "text": "C\u00e9u-Arduino supports the development of Arduino applications in the programming\nlanguage C\u00e9u:  https://github.com/fsantanna/ceu-arduino   Introduction  Modes of Operation  Digital Pins  Serial Communication  License", 
+            "text": "C\u00e9u-Arduino supports the development of Arduino applications in the programming\nlanguage C\u00e9u:  https://github.com/fsantanna/ceu-arduino", 
             "title": "C\u00e9u-Arduino v0.20 - Reference Manual"
         }, 
         {
-            "location": "/010-introduction/", 
-            "text": "Introduction\n\n\nTODO", 
-            "title": "Introduction"
-        }, 
-        {
-            "location": "/010-introduction/#introduction", 
-            "text": "TODO", 
-            "title": "Introduction"
-        }, 
-        {
-            "location": "/020-modes/", 
-            "text": "Modes of Operation\n\n\nA mode of operation specifies how C\u00e9u-Arduino captures events from the\nenvironment (e.g., pin changes) and redirects them to the C\u00e9u application.\n\n\nC\u00e9u-Arduino supports the \npolling\n and \ninterrupt-based\n modes of operation.\n\n\nThe polling mode is the default mode of operation.\n\n\nThe modes of operation are implemented in C and are part of C\u00e9u-Arduino.\nEach mode is described in pseudo-code as follows.\n\n\nPolling Mode\n\n\nThe \npolling mode\n of C\u00e9u-Arduino continually checks for changes in the\nenvironment in an infinite loop:\n\n\nvoid setup () {\n    ceu_start();\n    while (\nprogram-is-running\n) {\n        ceu_input(CEU_INPUT__NONE, NULL, \ntime\n);   /* input async and timer */\n        if (\npin-*-changed\n) {\n            ceu_input(CEU_INPUT__PIN_*, \n...\n);     /* input pins */\n        }\n        \n...\n   // for each pin\n    }\n    ceu_stop();\n    while (1);                                      /* freezes arduino */\n}\n\nvoid loop () { /* never reached */ }\n\n\n\n\nThe inputs are polled on each loop iteration and changes are notified to the\nC\u00e9u application through \nceu_input\n calls.\n\n\nThe polling mode uses \n100%\n of the CPU time.\n\n\nInput Events\n\n\nCurrently, the polling mode supports the following input events:\n\n\n\n\ntimer\n\n\nasync\n\n\ndigital pins\n\n\n\n\nCompilation\n\n\nSince polling is the default mode of operation, compilation only needs to\nprovide the C\u00e9u application:\n\n\n$ make CEU_SRC=\npath-to-ceu-application\n\n\n\n\n\nInterrupt-Base Mode\n\n\nIn the \ninterrupt-based mode\n of C\u00e9u-Arduino, all input is done in C\u00e9u itself\nthrough \nasync/isr\n blocks\n.\nEmitting an input event from an \nasync/isr\n only sets a flag which is then\nchecked in the Arduino loop:\n\n\nvoid setup () {\n    ceu_start();\n    while (\nprogram-is-running\n) {\n        ceu_input(CEU_INPUT__NONE, NULL, CEU_WCLOCK_INACTIVE);\n        if (\nany-isr-evt-occurred\n) {               // interrupts off\n            ceu_input(\nisr-evt-occuring\n, \n...\n);   // interrupts on\n        }\n#ifdef CEU_FEATURES_ISR_SLEEP\n        else if (!\nprogram-has-pending-async\n) {\n            \nenter-sleep-mode\n\n        }\n#endif\n    }\n    ceu_stop();\n    while (1);                                      /* freezes arduino */\n}\n\nvoid loop () { /* never reached */ }\n\n\n\n\nTo comply with the synchronous semantics of C\u00e9u, all \nceu_input\n calls are\nserialized in the loop.\n\n\nIf the macro \nCEU_FEATURES_ISR_SLEEP\n is defined, the Arduino enters in the\n\nSLEEP_MODE_IDLE\n\n\nsleep mode\n\nafter each reaction.\n\n\nInterrupts are disabled only while checking for occurring inputs.\nHence, \nasync/isr\n blocks and synchronous code may be concurrent and require\n\natomic\n blocks\n.\n\n\nAn \nasync/isr\n in C\u00e9u-Arduino requires two arguments:\n\n\n\n\nthe interrupt number (i.e., the index in the interrupt vector)\n\n\nthe interrupt trigger mode (i.e., when the interrupt should be triggered)\n\n\n\n\nThe interrupt trigger mode is only used for digital pin interrupts:\n\n\nhttps://www.arduino.cc/en/Reference/AttachInterrupt\n\n\nThe example that follows executes the code marked as \n...\n whenever the value\nof \npin 2\n changes:\n\n\nspawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do\n    \n...\n\nend\n\n\n\n\nInput Events\n\n\nDrivers:\n\n\n\n\npin-02\n:\n    \nTODO\n\n\ntimer\n:\n    \nTODO\n\n\nusart\n:\n    \nTODO\n\n\n\n\nCompilation\n\n\nApplications that use interrupts have to be compiled with \nCEU_ISR=true\n:\n\n\n$ make CEU_ISR=true CEU_SRC=\npath-to-ceu-application", 
+            "location": "/modes/", 
+            "text": "Modes of Operation\n\n\nA mode of operation specifies how C\u00e9u-Arduino captures events from the\nenvironment (e.g., pin changes) and redirects them to the C\u00e9u application.\n\n\nC\u00e9u-Arduino supports the \npolling\n and \ninterrupt-based\n modes of operation.\n\n\nThe polling mode is the default mode of operation.\n\n\nThe modes of operation are implemented in C and are part of C\u00e9u-Arduino.\nEach mode is described in pseudo-code as follows.", 
             "title": "Modes of Operation"
         }, 
         {
-            "location": "/020-modes/#modes-of-operation", 
+            "location": "/modes/#modes-of-operation", 
             "text": "A mode of operation specifies how C\u00e9u-Arduino captures events from the\nenvironment (e.g., pin changes) and redirects them to the C\u00e9u application.  C\u00e9u-Arduino supports the  polling  and  interrupt-based  modes of operation.  The polling mode is the default mode of operation.  The modes of operation are implemented in C and are part of C\u00e9u-Arduino.\nEach mode is described in pseudo-code as follows.", 
             "title": "Modes of Operation"
         }, 
         {
-            "location": "/020-modes/#polling-mode", 
-            "text": "The  polling mode  of C\u00e9u-Arduino continually checks for changes in the\nenvironment in an infinite loop:  void setup () {\n    ceu_start();\n    while ( program-is-running ) {\n        ceu_input(CEU_INPUT__NONE, NULL,  time );   /* input async and timer */\n        if ( pin-*-changed ) {\n            ceu_input(CEU_INPUT__PIN_*,  ... );     /* input pins */\n        }\n         ...    // for each pin\n    }\n    ceu_stop();\n    while (1);                                      /* freezes arduino */\n}\n\nvoid loop () { /* never reached */ }  The inputs are polled on each loop iteration and changes are notified to the\nC\u00e9u application through  ceu_input  calls.  The polling mode uses  100%  of the CPU time.", 
-            "title": "Polling Mode"
+            "location": "/modes/polling/", 
+            "text": "Polling\n\n\nThe \npolling mode\n of C\u00e9u-Arduino continually checks for changes in the\nenvironment in an infinite loop:\n\n\nvoid setup () {\n    ceu_start();\n    while (\nprogram-is-running\n) {\n        ceu_input(CEU_INPUT__NONE, NULL, \ntime\n);   /* input async and timer */\n        if (\npin-*-changed\n) {\n            ceu_input(CEU_INPUT__PIN_*, \n...\n);     /* input pins */\n        }\n        \n...\n   // for each pin\n    }\n    ceu_stop();\n    while (1);                                      /* freezes arduino */\n}\n\nvoid loop () { /* never reached */ }\n\n\n\n\nThe inputs are polled on each loop iteration and changes are notified to the\nC\u00e9u application through \nceu_input\n calls.\n\n\nThe polling mode uses \n100%\n of the CPU time.\n\n\nInput Events\n\n\nCurrently, the polling mode supports the following input events:\n\n\n\n\ntimer\n\n\nasync\n\n\ndigital pins\n\n\n\n\nCompilation\n\n\nSince polling is the default mode of operation, compilation only needs to\nprovide the C\u00e9u application:\n\n\n$ make CEU_SRC=\npath-to-ceu-application", 
+            "title": "Polling"
         }, 
         {
-            "location": "/020-modes/#input-events", 
+            "location": "/modes/polling/#polling", 
+            "text": "The  polling mode  of C\u00e9u-Arduino continually checks for changes in the\nenvironment in an infinite loop:  void setup () {\n    ceu_start();\n    while ( program-is-running ) {\n        ceu_input(CEU_INPUT__NONE, NULL,  time );   /* input async and timer */\n        if ( pin-*-changed ) {\n            ceu_input(CEU_INPUT__PIN_*,  ... );     /* input pins */\n        }\n         ...    // for each pin\n    }\n    ceu_stop();\n    while (1);                                      /* freezes arduino */\n}\n\nvoid loop () { /* never reached */ }  The inputs are polled on each loop iteration and changes are notified to the\nC\u00e9u application through  ceu_input  calls.  The polling mode uses  100%  of the CPU time.", 
+            "title": "Polling"
+        }, 
+        {
+            "location": "/modes/polling/#input-events", 
             "text": "Currently, the polling mode supports the following input events:   timer  async  digital pins", 
             "title": "Input Events"
         }, 
         {
-            "location": "/020-modes/#compilation", 
+            "location": "/modes/polling/#compilation", 
             "text": "Since polling is the default mode of operation, compilation only needs to\nprovide the C\u00e9u application:  $ make CEU_SRC= path-to-ceu-application", 
             "title": "Compilation"
         }, 
         {
-            "location": "/020-modes/#interrupt-base-mode", 
-            "text": "In the  interrupt-based mode  of C\u00e9u-Arduino, all input is done in C\u00e9u itself\nthrough  async/isr  blocks .\nEmitting an input event from an  async/isr  only sets a flag which is then\nchecked in the Arduino loop:  void setup () {\n    ceu_start();\n    while ( program-is-running ) {\n        ceu_input(CEU_INPUT__NONE, NULL, CEU_WCLOCK_INACTIVE);\n        if ( any-isr-evt-occurred ) {               // interrupts off\n            ceu_input( isr-evt-occuring ,  ... );   // interrupts on\n        }\n#ifdef CEU_FEATURES_ISR_SLEEP\n        else if (! program-has-pending-async ) {\n             enter-sleep-mode \n        }\n#endif\n    }\n    ceu_stop();\n    while (1);                                      /* freezes arduino */\n}\n\nvoid loop () { /* never reached */ }  To comply with the synchronous semantics of C\u00e9u, all  ceu_input  calls are\nserialized in the loop.  If the macro  CEU_FEATURES_ISR_SLEEP  is defined, the Arduino enters in the SLEEP_MODE_IDLE  sleep mode \nafter each reaction.  Interrupts are disabled only while checking for occurring inputs.\nHence,  async/isr  blocks and synchronous code may be concurrent and require atomic  blocks .  An  async/isr  in C\u00e9u-Arduino requires two arguments:   the interrupt number (i.e., the index in the interrupt vector)  the interrupt trigger mode (i.e., when the interrupt should be triggered)   The interrupt trigger mode is only used for digital pin interrupts:  https://www.arduino.cc/en/Reference/AttachInterrupt  The example that follows executes the code marked as  ...  whenever the value\nof  pin 2  changes:  spawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do\n     ... \nend", 
-            "title": "Interrupt-Base Mode"
+            "location": "/modes/interrupts/", 
+            "text": "Interrupts\n\n\nIn the \ninterrupt-based mode\n of C\u00e9u-Arduino, all input is done in C\u00e9u itself\nthrough \nasync/isr\n blocks\n.\nEmitting an input event from an \nasync/isr\n only sets a flag which is then\nchecked in the Arduino loop:\n\n\nvoid setup () {\n    ceu_start();\n    while (\nprogram-is-running\n) {\n        ceu_input(CEU_INPUT__NONE, NULL, CEU_WCLOCK_INACTIVE);\n        if (\nany-isr-evt-occurred\n) {               // interrupts off\n            ceu_input(\nisr-evt-occuring\n, \n...\n);   // interrupts on\n        }\n#ifdef CEU_FEATURES_ISR_SLEEP\n        else if (!\nprogram-has-pending-async\n) {\n            \nenter-sleep-mode\n\n        }\n#endif\n    }\n    ceu_stop();\n    while (1);                                      /* freezes arduino */\n}\n\nvoid loop () { /* never reached */ }\n\n\n\n\nTo comply with the synchronous semantics of C\u00e9u, all \nceu_input\n calls are\nserialized in the loop.\n\n\nIf the macro \nCEU_FEATURES_ISR_SLEEP\n is defined, the Arduino enters in the\n\nSLEEP_MODE_IDLE\n\n\nsleep mode\n\nafter each reaction.\n\n\nInterrupts are disabled only while checking for occurring inputs.\nHence, \nasync/isr\n blocks and synchronous code may be concurrent and require\n\natomic\n blocks\n.\n\n\nAn \nasync/isr\n in C\u00e9u-Arduino requires two arguments:\n\n\n\n\nthe interrupt number (i.e., the index in the interrupt vector)\n\n\nthe interrupt trigger mode (i.e., when the interrupt should be triggered)\n\n\n\n\nThe interrupt trigger mode is only used for digital pin interrupts:\n\n\nhttps://www.arduino.cc/en/Reference/AttachInterrupt\n\n\nThe example that follows executes the code marked as \n...\n whenever the value\nof \npin 2\n changes:\n\n\nspawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do\n    \n...\n\nend\n\n\n\n\nInput Events\n\n\nDrivers:\n\n\n\n\npin-02\n:\n    \nTODO\n\n\ntimer\n:\n    \nTODO\n\n\nusart\n:\n    \nTODO\n\n\n\n\nCompilation\n\n\nApplications that use interrupts have to be compiled with \nCEU_ISR=true\n:\n\n\n$ make CEU_ISR=true CEU_SRC=\npath-to-ceu-application", 
+            "title": "Interrupts"
         }, 
         {
-            "location": "/020-modes/#input-events_1", 
+            "location": "/modes/interrupts/#interrupts", 
+            "text": "In the  interrupt-based mode  of C\u00e9u-Arduino, all input is done in C\u00e9u itself\nthrough  async/isr  blocks .\nEmitting an input event from an  async/isr  only sets a flag which is then\nchecked in the Arduino loop:  void setup () {\n    ceu_start();\n    while ( program-is-running ) {\n        ceu_input(CEU_INPUT__NONE, NULL, CEU_WCLOCK_INACTIVE);\n        if ( any-isr-evt-occurred ) {               // interrupts off\n            ceu_input( isr-evt-occuring ,  ... );   // interrupts on\n        }\n#ifdef CEU_FEATURES_ISR_SLEEP\n        else if (! program-has-pending-async ) {\n             enter-sleep-mode \n        }\n#endif\n    }\n    ceu_stop();\n    while (1);                                      /* freezes arduino */\n}\n\nvoid loop () { /* never reached */ }  To comply with the synchronous semantics of C\u00e9u, all  ceu_input  calls are\nserialized in the loop.  If the macro  CEU_FEATURES_ISR_SLEEP  is defined, the Arduino enters in the SLEEP_MODE_IDLE  sleep mode \nafter each reaction.  Interrupts are disabled only while checking for occurring inputs.\nHence,  async/isr  blocks and synchronous code may be concurrent and require atomic  blocks .  An  async/isr  in C\u00e9u-Arduino requires two arguments:   the interrupt number (i.e., the index in the interrupt vector)  the interrupt trigger mode (i.e., when the interrupt should be triggered)   The interrupt trigger mode is only used for digital pin interrupts:  https://www.arduino.cc/en/Reference/AttachInterrupt  The example that follows executes the code marked as  ...  whenever the value\nof  pin 2  changes:  spawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do\n     ... \nend", 
+            "title": "Interrupts"
+        }, 
+        {
+            "location": "/modes/interrupts/#input-events", 
             "text": "Drivers:   pin-02 :\n     TODO  timer :\n     TODO  usart :\n     TODO", 
             "title": "Input Events"
         }, 
         {
-            "location": "/020-modes/#compilation_1", 
+            "location": "/modes/interrupts/#compilation", 
             "text": "Applications that use interrupts have to be compiled with  CEU_ISR=true :  $ make CEU_ISR=true CEU_SRC= path-to-ceu-application", 
             "title": "Compilation"
         }, 
         {
-            "location": "/030-pins/", 
-            "text": "Digital Pins\n\n\nC\u00e9u-Arduino supports \nemit\n and \nawait\n statements for digital\npins in output and input modes, respectively.\n\n\nInput Pins\n\n\nA program can \nawait\n a change in a digital pin configured as input and acquire\nits current value:\n\n\ninput int PIN_02;\nvar int v = await PIN_02;\n\n\n\n\nIn the \ninterrupt mode\n, the pin requires a driver to generate the input:\n\n\n#include \narduino/isr/pin-02.ceu\n\ninput int PIN_02;\nvar int v = await PIN_02;\n\n\n\n\nOutput Pins\n\n\nA program can \nemit\n a change to a digital pin configured as output.\n\n\nDigital Output\n\n\nFor digital output, the pin number requires the prefix \nPIN_\n:\n\n\noutput int PIN_13;\nemit PIN_13(HIGH);\n\n\n\n\nPWM Output\n\n\nFor PWM output, the pin number requires the prefix \nPWM_\n:\n\n\noutput u8 PWM_13;\nemit PWM_13(127);", 
+            "location": "/digital_pins/", 
+            "text": "Digital Pins\n\n\nC\u00e9u-Arduino supports \nemit\n and \nawait\n statements for digital\npins in output and input modes, respectively.", 
             "title": "Digital Pins"
         }, 
         {
-            "location": "/030-pins/#digital-pins", 
+            "location": "/digital_pins/#digital-pins", 
             "text": "C\u00e9u-Arduino supports  emit  and  await  statements for digital\npins in output and input modes, respectively.", 
             "title": "Digital Pins"
         }, 
         {
-            "location": "/030-pins/#input-pins", 
+            "location": "/digital_pins/inputs/", 
+            "text": "Input Pins\n\n\nA program can \nawait\n a change in a digital pin configured as input and acquire\nits current value:\n\n\ninput int PIN_02;\nvar int v = await PIN_02;\n\n\n\n\nIn the \ninterrupt mode\n, the pin requires a driver to generate the input:\n\n\n#include \narduino/isr/pin-02.ceu\n\ninput int PIN_02;\nvar int v = await PIN_02;", 
+            "title": "Inputs"
+        }, 
+        {
+            "location": "/digital_pins/inputs/#input-pins", 
             "text": "A program can  await  a change in a digital pin configured as input and acquire\nits current value:  input int PIN_02;\nvar int v = await PIN_02;  In the  interrupt mode , the pin requires a driver to generate the input:  #include  arduino/isr/pin-02.ceu \ninput int PIN_02;\nvar int v = await PIN_02;", 
             "title": "Input Pins"
         }, 
         {
-            "location": "/030-pins/#output-pins", 
+            "location": "/digital_pins/outputs/", 
+            "text": "Output Pins\n\n\nA program can \nemit\n a change to a digital pin configured as output.\n\n\nDigital Output\n\n\nFor digital output, the pin number requires the prefix \nPIN_\n:\n\n\noutput int PIN_13;\nemit PIN_13(HIGH);\n\n\n\n\nPWM Output\n\n\nFor PWM output, the pin number requires the prefix \nPWM_\n:\n\n\noutput u8 PWM_13;\nemit PWM_13(127);", 
+            "title": "Outputs"
+        }, 
+        {
+            "location": "/digital_pins/outputs/#output-pins", 
             "text": "A program can  emit  a change to a digital pin configured as output.", 
             "title": "Output Pins"
         }, 
         {
-            "location": "/030-pins/#digital-output", 
+            "location": "/digital_pins/outputs/#digital-output", 
             "text": "For digital output, the pin number requires the prefix  PIN_ :  output int PIN_13;\nemit PIN_13(HIGH);", 
             "title": "Digital Output"
         }, 
         {
-            "location": "/030-pins/#pwm-output", 
+            "location": "/digital_pins/outputs/#pwm-output", 
             "text": "For PWM output, the pin number requires the prefix  PWM_ :  output u8 PWM_13;\nemit PWM_13(127);", 
             "title": "PWM Output"
         }, 
         {
-            "location": "/040-serial/", 
+            "location": "/serial_communication/", 
             "text": "Serial Communication\n\n\nPolling Mode\n\n\nA program can \nawait\n incoming bytes from the serial as follows:\n\n\ninput byte SERIAL;\nvar byte c = await SERIAL;\n\n\n\n\nThe macro \nCEU_ARDUINO_SERIAL_SPEED\n specifies the data transmission speed\n(it defaults to \n9600\n).\n\n\nIn the polling mode, writing to the serial is the same as in Arduino:\n\n\nhttps://www.arduino.cc/en/Reference/Serial\n\n\nNote that variable and function names from Arduino must be prefixed with an\nunderscore to be used from C\u00e9u (e.g., \n_Serial.write()\n).\n\n\nInterrupt Mode\n\n\nTODO", 
             "title": "Serial Communication"
         }, 
         {
-            "location": "/040-serial/#serial-communication", 
+            "location": "/serial_communication/#serial-communication", 
             "text": "", 
             "title": "Serial Communication"
         }, 
         {
-            "location": "/040-serial/#polling-mode", 
+            "location": "/serial_communication/#polling-mode", 
             "text": "A program can  await  incoming bytes from the serial as follows:  input byte SERIAL;\nvar byte c = await SERIAL;  The macro  CEU_ARDUINO_SERIAL_SPEED  specifies the data transmission speed\n(it defaults to  9600 ).  In the polling mode, writing to the serial is the same as in Arduino:  https://www.arduino.cc/en/Reference/Serial  Note that variable and function names from Arduino must be prefixed with an\nunderscore to be used from C\u00e9u (e.g.,  _Serial.write() ).", 
             "title": "Polling Mode"
         }, 
         {
-            "location": "/040-serial/#interrupt-mode", 
+            "location": "/serial_communication/#interrupt-mode", 
             "text": "TODO", 
             "title": "Interrupt Mode"
         }, 

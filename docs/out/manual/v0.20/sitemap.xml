@@ -4,39 +4,59 @@
     
     <url>
      <loc>None/</loc>
-     <lastmod>2016-12-05</lastmod>
+     <lastmod>2016-12-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
 
     
+        
     <url>
-     <loc>None/010-introduction/</loc>
-     <lastmod>2016-12-05</lastmod>
+     <loc>None/modes/</loc>
+     <lastmod>2016-12-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
+        
+    <url>
+     <loc>None/modes/polling/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/modes/interrupts/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    
+
+    
+        
+    <url>
+     <loc>None/digital_pins/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/digital_pins/inputs/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/digital_pins/outputs/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
     
 
     
     <url>
-     <loc>None/020-modes/</loc>
-     <lastmod>2016-12-05</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-    
-
-    
-    <url>
-     <loc>None/030-pins/</loc>
-     <lastmod>2016-12-05</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-    
-
-    
-    <url>
-     <loc>None/040-serial/</loc>
-     <lastmod>2016-12-05</lastmod>
+     <loc>None/serial_communication/</loc>
+     <lastmod>2016-12-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
@@ -44,7 +64,7 @@
     
     <url>
      <loc>None/license/</loc>
-     <lastmod>2016-12-05</lastmod>
+     <lastmod>2016-12-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
     

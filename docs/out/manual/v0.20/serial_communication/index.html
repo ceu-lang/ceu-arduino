@@ -8,7 +8,7 @@
   
   
   
-  <title>Introduction - Céu-SDL v0.20 - Reference Manual</title>
+  <title>Serial Communication - Céu-Arduino v0.20 - Reference Manual</title>
   
 
   <link rel="shortcut icon" href="../img/favicon.ico">
@@ -23,9 +23,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Introduction";
-    var mkdocs_page_input_path = "010-introduction.md";
-    var mkdocs_page_url = "/010-introduction/";
+    var mkdocs_page_name = "Serial Communication";
+    var mkdocs_page_input_path = "serial_communication/index.md";
+    var mkdocs_page_url = "/serial_communication/";
   </script>
   
   <script src="../js/jquery-2.1.1.min.js"></script>
@@ -43,7 +43,7 @@
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
       <div class="wy-side-nav-search">
-        <a href=".." class="icon icon-home"> Céu-SDL v0.20 - Reference Manual</a>
+        <a href=".." class="icon icon-home"> Céu-Arduino v0.20 - Reference Manual</a>
         <div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -62,36 +62,77 @@
 <li>
           
             <li>
+    <ul class="subnav">
+    <li><span>Modes of Operation</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../modes/">Modes of Operation</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../modes/polling/">Polling</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../modes/interrupts/">Interrupts</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Digital Pins</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../digital_pins/">Digital Pins</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../digital_pins/inputs/">Inputs</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../digital_pins/outputs/">Outputs</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
     <li class="toctree-l1 current">
-        <a class="current" href="./">Introduction</a>
+        <a class="current" href="./">Serial Communication</a>
         
             <ul>
             
-                <li class="toctree-l3"><a href="#introduction">Introduction</a></li>
+                <li class="toctree-l3"><a href="#serial-communication">Serial Communication</a></li>
+                
+                    <li><a class="toctree-l4" href="#polling-mode">Polling Mode</a></li>
+                
+                    <li><a class="toctree-l4" href="#interrupt-mode">Interrupt Mode</a></li>
                 
             
             </ul>
-        
-    </li>
-<li>
-          
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../020-modes/">Modes of Operation</a>
-        
-    </li>
-<li>
-          
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../030-pins/">Digital Pins</a>
-        
-    </li>
-<li>
-          
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../040-serial/">Serial Communication</a>
         
     </li>
 <li>
@@ -113,7 +154,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="..">Céu-SDL v0.20 - Reference Manual</a>
+        <a href="..">Céu-Arduino v0.20 - Reference Manual</a>
       </nav>
 
       
@@ -125,7 +166,7 @@
     
       
     
-    <li>Introduction</li>
+    <li>Serial Communication</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -135,7 +176,20 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="introduction">Introduction</h1>
+                <h1 id="serial-communication">Serial Communication</h1>
+<h2 id="polling-mode">Polling Mode</h2>
+<p>A program can <code>await</code> incoming bytes from the serial as follows:</p>
+<pre><code>input byte SERIAL;
+var byte c = await SERIAL;
+</code></pre>
+
+<p>The macro <code>CEU_ARDUINO_SERIAL_SPEED</code> specifies the data transmission speed
+(it defaults to <code>9600</code>).</p>
+<p>In the polling mode, writing to the serial is the same as in Arduino:</p>
+<p><a href="https://www.arduino.cc/en/Reference/Serial">https://www.arduino.cc/en/Reference/Serial</a></p>
+<p>Note that variable and function names from Arduino must be prefixed with an
+underscore to be used from Céu (e.g., <code>_Serial.write()</code>).</p>
+<h2 id="interrupt-mode">Interrupt Mode</h2>
 <p><code>TODO</code></p>
               
             </div>
@@ -144,10 +198,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../020-modes/" class="btn btn-neutral float-right" title="Modes of Operation">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../license/" class="btn btn-neutral float-right" title="License">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href=".." class="btn btn-neutral" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../digital_pins/outputs/" class="btn btn-neutral" title="Outputs"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -173,10 +227,10 @@
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href=".." style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../digital_pins/outputs/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../020-modes/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../license/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

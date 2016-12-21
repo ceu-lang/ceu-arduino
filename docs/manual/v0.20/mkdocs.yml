@@ -1,12 +1,17 @@
-site_name: Céu-SDL v0.20 - Reference Manual
+site_name: Céu-Arduino v0.20 - Reference Manual
 theme:     readthedocs
 #site_dir:  site/v0.20
 
 pages:
-- Home:                 index.md
-- Introduction:         010-introduction.md
-- Modes of Operation:   020-modes.md
-- Digital Pins:         030-pins.md
-- Serial Communication: 040-serial.md
-- License:              license.md
+    - Home:                     'index.md'
+    - Modes of Operation:
+        - Modes of Operation:   'modes/index.md'
+        - Polling:              'modes/polling.md'
+        - Interrupts:           'modes/interrupts.md'
+    - Digital Pins:
+        - Digital Pins:         'digital_pins/index.md'
+        - Inputs:               'digital_pins/inputs.md'
+        - Outputs:              'digital_pins/outputs.md'
+    - Serial Communication:     'serial_communication/index.md'
+    - License:              license.md
 

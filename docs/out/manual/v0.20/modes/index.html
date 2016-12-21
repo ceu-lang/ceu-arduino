@@ -8,7 +8,7 @@
   
   
   
-  <title>License - Céu-Arduino v0.20 - Reference Manual</title>
+  <title>Modes of Operation - Céu-Arduino v0.20 - Reference Manual</title>
   
 
   <link rel="shortcut icon" href="../img/favicon.ico">
@@ -23,9 +23,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "License";
-    var mkdocs_page_input_path = "license.md";
-    var mkdocs_page_url = "/license/";
+    var mkdocs_page_name = "Modes of Operation";
+    var mkdocs_page_input_path = "modes/index.md";
+    var mkdocs_page_url = "/modes/";
   </script>
   
   <script src="../js/jquery-2.1.1.min.js"></script>
@@ -67,22 +67,29 @@
 
         
             
-    <li class="toctree-l1 ">
-        <a class="" href="../modes/">Modes of Operation</a>
+    <li class="toctree-l1 current">
+        <a class="current" href="./">Modes of Operation</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#modes-of-operation">Modes of Operation</a></li>
+                
+            
+            </ul>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../modes/polling/">Polling</a>
+        <a class="" href="polling/">Polling</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../modes/interrupts/">Interrupts</a>
+        <a class="" href="interrupts/">Interrupts</a>
         
     </li>
 
@@ -127,15 +134,8 @@
 <li>
           
             <li>
-    <li class="toctree-l1 current">
-        <a class="current" href="./">License</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#license">License</a></li>
-                
-            
-            </ul>
+    <li class="toctree-l1 ">
+        <a class="" href="../license/">License</a>
         
     </li>
 <li>
@@ -161,8 +161,12 @@
     <li><a href="..">Docs</a> &raquo;</li>
     
       
+        
+          <li>Modes of Operation &raquo;</li>
+        
+      
     
-    <li>License</li>
+    <li>Modes of Operation</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -172,28 +176,13 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="license">License</h1>
-<p>Céu-Arduino is distributed under the MIT license reproduced below:</p>
-<pre><code> Copyright (C) 2012-2016 Francisco Sant'Anna
-
- Permission is hereby granted, free of charge, to any person obtaining a copy of
- this software and associated documentation files (the &quot;Software&quot;), to deal in
- the Software without restriction, including without limitation the rights to
- use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
- of the Software, and to permit persons to whom the Software is furnished to do
- so, subject to the following conditions:
-
- The above copyright notice and this permission notice shall be included in all
- copies or substantial portions of the Software.
-
- THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- SOFTWARE.
-</code></pre>
+                <h1 id="modes-of-operation">Modes of Operation</h1>
+<p>A mode of operation specifies how Céu-Arduino captures events from the
+environment (e.g., pin changes) and redirects them to the Céu application.</p>
+<p>Céu-Arduino supports the <em>polling</em> and <em>interrupt-based</em> modes of operation.</p>
+<p>The polling mode is the default mode of operation.</p>
+<p>The modes of operation are implemented in C and are part of Céu-Arduino.
+Each mode is described in pseudo-code as follows.</p>
               
             </div>
           </div>
@@ -201,8 +190,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
+        <a href="polling/" class="btn btn-neutral float-right" title="Polling">Next <span class="icon icon-circle-arrow-right"></span></a>
       
-        <a href="../serial_communication/" class="btn btn-neutral" title="Serial Communication"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+        <a href=".." class="btn btn-neutral" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -228,8 +219,10 @@
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../serial_communication/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href=".." style="color: #fcfcfc;">&laquo; Previous</a></span>
       
+      
+        <span style="margin-left: 15px"><a href="polling/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

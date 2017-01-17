@@ -14,6 +14,7 @@ all: ceu c
 c:
 	$(ARD_EXE) --verbose $(PRESERVE)                                \
 	           --board arduino:$(ARD_ARCH):$(ARD_BOARD)$(ARD_CPU)   \
+	           --port $(ARD_PORT)                                   \
 	           --upload env/env.ino
 
 ceu:

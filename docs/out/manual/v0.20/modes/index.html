@@ -56,17 +56,12 @@
           
             <li>
     <li class="toctree-l1 ">
-        <a class="" href="..">Home</a>
+        <a class="" href="..">Introduction</a>
         
     </li>
 <li>
           
             <li>
-    <ul class="subnav">
-    <li><span>Modes of Operation</span></li>
-
-        
-            
     <li class="toctree-l1 current">
         <a class="current" href="./">Modes of Operation</a>
         
@@ -74,56 +69,21 @@
             
                 <li class="toctree-l3"><a href="#modes-of-operation">Modes of Operation</a></li>
                 
+                    <li><a class="toctree-l4" href="#polling">Polling</a></li>
+                
+                    <li><a class="toctree-l4" href="#interrupts">Interrupts</a></li>
+                
             
             </ul>
         
     </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="polling/">Polling</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="interrupts/">Interrupts</a>
-        
-    </li>
-
-        
-    </ul>
 <li>
           
             <li>
-    <ul class="subnav">
-    <li><span>Digital Pins</span></li>
-
-        
-            
     <li class="toctree-l1 ">
         <a class="" href="../digital_pins/">Digital Pins</a>
         
     </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../digital_pins/inputs/">Inputs</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../digital_pins/outputs/">Outputs</a>
-        
-    </li>
-
-        
-    </ul>
 <li>
           
             <li>
@@ -161,10 +121,6 @@
     <li><a href="..">Docs</a> &raquo;</li>
     
       
-        
-          <li>Modes of Operation &raquo;</li>
-        
-      
     
     <li>Modes of Operation</li>
     <li class="wy-breadcrumbs-aside">
@@ -176,13 +132,110 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="modes-of-operation">Modes of Operation</h1>
+                <h1 id="modes-of-operation">Modes of Operation<a class="headerlink" href="#modes-of-operation" title="Permanent link">&para;</a></h1>
 <p>A mode of operation specifies how Céu-Arduino captures events from the
 environment (e.g., pin changes) and redirects them to the Céu application.</p>
 <p>Céu-Arduino supports the <em>polling</em> and <em>interrupt-based</em> modes of operation.</p>
 <p>The polling mode is the default mode of operation.</p>
 <p>The modes of operation are implemented in C and are part of Céu-Arduino.
 Each mode is described in pseudo-code as follows.</p>
+<h2 id="polling">Polling<a class="headerlink" href="#polling" title="Permanent link">&para;</a></h2>
+<p>The <em>polling mode</em> of Céu-Arduino continually checks for changes in the
+environment in an infinite loop:</p>
+<pre><code class="c">void setup () {
+    ceu_start();
+    while (&lt;program-is-running&gt;) {
+        ceu_input(CEU_INPUT__NONE, NULL, &lt;time&gt;);   /* input async and timer */
+        if (&lt;pin-*-changed&gt;) {
+            ceu_input(CEU_INPUT__PIN_*, &lt;...&gt;);     /* input pins */
+        }
+        &lt;...&gt;   // for each pin
+    }
+    ceu_stop();
+    while (1);                                      /* freezes arduino */
+}
+
+void loop () { /* never reached */ }
+</code></pre>
+
+<p>The inputs are polled on each loop iteration and changes are notified to the
+Céu application through <code>ceu_input</code> calls.</p>
+<p>The polling mode uses <em>100%</em> of the CPU time.</p>
+<h3 id="input-events">Input Events<a class="headerlink" href="#input-events" title="Permanent link">&para;</a></h3>
+<p>Currently, the polling mode supports the following input events:</p>
+<ul>
+<li>Timers</li>
+<li>Asynchronous blocks</li>
+<li><a href="./../digital_pins/#digital-pins">Digital pins</a></li>
+</ul>
+<h3 id="compilation">Compilation<a class="headerlink" href="#compilation" title="Permanent link">&para;</a></h3>
+<p>Since polling is the default mode of operation, compilation only needs to
+provide the Céu application:</p>
+<pre><code>$ make CEU_SRC=&lt;path-to-ceu-application&gt;
+</code></pre>
+
+<h2 id="interrupts">Interrupts<a class="headerlink" href="#interrupts" title="Permanent link">&para;</a></h2>
+<p>In the <em>interrupt-based mode</em> of Céu-Arduino, all input is done in Céu itself
+through <code>async/isr</code> blocks.
+Emitting an input event from an <code>async/isr</code> only sets a flag which is then
+checked in the Arduino loop:</p>
+<pre><code class="c">void setup () {
+    ceu_start();
+    while (&lt;program-is-running&gt;) {
+        ceu_input(CEU_INPUT__NONE, NULL, CEU_WCLOCK_INACTIVE);
+        if (&lt;any-isr-evt-occurred&gt;) {               // interrupts off
+            ceu_input(&lt;isr-evt-occuring&gt;, &lt;...&gt;);   // interrupts on
+        }
+#ifdef CEU_FEATURES_ISR_SLEEP
+        else if (!&lt;program-has-pending-async&gt;) {
+            &lt;enter-sleep-mode&gt;
+        }
+#endif
+    }
+    ceu_stop();
+    while (1);                                      /* freezes arduino */
+}
+
+void loop () { /* never reached */ }
+</code></pre>
+
+<p>To comply with the synchronous semantics of Céu, all <code>ceu_input</code> calls are
+serialized in the loop.</p>
+<p>If the macro <code>CEU_FEATURES_ISR_SLEEP</code> is defined, the Arduino enters in the
+<code>SLEEP_MODE_IDLE</code>
+<a href="http://playground.arduino.cc/Learning/ArduinoSleepCode">sleep mode</a>
+after each reaction.</p>
+<p>Interrupts are disabled only while checking for occurring inputs.
+Hence, <code>async/isr</code> blocks and synchronous code may be concurrent and require
+<code>atomic</code> blocks.</p>
+<p>An <code>async/isr</code> in Céu-Arduino requires two arguments:</p>
+<ul>
+<li>the interrupt number (i.e., the index in the interrupt vector)</li>
+<li>the interrupt trigger mode (i.e., when the interrupt should be triggered)</li>
+</ul>
+<p>The interrupt trigger mode is only used for digital pin interrupts:</p>
+<p><a href="https://www.arduino.cc/en/Reference/AttachInterrupt">https://www.arduino.cc/en/Reference/AttachInterrupt</a></p>
+<p>The example that follows executes the code marked as <code>&lt;...&gt;</code> whenever the value
+of <em>pin 2</em> changes:</p>
+<pre><code>spawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do
+    &lt;...&gt;
+end
+</code></pre>
+
+<h3 id="input-events_1">Input Events<a class="headerlink" href="#input-events_1" title="Permanent link">&para;</a></h3>
+<p>Drivers:</p>
+<ul>
+<li><a href="https://github.com/fsantanna/ceu-arduino/blob/master/include/arduino/isr/pin-02.ceu"><code>pin-02</code></a>:
+    <code>TODO</code></li>
+<li><a href="https://github.com/fsantanna/ceu-arduino/blob/master/include/arduino/isr/timer.ceu"><code>timer</code></a>:
+    <code>TODO</code></li>
+<li><a href="https://github.com/fsantanna/ceu-arduino/blob/master/include/arduino/isr/usart.ceu"><code>usart</code></a>:
+    <code>TODO</code></li>
+</ul>
+<h3 id="compilation_1">Compilation<a class="headerlink" href="#compilation_1" title="Permanent link">&para;</a></h3>
+<p>Applications that use interrupts have to be compiled with <code>CEU_ISR=true</code>:</p>
+<pre><code>$ make CEU_ISR=true CEU_SRC=&lt;path-to-ceu-application&gt;
+</code></pre>
               
             </div>
           </div>
@@ -190,10 +243,10 @@ Each mode is described in pseudo-code as follows.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="polling/" class="btn btn-neutral float-right" title="Polling">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../digital_pins/" class="btn btn-neutral float-right" title="Digital Pins">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href=".." class="btn btn-neutral" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href=".." class="btn btn-neutral" title="Introduction"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -222,7 +275,7 @@ Each mode is described in pseudo-code as follows.</p>
         <span><a href=".." style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="polling/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../digital_pins/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

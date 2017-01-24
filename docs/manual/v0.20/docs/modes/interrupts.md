@@ -1,7 +1,7 @@
 ## Interrupts
 
 In the *interrupt-based mode* of Céu-Arduino, all input is done in Céu itself
-through [`async/isr` blocks](TODO).
+through `async/isr` blocks.
 Emitting an input event from an `async/isr` only sets a flag which is then
 checked in the Arduino loop:
 
@@ -36,7 +36,7 @@ after each reaction.
 
 Interrupts are disabled only while checking for occurring inputs.
 Hence, `async/isr` blocks and synchronous code may be concurrent and require
-[`atomic` blocks](TODO).
+`atomic` blocks.
 
 An `async/isr` in Céu-Arduino requires two arguments:
 

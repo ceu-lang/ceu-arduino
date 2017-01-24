@@ -2,16 +2,16 @@ site_name: Céu-Arduino v0.20 - Reference Manual
 theme:     readthedocs
 #site_dir:  site/v0.20
 
-pages:
-    - Home:                     'index.md'
-    - Modes of Operation:
-        - Modes of Operation:   'modes/index.md'
-        - Polling:              'modes/polling.md'
-        - Interrupts:           'modes/interrupts.md'
-    - Digital Pins:
-        - Digital Pins:         'digital_pins/index.md'
-        - Inputs:               'digital_pins/inputs.md'
-        - Outputs:              'digital_pins/outputs.md'
-    - Serial Communication:     'serial_communication/index.md'
-    - License:              license.md
+markdown_extensions:
+    - markdown_include.include:
+        base_path: docs
+    - toc:
+        permalink: True
+    #- codehilite(linenums=true)
 
+pages:
+    - Introduction:         'index.md'
+    - Modes of Operation:   'modes/index.md'
+    - Digital Pins:         'digital_pins/index.md'
+    - Serial Communication: 'serial_communication/index.md'
+    - License:              'license.md'

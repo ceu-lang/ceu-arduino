@@ -29,9 +29,9 @@ The polling mode uses *100%* of the CPU time.
 
 Currently, the polling mode supports the following input events:
 
-* [timer](TODO)
-* [async](TODO)
-* [digital pins](#TODO)
+* Timers
+* Asynchronous blocks
+* [Digital pins](../digital_pins/#digital-pins)
 
 ### Compilation
 

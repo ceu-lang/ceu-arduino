@@ -1,4 +1,8 @@
 # Digital Pins
 
-Céu-Arduino supports [`emit`](TODO) and [`await`](TODO) statements for digital
-pins in output and input modes, respectively.
+Céu-Arduino supports `emit` and `await` statements for digital pins in output
+and input modes, respectively.
+
+{!digital_pins/inputs.md!}
+
+{!digital_pins/outputs.md!}

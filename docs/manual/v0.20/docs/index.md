@@ -1,6 +1,4 @@
-# Céu-Arduino v0.20 - Reference Manual
+# Introduction
 
 Céu-Arduino supports the development of Arduino applications in the programming
-language Céu:
-
-<https://github.com/fsantanna/ceu-arduino>
+language [Céu](http://www.ceu-lang.org/).

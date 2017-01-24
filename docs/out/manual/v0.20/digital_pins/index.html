@@ -56,46 +56,19 @@
           
             <li>
     <li class="toctree-l1 ">
-        <a class="" href="..">Home</a>
+        <a class="" href="..">Introduction</a>
         
     </li>
 <li>
           
             <li>
-    <ul class="subnav">
-    <li><span>Modes of Operation</span></li>
-
-        
-            
     <li class="toctree-l1 ">
         <a class="" href="../modes/">Modes of Operation</a>
         
     </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../modes/polling/">Polling</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../modes/interrupts/">Interrupts</a>
-        
-    </li>
-
-        
-    </ul>
 <li>
           
             <li>
-    <ul class="subnav">
-    <li><span>Digital Pins</span></li>
-
-        
-            
     <li class="toctree-l1 current">
         <a class="current" href="./">Digital Pins</a>
         
@@ -103,27 +76,14 @@
             
                 <li class="toctree-l3"><a href="#digital-pins">Digital Pins</a></li>
                 
+                    <li><a class="toctree-l4" href="#input-pins">Input Pins</a></li>
+                
+                    <li><a class="toctree-l4" href="#output-pins">Output Pins</a></li>
+                
             
             </ul>
         
     </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="inputs/">Inputs</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="outputs/">Outputs</a>
-        
-    </li>
-
-        
-    </ul>
 <li>
           
             <li>
@@ -161,10 +121,6 @@
     <li><a href="..">Docs</a> &raquo;</li>
     
       
-        
-          <li>Digital Pins &raquo;</li>
-        
-      
     
     <li>Digital Pins</li>
     <li class="wy-breadcrumbs-aside">
@@ -176,9 +132,36 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="digital-pins">Digital Pins</h1>
-<p>Céu-Arduino supports <a href="./TODO"><code>emit</code></a> and <a href="./TODO"><code>await</code></a> statements for digital
-pins in output and input modes, respectively.</p>
+                <h1 id="digital-pins">Digital Pins<a class="headerlink" href="#digital-pins" title="Permanent link">&para;</a></h1>
+<p>Céu-Arduino supports <code>emit</code> and <code>await</code> statements for digital pins in output
+and input modes, respectively.</p>
+<h2 id="input-pins">Input Pins<a class="headerlink" href="#input-pins" title="Permanent link">&para;</a></h2>
+<p>A program can <code>await</code> a change in a digital pin configured as input and acquire
+its current value:</p>
+<pre><code>input int PIN_02;
+var int v = await PIN_02;
+</code></pre>
+
+<p>In the <a href="./../modes/#interrupts">interrupt mode</a>, the pin requires a driver to
+generate the input:</p>
+<pre><code class="ceu">#include &quot;arduino/isr/pin-02.ceu&quot;
+input int PIN_02;
+var int v = await PIN_02;
+</code></pre>
+
+<h2 id="output-pins">Output Pins<a class="headerlink" href="#output-pins" title="Permanent link">&para;</a></h2>
+<p>A program can <code>emit</code> a change to a digital pin configured as output.</p>
+<h3 id="digital-output">Digital Output<a class="headerlink" href="#digital-output" title="Permanent link">&para;</a></h3>
+<p>For digital output, the pin number requires the prefix <code>PIN_</code>:</p>
+<pre><code>output int PIN_13;
+emit PIN_13(HIGH);
+</code></pre>
+
+<h3 id="pwm-output">PWM Output<a class="headerlink" href="#pwm-output" title="Permanent link">&para;</a></h3>
+<p>For PWM output, the pin number requires the prefix <code>PWM_</code>:</p>
+<pre><code>output u8 PWM_13;
+emit PWM_13(127);
+</code></pre>
               
             </div>
           </div>
@@ -186,10 +169,10 @@ pins in output and input modes, respectively.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="inputs/" class="btn btn-neutral float-right" title="Inputs">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../serial_communication/" class="btn btn-neutral float-right" title="Serial Communication">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../modes/interrupts/" class="btn btn-neutral" title="Interrupts"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../modes/" class="btn btn-neutral" title="Modes of Operation"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -215,10 +198,10 @@ pins in output and input modes, respectively.</p>
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../modes/interrupts/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../modes/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="inputs/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../serial_communication/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

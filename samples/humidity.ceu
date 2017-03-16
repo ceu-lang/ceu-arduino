@@ -1,6 +1,6 @@
 #include "arduino/arduino.ceu"
 
-input u8 PWM_10;
+input int PIN_10;
 
 output int PIN_13; // This is for the warning to give the user about humidity level.
 output int PIN_12; // This is for abnormal behaviour of the system
@@ -13,7 +13,7 @@ For this case I have choose the value 30 and worked.
 */
 
 loop do
-    var int v = await PWM_10;
+    var int v = _analogRead(10);
     if v >= 255  then // Check for abnormal cases 
 	emit PIN_12(HIGH);
 	await 5ms;

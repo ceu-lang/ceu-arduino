@@ -1,0 +1,29 @@
+#include "arduino/arduino.ceu"
+
+input u8 PWM_10;
+
+output int PIN_13; // This is for the warning to give the user about humidity level.
+output int PIN_12; // This is for abnormal behaviour of the system
+
+/* This code will regulary check the humidity values using the humidity sensor.
+here the analog read of pin 10 will result in values ranges from 0 to 255.
+based on the values and observation we can define the warning range.
+(warning range is the sign of lack of water in field.)
+For this case I have choose the value 30 and worked.
+*/
+
+loop do
+    var int v = await PWM_10;
+    if v >= 255  then // Check for abnormal cases 
+	emit PIN_12(HIGH);
+	await 5ms;
+    else
+	    if v >= 30 then // Check whether the value reached the boundary or not
+		emit PIN_13(HIGH);
+		await 5ms;
+	    else
+		emit PIN_13(LOW);
+		await 5ms;
+	   end
+    end
+end

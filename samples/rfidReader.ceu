@@ -1,0 +1,28 @@
+#include "arduino/arduino.ceu"
+
+native/pre do
+	##include <SoftwareSerial.h>
+	SoftwareSerial rfid=SoftwareSerial(2, 3);
+	// this is to initiate the softwareSerial to read Rfid here 
+	// pin 2 for TX and pin 3 for RX
+end
+
+_rfid.begin(9600); // baud rate of rfid_reader
+
+loop do
+ var void str=""; // set the intial string of the particular id to null
+ par/and loop do 
+     if(_rfid.available() > 0) then // checks whether RFID is avialble or not
+ 	 loop i in[0->14]
+		 if (_rfid.available()>0) then
+		  i=_rfid.read();// read the values
+		  str = str + i;// add values of read to particular string
+		 end
+     	 end
+     end
+ with
+	if (str != "") then
+		printf(str);
+	end
+ end
+end

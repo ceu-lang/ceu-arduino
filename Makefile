@@ -1,4 +1,4 @@
-CEU_DIR  = $(error set absolute path to "<ceu>" repository)
+CEU_DIR  = $/home/amutheezan/ceu/
 CEU_SRC ?= samples/blink-01.ceu
 CEU_ISR ?= false
 

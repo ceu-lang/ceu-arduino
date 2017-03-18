@@ -5,24 +5,36 @@ input int PIN_10;
 output int PIN_13; // This is for the warning to give the user about humidity level.
 output int PIN_12; // This is for abnormal behaviour of the system
 
+native/pre do 
+	##include <dht.h> // we need to import the dht library for the running.
+	dht DHT;
+	#define DHT_11PIN PIN_10;
+end
+
 /* This code will regulary check the humidity values using the humidity sensor.
-here the analog read of pin 10 will result in values ranges from 0 to 255.
+here the analog read of pin 10 will result in values ranges from 0 to 100.
 based on the values and observation we can define the warning range.
 (warning range is the sign of lack of water in field.)
 For this case I have choose the value 30 and worked.
 */
 
+native _dht,_printf;
+
 loop do
-    var int v = _analogRead(10);
-    if v >= 255  then // Check for abnormal cases 
+    var int v = _dht.read11(10);
+    var int hum = _dht.humidity;
+// we can also get temperature by _dht.temperature
+    if hum >=  100  then // Check for abnormal cases 
 	emit PIN_12(HIGH);
 	await 5ms;
     else
-	    if v >= 30 then // Check whether the value reached the boundary or not
+	    if hum >= 30 then // Check whether the value reached the boundary or not
 		emit PIN_13(HIGH);
+		_printf("System is okay");
 		await 5ms;
 	    else
 		emit PIN_13(LOW);
+		_printf("Pour water system is lack of humidity");
 		await 5ms;
 	   end
     end

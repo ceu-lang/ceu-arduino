@@ -12,15 +12,12 @@ end
 _softwareserial.begin(9600); // baud rate of rfid_reader
 
 loop do
- loop do 
-
      if(_softwareserial.available() > 0) then // checks whether RFID is avialble or not
      	var int i;
- 	 loop i in [0->14] do
+ 	loop i in [0->14] do
 		 if (_softwareserial.available()>0) then
 		  _printf(_softwareserial.read());
 		 end
      	 end
      end
- end
 end

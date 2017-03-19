@@ -1,23 +1,59 @@
 #include "arduino/arduino.ceu"
 
-native _softwareserial,_printf;
+input int PIN_5;
+input int PIN_6;
+
+output int PIN_13;
+
+native _softwareserial;
+native _printf,_read,_isAvailable;
+native _AVAILABLE,_NOT_AVAILABLE;
 
 native/pre do
 	##include <SoftwareSerial.h>
 	SoftwareSerial softwareserial=SoftwareSerial(5, 6);
 	// this is to initiate the softwareSerial to read Rfid here 
 	// pin 5 for TX and pin 6 for RX
+
+	enum{
+		AVAILABLE,
+		NOT_AVAILABLE	
+	};
+
+	int read(){
+		int j;
+		for(int i=1;i<15;i++){
+			if (softwareserial.available() > 0){
+				j = j + softwareserial.read();// this should be replaced with the code to concat nate string literals since at
+//the moment i don't have lcd module at home i do without displaying so, only blinking obtainned based on values.
+			}
+		}
+		j=j-5;
+		return j;
+	};
+	
+	int isAvailable(){
+		if(softwareserial.available() > 0)
+			return AVAILABLE;
+		else
+			return NOT_AVAILABLE;
+	}
 end
 
 _softwareserial.begin(9600); // baud rate of rfid_reader
 
 loop do
-     if(_softwareserial.available() > 0) then // checks whether RFID is avialble or not
-     	var int i;
- 	loop i in [0->14] do
-		 if (_softwareserial.available()>0) then
-		  _printf(_softwareserial.read());
-		 end
-     	 end
+     var int isAvailable;
+     isAvailable = _isAvailable();
+     if (isAvailable == _AVAILABLE) then // checks whether RFID is avialble or not
+	emit PIN_13(HIGH);
+	_printf("Started reading !!!");
+	await 5ms;
+         var int value;
+	 value = _read();
+	_printf("Sum index = %d " , value);
+	 emit PIN_13(LOW);
+	 await 5ms;
+	 _printf("Finished reading !!!");
      end
 end

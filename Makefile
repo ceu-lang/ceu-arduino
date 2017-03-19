@@ -2,7 +2,8 @@ CEU_DIR  = $/home/amutheezan/ceu/
 CEU_SRC ?= samples/blink-01.ceu
 CEU_ISR ?= false
 
-ARD_EXE = arduino
+ 
+ARD_EXE =  /opt/arduino-1.8.1/arduino
 ARD_ARCH  = avr
 ARD_BOARD = uno
 ARD_PORT  = /dev/ttyACM0

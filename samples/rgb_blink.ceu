@@ -1,19 +1,19 @@
-/**
- * RGB LED Blink with color changer
- *
- * This application involves a blinking RGB LED which changes
- * color from red to green to blue back to red on each button
- * press
- *
- * Author: Guilherme Simas <github.com/guilhermesimas>
- *
- * Date: 26.mar.2017
+/*
+  RGB LED Blink with color changer
+ 
+  This application involves a blinking RGB LED which changes
+  color from red to green to blue back to red on each button
+  press
+ 
+  Author: Guilherme Simas <github.com/guilhermesimas>
+ 
+  Date: 26.mar.2017
  */
 
 #include "arduino/arduino.ceu"
 
 // Change color button
-input int PIN_08;
+input int PIN_02;
 
 // RED / BLUE / GREEN Terminals of RGB LED
 output int PIN_05;
@@ -77,10 +77,10 @@ with
 	// Responsible for emitting a button press event and
 	// debouncing the button
 	loop do
-		await PIN_08 ;
+		await PIN_02 ;
 		emit change_color;
 		await 50us;
-		await PIN_08 ;
+		await PIN_02 ;
 		await 50us;
 	end
 with

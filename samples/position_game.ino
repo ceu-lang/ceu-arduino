@@ -76,6 +76,7 @@ void loop() {
 			number_of_attempts++;
 			// If player exceeded max attempts, game over
 			if ( number_of_attempts == MAX_NUMBER_ATTEMPTS + 1 ) {
+				printTooManyAttemptsMessage();
 				gameOver = true;
 			}
 		}
@@ -85,16 +86,16 @@ void loop() {
 			previous_time = current_time;
 			time_elapsed += TIME_WARNING_INTERVAL;
 			// If time's up, game over
-			if ( time_elapsed == current_time ) {
+			if ( time_elapsed == MAX_TIME ) {
+				printTimesUpMessage();
 				gameOver = true;
+			} else {
+				Serial.print( MAX_TIME - time_elapsed );
+				Serial.println( " seconds remaining!" );
 			}
-			Serial.print( MAX_TIME - time_elapsed );
-			Serial.println( " seconds remaining!" );
 		}
 	}
 }
-
-
 
 // Interrupt handling routine
 void buttonPressed() {

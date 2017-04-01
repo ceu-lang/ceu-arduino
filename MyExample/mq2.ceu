@@ -10,7 +10,7 @@ output int PIN_13; //led as output pin
 emit PIN_13(LOW);
 loop do
 	var int v = await PIN_02;//taking reading from sensor
-	if v > 100 then
+	if v < 100 then
 		emit PIN_13(HIGH);
 	end
 	await 5ms;

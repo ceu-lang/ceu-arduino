@@ -1,25 +1,37 @@
 #ifndef _ARDUINO_CEU
 #define _ARDUINO_CEU
 
-#define HIGH _HIGH
-#define LOW  _LOW
+#define INPUT   _INPUT
+#define OUTPUT  _OUTPUT
+#define HIGH    true
+#define LOW     false
+#define A0      _A0
+#define A5      _A5
+#define HEX     _HEX
 
 native/const
+    _A0, _A5,
     _CHANGE,
     _HIGH,
     _LOW,
     _INPUT,
     _INPUT_PULLUP,
     _OUTPUT,
+    _HEX,
 ;
 
 native
     _ceu_dbg_assert,
+    _analogRead,
+    _delay,
     _delayMicroseconds,
     _digitalPinToInterrupt,
     _digitalRead,
     _digitalWrite,
+    _micros,
+    _millis,
     _pinMode,
+    _pulseIn,
     _Serial,
 ;
 

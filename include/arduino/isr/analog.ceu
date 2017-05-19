@@ -1,0 +1,19 @@
+#include "arduino/avr.ceu"
+#include "arduino/arduino.ceu"
+
+input int AN;
+
+native/pre do
+	##define CEU_FEATURES_ISR_SLEEP
+end
+
+native _an_req;
+native/pre do
+	void an_req (uint8_t pin){
+		analogRead_begin(pin);
+	}
+end
+
+spawn async/isr [_ADC_vect_num,0] do
+	emit AN(_analogRead_read());
+end

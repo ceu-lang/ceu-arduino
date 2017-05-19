@@ -1,0 +1,16 @@
+native/pre do
+    ##define CEU_FEATURES_ISR_SLEEP
+end
+
+#include "arduino/arduino.ceu"
+#include "arduino/isr/analog.ceu"
+
+output int PIN_07;
+
+loop do
+	_an_req(14);
+	var int value = await AN ;
+	if value > 500 then
+		emit PIN_07(HIGH);
+	end
+end

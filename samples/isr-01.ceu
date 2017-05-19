@@ -1,0 +1,40 @@
+/*
+ * BUTTON => LED
+ * Button press/release connected to PIN_02 generates an interrupt.
+ * Interrupt generates "emit PIN_02" passing the button state.
+ * Main program changes LED connected to PIN13 according to the button state.
+ */
+
+native/pre do
+    //##define CEU_FEATURES_ISR_SLEEP
+end
+
+#include "arduino/arduino.ceu"
+
+input  int PIN_02;
+output int PIN_13;
+
+input  int AN_01;
+output void AN_REQ_01;
+
+native _an_req;
+native/pre do
+    void an_req (int an) {
+        ...
+    }
+end
+
+
+spawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do
+    emit PIN_02(_digitalRead(2));
+end
+
+_an_req(1);
+await AN_01;
+
+emit PIN_13(LOW);
+
+loop do
+    var int v = await PIN_02;
+    emit PIN_13(v);
+end

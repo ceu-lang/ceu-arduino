@@ -21,6 +21,8 @@ native
     _digitalWrite,
     _pinMode,
     _Serial,
+    _analogRead_read,
+    _analogRead_begin
 ;
 
 #define DELAY(ms)                       \

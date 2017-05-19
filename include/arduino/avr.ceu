@@ -10,6 +10,7 @@ native/const
     _TIMER1_OVF_vect_num,
     _USART_RX_vect_num,
     _USART_TX_vect_num,
+    _ADC_vect_num
 ;
 
 native

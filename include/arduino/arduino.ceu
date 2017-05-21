@@ -11,6 +11,7 @@ native/const
     _INPUT,
     _INPUT_PULLUP,
     _OUTPUT,
+    _DEFAULT
 ;
 
 native
@@ -20,9 +21,7 @@ native
     _digitalRead,
     _digitalWrite,
     _pinMode,
-    _Serial,
-    _analogRead_read,
-    _analogRead_begin
+    _Serial
 ;
 
 #define DELAY(ms)                       \

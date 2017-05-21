@@ -4,13 +4,22 @@ end
 
 #include "arduino/arduino.ceu"
 #include "arduino/isr/analog.ceu"
+#include "arduino/isr/timer.ceu"
 
-output int PIN_07;
+output int PIN_13;
+
+emit PIN_13(HIGH);
+await(500)ms;
+emit PIN_13(LOW);
+await(500)ms;
 
 loop do
 	_an_req(14);
 	var int value = await AN ;
 	if value > 500 then
-		emit PIN_07(HIGH);
+		emit PIN_13(HIGH);
+		await (200)ms;
+		emit PIN_13(LOW);
+		await (200)ms;
 	end
 end

@@ -9,3 +9,4 @@ _ceu_*
 *.o
 *.hex
 *.elf
+samples/position_game.ino

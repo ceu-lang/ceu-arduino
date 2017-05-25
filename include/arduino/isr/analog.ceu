@@ -5,63 +5,63 @@
 input int AN;
 
 native/pre do
-	##define CEU_FEATURES_ISR_SLEEP
+    ##define CEU_FEATURES_ISR_SLEEP
 end
 
 native _an_req,
-		_analogRead_read;
+        _analogRead_read;
 native/pre do
 
-	// bit operations, set_bit and clear_bit
-	##ifndef cbi
-	##define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
-	##endif
-	##ifndef sbi
-	##define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
-	##endif
+    // bit operations, set_bit and clear_bit
+    ##ifndef cbi
+    ##define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
+    ##endif
+    ##ifndef sbi
+    ##define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
+    ##endif
 
-	uint8_t analog_reference = DEFAULT;
-	
-	//starts a conversion
-	void analogRead_begin( uint8_t pin ) {
+    uint8_t analog_reference = DEFAULT;
+    
+    //starts a conversion
+    void analogRead_begin( uint8_t pin ) {
 
-		if ( pin >= 14 ) pin -= 14; // allow for channel or pin numbers
+        if ( pin >= 14 ) pin -= 14; // allow for channel or pin numbers
 
-		// set the analog reference (high two bits of ADMUX) and select the
-		// channel (low 4 bits).  this also sets ADLAR (left-adjust result)
-		// to 0 (the default).
-		ADMUX = ( analog_reference << 6 ) | ( pin & 0x07 );
+        // set the analog reference (high two bits of ADMUX) and select the
+        // channel (low 4 bits).  this also sets ADLAR (left-adjust result)
+        // to 0 (the default).
+        ADMUX = ( analog_reference << 6 ) | ( pin & 0x07 );
 
-		//configures interrupt
-		sbi( ADCSRA, ADIE );
+        //configures interrupt
+        sbi( ADCSRA, ADIE );
 
-		// start the conversion
-		sbi( ADCSRA, ADSC );
-	}
-	
-	int analogRead_read() {
+        // start the conversion
+        sbi( ADCSRA, ADSC );
+    }
+    
+    int analogRead_read() {
 
-		uint8_t low, high;
+        uint8_t low, high;
 
-		// we have to read ADCL first; doing so locks both ADCL
-		// and ADCH until ADCH is read.  reading ADCL second would
-		// cause the results of each conversion to be discarded,
-		// as ADCL and ADCH would be locked when it completed.
-		low  = ADCL;
-		high = ADCH;
+        // we have to read ADCL first; doing so locks both ADCL
+        // and ADCH until ADCH is read.  reading ADCL second would
+        // cause the results of each conversion to be discarded,
+        // as ADCL and ADCH would be locked when it completed.
+        low  = ADCL;
+        high = ADCH;
 
-		// combine the two bytes
-		return ( high << 8 ) | low;
-	}
+        // combine the two bytes
+        return ( high << 8 ) | low;
+    }
 
 
 
-	void an_req (uint8_t pin){
-		analogRead_begin(pin);
-	}
+    void an_req (uint8_t pin){
+        analogRead_begin(pin);
+    }
 end
 
 
 spawn async/isr [_ADC_vect_num,0] do
-	emit AN(_analogRead_read());
+    emit AN(_analogRead_read());
 end

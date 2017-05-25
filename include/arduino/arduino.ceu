@@ -6,12 +6,12 @@
 
 native/const
     _CHANGE,
+    _DEFAULT,
     _HIGH,
     _LOW,
     _INPUT,
     _INPUT_PULLUP,
-    _OUTPUT,
-    _DEFAULT
+    _OUTPUT
 ;
 
 native

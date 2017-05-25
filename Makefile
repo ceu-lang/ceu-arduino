@@ -1,4 +1,4 @@
-CEU_DIR  = $(/home/gsimas/Documents/GSoC/ceu-arduino)
+CEU_DIR  = $(error set absolute path to "<ceu>" repository)
 CEU_SRC ?= samples/blink-01.ceu
 CEU_ISR ?= true
 

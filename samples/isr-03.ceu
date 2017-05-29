@@ -11,8 +11,8 @@
 #include "arduino/avr.ceu"
 #include "arduino/arduino.ceu"
 
-input  int PIN_02;
-output int PIN_13;
+input  bool PIN_02;
+output bool PIN_13;
 
 native/pre do
     //##define CEU_FEATURES_ISR_SLEEP

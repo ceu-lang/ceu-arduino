@@ -62,8 +62,8 @@ spawn async/isr [_TIMER1_OVF_vect_num, 0] do
     emit (_ceu_arduino_dt())us;
 end
 
-input  int PIN_02;
-output int PIN_13;
+input  bool PIN_02;
+output bool PIN_13;
 
 spawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do
     emit PIN_02(_digitalRead(2));

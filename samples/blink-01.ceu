@@ -1,6 +1,6 @@
 #include "arduino/arduino.ceu"
 
-output int PIN_13;
+output bool PIN_13;
 
 loop do
     emit PIN_13(HIGH);

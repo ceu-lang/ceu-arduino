@@ -10,7 +10,7 @@ var& IUsart usart;
 vector[20] byte rx = [];
 spawn Usart(9600, &rx) -> (&usart);
 
-output int PIN_13;
+output bool PIN_13;
 
 // heavy loop to evaluate ISR responsiveness
 #if 0

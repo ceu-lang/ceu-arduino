@@ -62,7 +62,7 @@ spawn async/isr [_TIMER1_OVF_vect_num, 0] do
     emit (_ceu_arduino_dt())us;
 end
 
-output int PIN_13;
+output bool PIN_13;
 
 var int i;
 loop i in [0->5[ do

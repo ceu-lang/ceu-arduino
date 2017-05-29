@@ -1,7 +1,7 @@
 #include "arduino/arduino.ceu"
 
-output int PIN_11;
-output int PIN_12;
+output bool PIN_11;
+output bool PIN_12;
 
 code/await Blink (var int pin, var int ms) -> FOREVER do
     loop do

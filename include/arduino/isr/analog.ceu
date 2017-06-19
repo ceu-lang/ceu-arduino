@@ -2,15 +2,17 @@
 #include "arduino/arduino.ceu"
 
 // Event that carries analog value
-input int AN;
 
 native/pre do
     ##define CEU_FEATURES_ISR_SLEEP
 end
 
-native _an_req,
-        _analogRead_read;
-native/pre do
+native _analogRead_read,
+        _analogRead_begin,
+        _dequeue,
+        _clear_elem,
+        _EMPTY_QUEUE;
+native/pos do
 
     // bit operations, set_bit and clear_bit
     ##ifndef cbi
@@ -20,17 +22,37 @@ native/pre do
     ##define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
     ##endif
 
-    uint8_t analog_reference = DEFAULT;
-    
+    #define EMPTY_QUEUE 0xff
+    #define N_ADC 6
+
+    uint8_t bit_vector = 0;
+
+    void queue(uint8_t e){
+        bit_vector = bit_vector | (0b1 << e);
+    }
+
+    uint8_t dequeue(void){
+        uint8_t mask = 0b1;
+        for(int i = 0; i < N_ADC ; i++){
+            if(bit_vector & mask){
+                return i;
+            }
+            mask = mask << 1;
+        }
+        return EMPTY_QUEUE;
+    }
+
+    void clear_elem(uint8_t e){
+        bit_vector = bit_vector & ((0b1 << e) ^ 0xff );
+    }
+
     //starts a conversion
     void analogRead_begin( uint8_t pin ) {
-
-        if ( pin >= 14 ) pin -= 14; // allow for channel or pin numbers
-
-        // set the analog reference (high two bits of ADMUX) and select the
-        // channel (low 4 bits).  this also sets ADLAR (left-adjust result)
+        // set channel (low 3 bits).  this also sets ADLAR (left-adjust result)
         // to 0 (the default).
-        ADMUX = ( analog_reference << 6 ) | ( pin & 0x07 );
+        ADMUX = (0x40) | ( pin & 0x07 );
+
+        cbi(ADCSRA,ADATE);
 
         //configures interrupt
         sbi( ADCSRA, ADIE );
@@ -54,14 +76,38 @@ native/pre do
         return ( high << 8 ) | low;
     }
 
-
-
-    void an_req (uint8_t pin){
-        analogRead_begin(pin);
-    }
 end
 
+input int AN_00;
+input int AN_01;
+input int AN_02;
+input int AN_03;
+input int AN_04;
+input int AN_05;
 
 spawn async/isr [_ADC_vect_num,0] do
-    emit AN(_analogRead_read());
+    var u8 channel = (_ADMUX & 7);
+    if channel == 0 then
+        _clear_elem(0);
+        emit AN_00(_analogRead_read());
+    else/if channel == 1 then
+        _clear_elem(1);
+        emit AN_01(_analogRead_read());
+    else/if channel == 2 then
+        _clear_elem(2);
+        emit AN_02(_analogRead_read());
+    else/if channel == 3 then
+        _clear_elem(3);
+        emit AN_03(_analogRead_read());
+    else/if channel == 4 then
+        _clear_elem(4);
+        emit AN_04(_analogRead_read());
+    else/if channel == 5 then
+        _clear_elem(5);
+        emit AN_05(_analogRead_read());
+    end
+    var u8 next = _dequeue();
+    if next != _EMPTY_QUEUE then
+        _analogRead_begin(next);
+    end
 end

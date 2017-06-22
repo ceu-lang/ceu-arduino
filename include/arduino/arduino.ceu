@@ -15,6 +15,7 @@ native/const
 ;
 
 native
+    _bitClear,
     _ceu_dbg_assert,
     _delayMicroseconds,
     _digitalPinToInterrupt,

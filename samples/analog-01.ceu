@@ -7,19 +7,44 @@ end
 #include "arduino/isr/timer.ceu"
 
 output int PIN_13;
+output int PIN_07;
+output void AN_REQ_00;
+output void AN_REQ_01;
 
 emit PIN_13(HIGH);
 await(500)ms;
 emit PIN_13(LOW);
 await(500)ms;
+emit PIN_07(HIGH);
+await(500)ms;
+emit PIN_07(LOW);
+await(500)ms;
 
-loop do
-	_an_req(14);
-	var int value = await AN ;
-	if value > 500 then
-		emit PIN_13(HIGH);
-		await (200)ms;
-		emit PIN_13(LOW);
-		await (200)ms;
+par do
+	loop do
+		emit AN_REQ_00;
+		await 5ms;
+		emit AN_REQ_01;
+		await 5ms;
+	end
+with
+	loop do
+		par/and do
+			var int value = await AN_00 ;
+			if value > 500 then
+				emit PIN_13(HIGH);
+				await (200)ms;
+				emit PIN_13(LOW);
+				await (200)ms;
+			end
+		with
+			var int value = await AN_01 ;
+			if value > 700 then
+				emit PIN_07(HIGH);
+				await (200)ms;
+				emit PIN_07(LOW);
+				await (200)ms;
+			end
+		end
 	end
 end

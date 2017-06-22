@@ -52,8 +52,6 @@ native/pos do
         // to 0 (the default).
         ADMUX = (0x40) | ( pin & 0x07 );
 
-        cbi(ADCSRA,ADATE);
-
         //configures interrupt
         sbi( ADCSRA, ADIE );
 
@@ -75,7 +73,6 @@ native/pos do
         // combine the two bytes
         return ( high << 8 ) | low;
     }
-
 end
 
 input int AN_00;
@@ -109,5 +106,7 @@ spawn async/isr [_ADC_vect_num,0] do
     var u8 next = _dequeue();
     if next != _EMPTY_QUEUE then
         _analogRead_begin(next);
+    else
+        _bitClear( _ADCSRA, _ADIE );
     end
 end

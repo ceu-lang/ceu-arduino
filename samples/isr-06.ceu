@@ -21,14 +21,12 @@ end
 native _ceu_arduino_dt;
 native/pos do
     static u16 CEU_ARDUINO_old;
-    ##define ceu_callback_user _ceu_callback_user_
-    tceu_callback_ret _ceu_callback_user_ (int cmd, tceu_callback_arg p1, tceu_callback_arg p2)
+    tceu_callback_ret ceu_callback_isr (int cmd, tceu_callback_arg p1,
+                                                 tceu_callback_arg p2,
+                                                 const char* file, u32 line)
     {
         tceu_callback_ret ret = { .is_handled=1 };
         switch (cmd) {
-            case CEU_CALLBACK_START:
-                CEU_ARDUINO_old = TCNT1;
-                break;
             case CEU_CALLBACK_WCLOCK_MIN: {
                 s32 us = p1.num;
                 if (us == CEU_WCLOCK_INACTIVE) {
@@ -47,6 +45,7 @@ native/pos do
         }
         return ret;
     }
+    tceu_callback CEU_CALLBACK_ISR = { &ceu_callback_isr, NULL };
 
     s32 ceu_arduino_dt (void) {
         u16 now = TCNT1;
@@ -56,8 +55,13 @@ native/pos do
     }
 end
 
-_TCCR1A = 0;
-_TCCR1B = (1 << _CS12) | (1 << _CS10); // 1024 prescaler
+{
+    ceu_callback_register(&CEU_CALLBACK_ISR);
+    CEU_ARDUINO_old = TCNT1;
+    TCCR1A = 0;
+    TCCR1B = (1 << CS12) | (1 << CS10); // 1024 prescaler
+}
+
 spawn async/isr [_TIMER1_OVF_vect_num, 0] do
     emit (_ceu_arduino_dt())us;
 end
@@ -66,48 +70,48 @@ output bool PIN_13;
 
 var int i;
 loop i in [0->5[ do
-    emit PIN_13(1);
+    emit PIN_13(true);
     await 250ms;
-    emit PIN_13(0);
+    emit PIN_13(false);
     await 250ms;
 end
 
 await 1s;
 loop i in [0->5[ do
-    emit PIN_13(1);
+    emit PIN_13(true);
     await 500ms;
-    emit PIN_13(0);
+    emit PIN_13(false);
     await 500ms;
 end
 
 await 1s;
 loop i in [0->5[ do
-    emit PIN_13(1);
+    emit PIN_13(true);
     await 1s;
-    emit PIN_13(0);
+    emit PIN_13(false);
     await 1s;
 end
 
 await 1s;
 loop i in [0->5[ do
-    emit PIN_13(1);
+    emit PIN_13(true);
     await 2s;
-    emit PIN_13(0);
+    emit PIN_13(false);
     await 2s;
 end
 
 await 1s;
-emit PIN_13(1);
+emit PIN_13(true);
 loop i in [0->10[ do
     await 1s;
 end
-emit PIN_13(0);
+emit PIN_13(false);
 
 // ERROR here, overflow!
 await 1s;
 loop i in [0->5[ do
-    emit PIN_13(1);
+    emit PIN_13(true);
     await 5s;
-    emit PIN_13(0);
+    emit PIN_13(false);
     await 5s;
 end

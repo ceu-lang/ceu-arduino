@@ -18,12 +18,10 @@ data IUsart with
 end
 
 code/await Usart (var int speed, vector&[] byte rx)
-                    -> (var& IUsart usart)
+                    -> (var IUsart usart)
                         -> FOREVER
 do
-    var IUsart usart_ = _;
-    usart = &usart_;
-
+    usart = _;
     spawn async/isr [_USART_RX_vect_num,0] do
         var byte c = _UDR0;
         outer.rx = outer.rx..[c];
@@ -44,9 +42,11 @@ do
     end
 
     every USART_RX do
-        emit usart_.ok_rx;
+        emit usart.ok_rx;
     end
 end
+
+// TODO: move to inside Usart
 
 code/await Usart_TX (var& IUsart usart, vector&[] byte buf) -> void
 do

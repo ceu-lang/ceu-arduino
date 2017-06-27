@@ -15,7 +15,7 @@ input  bool PIN_02;
 output bool PIN_13;
 
 spawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do
-    emit PIN_02(_digitalRead(2));
+    emit PIN_02(_digitalRead(2) as bool);
 end
 
 emit PIN_13(LOW);

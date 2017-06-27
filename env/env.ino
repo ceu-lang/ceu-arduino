@@ -42,8 +42,9 @@ typedef struct tceu_arduino {
 static tceu_arduino CEU_ARDUINO;
 #endif
 
-tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1,
-                                         tceu_callback_arg p2)
+tceu_callback_ret ceu_callback_arduino (int cmd, tceu_callback_arg p1,
+                                                 tceu_callback_arg p2,
+                                                 const char* file, u32 line)
 {
     tceu_callback_ret ret = { .is_handled=1 };
 
@@ -162,7 +163,8 @@ void setup () {
 
 #endif
 
-    ceu_start();
+    tceu_callback cb = { &ceu_callback_arduino, NULL };
+    ceu_start(&cb, 0, NULL);
 
     while (!CEU_APP.end_ok)
     {

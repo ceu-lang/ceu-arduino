@@ -11,20 +11,21 @@ output bool PIN_11;
 
 spawn do
     loop do
-        emit PIN_11(1);
+        emit PIN_11(true);
         await 1s;
-        emit PIN_11(0);
+        emit PIN_11(false);
         await 1s;
     end
 end
 
 watching 4s do
     loop do
-        emit PIN_13(1);
+        emit PIN_13(true);
         await 500ms;
-        emit PIN_13(0);
+        emit PIN_13(false);
         await PIN_02;
     end
 end
 
-emit PIN_12(1);
+emit PIN_12(true);
+await FOREVER;

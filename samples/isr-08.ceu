@@ -9,9 +9,9 @@ output bool PIN_13;
 
 loop do
     watching PIN_02 do
-        var int x = 0;
+        var bool x = false;
         every 500ms do
-            x = 1 - x;
+            x = not x;
             emit PIN_13(x);
         end
     end

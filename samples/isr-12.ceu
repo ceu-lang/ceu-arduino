@@ -8,7 +8,7 @@ end
 
 var& IUsart usart;
 vector[20] byte rx = [];
-spawn Usart(9600, &rx) -> (&usart);
+var& Usart usart = spawn Usart(9600, &rx);
 
 output bool PIN_13;
 
@@ -34,7 +34,7 @@ watching PIN_02 do
             await 1s;
         with
             vector[20] byte str = [].."Hello World!\n";
-            await Usart_TX(&usart,&str);
+            await Usart_TX(&usart.usart,&str);
         end
     end
 end
@@ -44,32 +44,32 @@ await 1s;
 watching PIN_02 do
     loop do
         if $rx == 0 then
-            await usart.ok_rx;
+            await usart.usart.ok_rx;
         end
         vector[20] byte tx;
         atomic do
             tx = []..rx;
             rx = [];
         end
-        await Usart_TX(&usart,&tx);
+        await Usart_TX(&usart.usart,&tx);
     end
 end
 
 // should tx up to 1-5\n
 watching 8ms do
     vector[20] byte str = [].."12345\n67890";
-    await Usart_TX(&usart, &str);
+    await Usart_TX(&usart.usart, &str);
 end
 
 // print both in sequence
 vector[20] byte str = [].."Hello World!\n";
 par/and do
-    await Usart_TX(&usart, &str);
+    await Usart_TX(&usart.usart, &str);
 with
-    await Usart_TX(&usart, &str);
+    await Usart_TX(&usart.usart, &str);
 end
 
 vector[20] byte str = [].."ok!\n";
-await Usart_TX(&usart, &str);
+await Usart_TX(&usart.usart, &str);
 
 await FOREVER;

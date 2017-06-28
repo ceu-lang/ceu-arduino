@@ -1,3 +1,5 @@
+/* TODO: only working with original Arduino */
+
 native/pre do
     //##define CEU_FEATURES_ISR_SLEEP
 end

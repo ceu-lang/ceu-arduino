@@ -1,3 +1,5 @@
+/* TODO: only working with original Arduino */
+
 #include "arduino/avr.ceu"
 
 native/pure _BAUD_USART;

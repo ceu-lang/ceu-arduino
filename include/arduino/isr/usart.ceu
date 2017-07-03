@@ -19,7 +19,7 @@ data IUsart with
     event void ok_rx;
 end
 
-code/await Usart (var int speed, vector&[] byte rx)
+code/await Usart (var int speed, var&[] byte rx)
                     -> (var IUsart usart)
                         -> FOREVER
 do
@@ -50,7 +50,7 @@ end
 
 // TODO: move to inside Usart
 
-code/await Usart_TX (var& IUsart usart, vector&[] byte buf) -> void
+code/await Usart_TX (var& IUsart usart, var&[] byte buf) -> void
 do
     lock usart.l do
         var usize i;

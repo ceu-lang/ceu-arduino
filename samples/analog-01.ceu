@@ -20,17 +20,14 @@ await(500)ms;
 emit PIN_07(LOW);
 await(500)ms;
 
+_Serial.begin(9600);
+
 par do
 	loop do
-		emit AN_REQ_00;
-		await 5ms;
-		emit AN_REQ_01;
-		await 5ms;
-	end
-with
-	loop do
 		par/and do
+			_Serial.println("Trail AN00 sleep");
 			var int value = await AN_00 ;
+			_Serial.println("Trail AN00 awoke");			
 			if value > 500 then
 				emit PIN_13(HIGH);
 				await (200)ms;
@@ -38,7 +35,9 @@ with
 				await (200)ms;
 			end
 		with
+			_Serial.println("Trail AN01 sleep");
 			var int value = await AN_01 ;
+			_Serial.println("Trail AN01 awoke");			
 			if value > 700 then
 				emit PIN_07(HIGH);
 				await (200)ms;
@@ -46,5 +45,12 @@ with
 				await (200)ms;
 			end
 		end
+	end
+with
+	loop do
+		emit AN_REQ_01;
+		// await 1ms;
+		emit AN_REQ_00;
+		await 1000ms;
 	end
 end

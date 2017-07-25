@@ -1,3 +1,12 @@
+#ifdef CEU_ISR__ADC_vect_num
+ISR(ADC_vect)
+{
+    if (isrs[ADC_vect_num].fun != NULL) {
+        isrs[ADC_vect_num].fun(isrs[ADC_vect_num].mem);
+    }
+}
+#endif
+
 #ifdef CEU_ISR__TIMER1_COMPA_vect_num
 ISR(TIMER1_COMPA_vect)
 {

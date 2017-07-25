@@ -77,6 +77,21 @@ tceu_callback_ret ceu_callback_arduino (int cmd, tceu_callback_arg p1,
             interrupts();
         }
 
+        case CEU_CALLBACK_LOG: {
+            switch (p1.num) {
+                case 0:
+                    Serial.print((char*)p2.ptr);
+                    break;
+                case 1:
+                    Serial.print(p2.num,HEX);
+                    break;
+                case 2:
+                    Serial.print(p2.num);
+                    break;
+            }
+            break;
+        }
+
 #ifdef CEU_FEATURES_ISR
         case CEU_CALLBACK_ISR_ENABLE: {
             if (p1.num == 1) {

@@ -6,6 +6,7 @@ native/pre do
 end
 
 native/const
+    _ADC_vect_num,
     _TIMER1_COMPA_vect_num,
     _TIMER1_OVF_vect_num,
     _USART_RX_vect_num,
@@ -13,6 +14,9 @@ native/const
 ;
 
 native
+    _ADCSRA,
+    _ADIE,
+    _ADMUX,
     _CS10,
     _CS12,
     _OCIE1A,

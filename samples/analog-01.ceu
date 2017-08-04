@@ -1,0 +1,56 @@
+native/pre do
+    ##define CEU_FEATURES_ISR_SLEEP
+end
+
+#include "arduino/arduino.ceu"
+#include "arduino/isr/analog.ceu"
+#include "arduino/isr/timer.ceu"
+
+output int PIN_13;
+output int PIN_07;
+output void AN_REQ_00;
+output void AN_REQ_01;
+
+emit PIN_13(HIGH);
+await(500)ms;
+emit PIN_13(LOW);
+await(500)ms;
+emit PIN_07(HIGH);
+await(500)ms;
+emit PIN_07(LOW);
+await(500)ms;
+
+_Serial.begin(9600);
+
+par do
+	loop do
+		par/and do
+			_Serial.println("Trail AN00 sleep");
+			var int value = await AN_00 ;
+			_Serial.println("Trail AN00 awoke");			
+			if value > 500 then
+				emit PIN_13(HIGH);
+				await (200)ms;
+				emit PIN_13(LOW);
+				await (200)ms;
+			end
+		with
+			_Serial.println("Trail AN01 sleep");
+			var int value = await AN_01 ;
+			_Serial.println("Trail AN01 awoke");			
+			if value > 700 then
+				emit PIN_07(HIGH);
+				await (200)ms;
+				emit PIN_07(LOW);
+				await (200)ms;
+			end
+		end
+	end
+with
+	loop do
+		emit AN_REQ_01;
+		// await 1ms;
+		emit AN_REQ_00;
+		await 1000ms;
+	end
+end

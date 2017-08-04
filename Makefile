@@ -1,6 +1,6 @@
 CEU_DIR  = $(error set absolute path to "<ceu>" repository)
 CEU_SRC ?= samples/blink-01.ceu
-CEU_ISR ?= false
+CEU_ISR ?= true
 
 ARD_EXE = arduino
 ARD_ARCH  = avr

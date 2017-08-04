@@ -14,7 +14,7 @@ native/const
 ;
 
 native
-    _ADCSRA, 
+    _ADCSRA,
     _ADIE,
     _ADMUX,
     _CS10,

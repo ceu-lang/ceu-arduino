@@ -1,3 +1,5 @@
+/* TODO: only working with original Arduino */
+
 #include "arduino/avr.ceu"
 
 native/pure _BAUD_USART;
@@ -17,13 +19,11 @@ data IUsart with
     event void ok_rx;
 end
 
-code/await Usart (var int speed, vector&[] byte rx)
-                    -> (var& IUsart usart)
+code/await Usart (var int speed, var&[] byte rx)
+                    -> (var IUsart usart)
                         -> FOREVER
 do
-    var IUsart usart_ = _;
-    usart = &usart_;
-
+    usart = _;
     spawn async/isr [_USART_RX_vect_num,0] do
         var byte c = _UDR0;
         outer.rx = outer.rx..[c];
@@ -44,11 +44,13 @@ do
     end
 
     every USART_RX do
-        emit usart_.ok_rx;
+        emit usart.ok_rx;
     end
 end
 
-code/await Usart_TX (var& IUsart usart, vector&[] byte buf) -> void
+// TODO: move to inside Usart
+
+code/await Usart_TX (var& IUsart usart, var&[] byte buf) -> void
 do
     lock usart.l do
         var usize i;

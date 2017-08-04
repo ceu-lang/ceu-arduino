@@ -16,15 +16,13 @@
 
 native _ceu_arduino_dt;
 native/pos do
-    static u16 CEU_ARDUINO_old;
-    ##define ceu_callback_user _ceu_callback_user_
-    tceu_callback_ret _ceu_callback_user_ (int cmd, tceu_callback_arg p1, tceu_callback_arg p2)
+    static u16 CEU_TIMER_old;
+    tceu_callback_ret ceu_callback_timer (int cmd, tceu_callback_arg p1,
+                                                   tceu_callback_arg p2,
+                                                   const char* file, u32 line)
     {
         tceu_callback_ret ret = { .is_handled=1 };
         switch (cmd) {
-            case CEU_CALLBACK_START:
-                CEU_ARDUINO_old = TCNT1;
-                break;
             case CEU_CALLBACK_WCLOCK_MIN: {
                 s32 us = p1.num;
                 if (us == CEU_WCLOCK_INACTIVE) {
@@ -33,7 +31,7 @@ native/pos do
                     s32 v = US_TO_OVERFLOW(us);
                     ceu_dbg_assert(v > 0);
                     TCNT1 = v;
-                    CEU_ARDUINO_old = v;
+                    CEU_TIMER_old = v;
                     TIMSK1 = TIMSK1 | (1 << TOIE1);
                 }
                 break;
@@ -43,17 +41,23 @@ native/pos do
         }
         return ret;
     }
+    tceu_callback CEU_CALLBACK_TIMER = { &ceu_callback_timer, NULL };
 
     s32 ceu_arduino_dt (void) {
         u16 now = TCNT1;
-        s32 dt  = (now - CEU_ARDUINO_old);
-        CEU_ARDUINO_old = now;
+        s32 dt  = (now - CEU_TIMER_old);
+        CEU_TIMER_old = now;
         return INCS_TO_US(dt);
     }
 end
 
-_TCCR1A = 0;
-_TCCR1B = (1 << _CS12) | (1 << _CS10); // 1024 prescaler
+{
+    ceu_callback_register(&CEU_CALLBACK_TIMER);
+    CEU_TIMER_old = TCNT1;
+    TCCR1A = 0;
+    TCCR1B = (1 << CS12) | (1 << CS10); // 1024 prescaler
+}
+
 spawn async/isr [_TIMER1_OVF_vect_num, 0] do
     emit (_ceu_arduino_dt())us;
 end

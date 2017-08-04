@@ -10,30 +10,30 @@ end
 
 #include "arduino/arduino.ceu"
 
-input  int PIN_02;
-output int PIN_13;
+input  bool PIN_02;
+output bool PIN_13;
 
-input  int PIN_03;
-output int PIN_12;
+input  bool PIN_03;
+output bool PIN_12;
 
 emit PIN_13(LOW);
 emit PIN_12(LOW);
 
 spawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do
-    emit PIN_02(_digitalRead(2));
+    emit PIN_02(_digitalRead(2) as bool);
 end
 
 spawn async/isr [_digitalPinToInterrupt(3),_CHANGE] do
-    emit PIN_03(_digitalRead(3));
+    emit PIN_03(_digitalRead(3) as bool);
 end
 
 par do
-    var int v;
+    var bool v;
     every v in PIN_02 do
         emit PIN_13(v);
     end
 with
-    var int v;
+    var bool v;
     every v in PIN_03 do
         emit PIN_12(v);
     end

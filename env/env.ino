@@ -42,8 +42,9 @@ typedef struct tceu_arduino {
 static tceu_arduino CEU_ARDUINO;
 #endif
 
-tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1,
-                                         tceu_callback_arg p2)
+tceu_callback_ret ceu_callback_arduino (int cmd, tceu_callback_arg p1,
+                                                 tceu_callback_arg p2,
+                                                 const char* file, u32 line)
 {
     tceu_callback_ret ret = { .is_handled=1 };
 
@@ -74,6 +75,21 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1,
                 delayMicroseconds(10000);
             }
             interrupts();
+        }
+
+        case CEU_CALLBACK_LOG: {
+            switch (p1.num) {
+                case 0:
+                    Serial.print((char*)p2.ptr);
+                    break;
+                case 1:
+                    Serial.print(p2.num,HEX);
+                    break;
+                case 2:
+                    Serial.print(p2.num);
+                    break;
+            }
+            break;
         }
 
 #ifdef CEU_FEATURES_ISR
@@ -162,7 +178,8 @@ void setup () {
 
 #endif
 
-    ceu_start();
+    tceu_callback cb = { &ceu_callback_arduino, NULL };
+    ceu_start(&cb, 0, NULL);
 
     while (!CEU_APP.end_ok)
     {

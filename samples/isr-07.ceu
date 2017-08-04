@@ -21,14 +21,12 @@ end
 native _ceu_arduino_dt;
 native/pos do
     static u16 CEU_ARDUINO_old;
-    ##define ceu_callback_user _ceu_callback_user_
-    tceu_callback_ret _ceu_callback_user_ (int cmd, tceu_callback_arg p1, tceu_callback_arg p2)
+    tceu_callback_ret ceu_callback_isr (int cmd, tceu_callback_arg p1,
+                                                 tceu_callback_arg p2,
+                                                 const char* file, u32 line)
     {
         tceu_callback_ret ret = { .is_handled=1 };
         switch (cmd) {
-            case CEU_CALLBACK_START:
-                CEU_ARDUINO_old = TCNT1;
-                break;
             case CEU_CALLBACK_WCLOCK_MIN: {
                 s32 us = p1.num;
                 if (us == CEU_WCLOCK_INACTIVE) {
@@ -47,6 +45,7 @@ native/pos do
         }
         return ret;
     }
+    tceu_callback CEU_CALLBACK_ISR = { &ceu_callback_isr, NULL };
 
     s32 ceu_arduino_dt (void) {
         u16 now = TCNT1;
@@ -56,24 +55,29 @@ native/pos do
     }
 end
 
-_TCCR1A = 0;
-_TCCR1B = (1 << _CS12) | (1 << _CS10); // 1024 prescaler
+{
+    ceu_callback_register(&CEU_CALLBACK_ISR);
+    CEU_ARDUINO_old = TCNT1;
+    TCCR1A = 0;
+    TCCR1B = (1 << CS12) | (1 << CS10); // 1024 prescaler
+}
+
 spawn async/isr [_TIMER1_OVF_vect_num, 0] do
     emit (_ceu_arduino_dt())us;
 end
 
-input  int PIN_02;
-output int PIN_13;
+input  bool PIN_02;
+output bool PIN_13;
 
 spawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do
-    emit PIN_02(_digitalRead(2));
+    emit PIN_02(_digitalRead(2) as bool);
 end
 
 loop do
     watching PIN_02 do
-        var int x = 0;
+        var bool x = false;
         every 500ms do
-            x = 1 - x;
+            x = not x;
             emit PIN_13(x);
         end
     end

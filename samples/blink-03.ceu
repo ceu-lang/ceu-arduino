@@ -1,8 +1,8 @@
 #include "arduino/arduino.ceu"
 
-output int PIN_11;
-output int PIN_12;
-output int PIN_13;
+output bool PIN_11;
+output bool PIN_12;
+output bool PIN_13;
 
 par do
     loop do

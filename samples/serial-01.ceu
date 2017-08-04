@@ -10,4 +10,3 @@ loop do
     var byte c = await SERIAL;
     _Serial.write(c);
 end
-

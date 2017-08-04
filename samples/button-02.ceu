@@ -1,7 +1,7 @@
 #include "arduino/arduino.ceu"
 
-input  int PIN_02;
-output int PIN_13;
+input  bool PIN_02;
+output bool PIN_13;
 
 loop do
     watching PIN_02 do

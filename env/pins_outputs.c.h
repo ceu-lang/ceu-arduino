@@ -1,36 +1,35 @@
+#ifdef _CEU_OUTPUT_AN_REQ_
+case CEU_OUTPUT_AN_REQ:
+    analogRead_begin(*((int*)p2.ptr));
+    break;
+#endif
 #ifdef _CEU_OUTPUT_AN_REQ_00_
 case CEU_OUTPUT_AN_REQ_00:
-    queue(0);
     analogRead_begin(0);
     break;
 #endif
 #ifdef _CEU_OUTPUT_AN_REQ_01_
 case CEU_OUTPUT_AN_REQ_01:
-    queue(1);
     analogRead_begin(1);
     break;
 #endif
 #ifdef _CEU_OUTPUT_AN_REQ_02_
 case CEU_OUTPUT_AN_REQ_02:
-    queue(2);
     analogRead_begin(2);
     break;
 #endif
 #ifdef _CEU_OUTPUT_AN_REQ_03_
 case CEU_OUTPUT_AN_REQ_03:
-    queue(3);
     analogRead_begin(3);
     break;
 #endif
 #ifdef _CEU_OUTPUT_AN_REQ_04_
 case CEU_OUTPUT_AN_REQ_04:
-    queue(4);
     analogRead_begin(4);
     break;
 #endif
 #ifdef _CEU_OUTPUT_AN_REQ_05_
 case CEU_OUTPUT_AN_REQ_05:
-    queue(5);
     analogRead_begin(5);
     break;
 #endif

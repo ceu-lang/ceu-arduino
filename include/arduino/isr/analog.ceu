@@ -2,95 +2,7 @@
 #include "arduino/avr.ceu"
 #include "arduino/arduino.ceu"
 
-// Event that carries analog value
-
-native/pre do
-    ##define CEU_FEATURES_ISR_SLEEP
-end
-
-native
-    _analogRead_read,
-    _analogRead_begin,
-    _bit_vector,
-    _clear_elem,
-    _dequeue,
-    _EMPTY_QUEUE,
-;
-
 native/pos do
-
-    // bit operations, set_bit and clear_bit
-    ##ifndef cbi
-    ##define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
-    ##endif
-    ##ifndef sbi
-    ##define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
-    ##endif
-
-    #define EMPTY_QUEUE 0xff
-    #define N_ADC 6
-
-    uint8_t bit_vector = 0;
-
-    void queue(uint8_t e){
-        bit_vector = bit_vector | (0b1 << e);
-    }
-
-    uint8_t dequeue(void){
-        uint8_t mask = 0b1;
-        for(int i = 0; i < N_ADC ; i++){
-            if(bit_vector & mask){
-                return i;
-            }
-            mask = mask << 1;
-        }
-        return EMPTY_QUEUE;
-    }
-
-    void clear_elem(uint8_t e){
-        bit_vector = bit_vector & ((0b1 << e) ^ 0xff );
-    }
-
-    //starts a conversion
-    void analogRead_begin( uint8_t pin ) {
-
-        // if there is a conversion in progress, queue this one
-        if(ADCSRA & _BV(ADSC)){
-            queue(pin);
-            return;
-        }
-
-        // set channel (low 3 bits).  this also sets ADLAR (left-adjust result)
-        // to 0 (the default).
-        ADMUX = (0x40) | ( pin & 0x07 );
-
-        //configures interrupt
-        sbi( ADCSRA, ADIE );
-
-        // start the conversion
-        sbi( ADCSRA, ADSC );
-    }
-    
-    int analogRead_read() {
-
-        uint8_t low, high;
-
-        cbi(ADCSRA,ADSC);
-        cbi(ADCSRA,ADIF);
-        cbi(ADCSRA,ADIE);
-
-        // we have to read ADCL first; doing so locks both ADCL
-        // and ADCH until ADCH is read.  reading ADCL second would
-        // cause the results of each conversion to be discarded,
-        // as ADCL and ADCH would be locked when it completed.
-
-        low  = ADCL;
-        high = ADCH;
-
-        // combine the two bytes
-        return ( high << 8 ) | low;
-    }
-
     tceu_callback_ret ceu_callback_analog (int cmd, tceu_callback_arg p1,
                                                     tceu_callback_arg p2,
                                                     const char* file, u32 line)
@@ -99,10 +11,24 @@ native/pos do
         switch (cmd) {
             case CEU_CALLBACK_OUTPUT:
                 switch (p1.num) {
-                    case CEU_OUTPUT_ADC_REQUEST:
-                        analogRead_begin(*((int*)p2.ptr));
+                    case CEU_OUTPUT_ADC_REQUEST: {
                         ret.is_handled = 1;
+                        u8 pin = *((int*)p2.ptr);
+
+                        // if there is a conversion in progress, queue this one
+                        if (ADCSRA & _BV(ADSC)) {
+                            CEU_APP.root.bit_vector = CEU_APP.root.bit_vector | (0b1 << pin);
+                            return;
+                        }
+
+                        // set channel (low 3 bits)
+                        // this also sets ADLAR (left-adjust result) to 0 (the default).
+                        ADMUX = 0x40 | (pin & 0x07);
+
+                        bitSet(ADCSRA, ADIE);    // configures interrupt
+                        bitSet(ADCSRA, ADSC);    // starts the conversion
                         break;
+                    }
                 }
                 break;
         }
@@ -112,46 +38,71 @@ native/pos do
 end
 { ceu_callback_register(&CEU_CALLBACK_ANALOG); }
 
-input none ADC_DONE;
-output int ADC_REQUEST;
+#define N_ADC 6
 
-var[6] bool available = [false,false,false,false,false,false];
-var[6] bool busy = [false,false,false,false,false,false];
-var[6] int sample = [0,0,0,0,0,0];
+output int  ADC_REQUEST;
+input  none ADC_DONE;
 
-code/await An (var int channel) -> int do
-    _ceu_dbg_assert(outer.busy[channel] == false);
-    outer.busy[channel] = true;
+var byte bit_vector = 0;
+
+data ADC_Channel with
+    var bool is_available = false;
+    var bool is_busy      = false;
+    var int  value;
+end
+
+var[6] ADC_Channel channels;
+do
+    var ADC_Channel ch = val ADC_Channel(_,_,_);
+    channels = channels .. [ ch, ch, ch, ch, ch, ch ];
+end
+
+code/await Analog (var int channel) -> int do
+    _ceu_dbg_assert(outer.channels[channel].is_busy == false);
+
+    outer.channels[channel].is_busy = true;
     emit ADC_REQUEST(channel);
-    loop do
-        await ADC_DONE;
-        var bool is_available = outer.available[channel];
-        if is_available == true then
-            outer.available[channel] = false;
-            var int value = outer.sample[channel];
-            outer.busy[channel] = false;
-            escape (value);
-        end
-    end
-    escape (20);
+
+    await ADC_DONE until outer.channels[channel].is_available;
+    outer.channels[channel].is_available = false;
+
+    outer.channels[channel].is_busy = false;
+    escape outer.channels[channel].value;
 end
 
 spawn async/isr [_ADC_vect_num,0] do
-    var u8 channel = (_ADMUX & 7);
-    _clear_elem(channel);
-    (outer.available[channel]) = true;
-    var int value = _analogRead_read();
-    outer.sample[channel] = value;
+    var u8 channel = {ADMUX & 7};
 
+    outer.bit_vector = outer.bit_vector & (({0b00000001} << channel) ^ 0xFF);
+
+    {
+        bitClear(ADCSRA, ADSC);
+        bitClear(ADCSRA, ADIF);
+        bitClear(ADCSRA, ADIE);
+    }
+
+    // we have to read ADCL first; doing so locks both ADCL
+    // and ADCH until ADCH is read.  reading ADCL second would
+    // cause the results of each conversion to be discarded,
+    // as ADCL and ADCH would be locked when it completed.
+    var byte low  = {ADCL};
+    var byte high = {ADCH};
+
+    outer.channels[channel].value = (high << 8) | low;
+    outer.channels[channel].is_available = true;
     emit ADC_DONE;
 
     // gets next conversion in queue
-    var u8 next = _dequeue();
-    // if none, clear the interrupt bit
-
-    if next != _EMPTY_QUEUE then
-        _analogRead_begin(next);
-    else
-        _bitClear( _ADCSRA, _ADIE );
+    do
+        var byte mask = {0b00000001};
+        var int i;
+        loop i in [0 -> N_ADC[ do
+            if (outer.bit_vector & mask) != 0 then
+                emit ADC_REQUEST(i);    // starts new conversion
+                escape;                 // prevents interrupt clear below
+            end
+            mask = mask << 1;
+        end
+        {bitClear(ADCSRA, ADIE);}       // if none, clears the interrupt bit
     end
 end

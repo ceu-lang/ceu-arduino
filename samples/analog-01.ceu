@@ -2,8 +2,8 @@ native/pre do
     ##define CEU_FEATURES_ISR_SLEEP
 end
 
-#include "arduino/isr/timer.ceu"
 #include "arduino/isr/analog.ceu"
+#include "arduino/isr/timer.ceu"
 
 _Serial.begin(9600);
 _Serial.println("=");
@@ -11,15 +11,15 @@ _Serial.println("=");
 loop do
     par/and do
         await 100ms;
-        var int value = await An(0); // connected to GND
+        var int value = await Analog(0); // connected to GND
         _Serial.print("AN 0 |"); _Serial.println(value);
     with
         await 200ms;
-        var int value = await An(1); // connected to 3.3V
+        var int value = await Analog(1); // connected to 3.3V
         _Serial.print("AN 1 |"); _Serial.println(value);
     with
         await 300ms;
-        var int value = await An(2); // connected to 5V
+        var int value = await Analog(2); // connected to 5V
         _Serial.print("AN 2 |"); _Serial.println(value);
     end
 end

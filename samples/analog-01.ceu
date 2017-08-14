@@ -6,53 +6,27 @@ end
 #include "arduino/isr/analog.ceu"
 #include "arduino/isr/timer.ceu"
 
-output on/off PIN_13;
-output on/off PIN_07;
-output none AN_REQ_00;
-output none AN_REQ_01;
-
-// emit PIN_13(on);
-// await(500)ms;
-// emit PIN_13(off);
-// await(500)ms;
-// emit PIN_07(on);
-// await(500)ms;
-// emit PIN_07(off);
-// await(500)ms;
-
-_Serial.begin(9600);
-_Serial.println("======================="); _Serial.flush();
-
+atomic do
+	_Serial.begin(9600);
+	_Serial.println("======================="); _Serial.flush();
+end
 par do
 	loop do
-		//par/and do
+		atomic do
 			_Serial.println("Trail AN00 sleep"); _Serial.flush();
-			var int value = await An(0) ;
+		end
+		var int value = await An(0) ;
+		await (2000)ms;
+		atomic do
 			_Serial.println("Trail AN00 awoke"); _Serial.flush();
-			if value > 500 then
-				emit PIN_13(on);
-				await (200)ms;
-				emit PIN_13(off);
-				await (200)ms;
-			end
-		//with
-		//	_Serial.println("Trail AN01 sleep");
-		//	var int value = await An(1) ;
-		//	_Serial.println("Trail AN01 awoke");			
-		//	if value > 700 then
-		//		emit PIN_07(off);
-		//		await (200)ms;
-		//		emit PIN_07(off);
-		//		await (200)ms;
-		//	end
-		//end
+		end
 		await 1s;
 	end
 with
 	loop do
-		// emit AN_REQ_01;
-		// await 1ms;
-		emit AN_REQ_00;
+		atomic do
+			_Serial.println("REQ"); _Serial.flush();
+		end
 		await 1000ms;
 	end
 end

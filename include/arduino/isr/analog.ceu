@@ -73,7 +73,7 @@ native/pos do
 
         uint8_t low, high;
 
-        Serial.println("READ"); Serial.flush();
+        //Serial.println("READ"); Serial.flush();
 
         cbi(ADCSRA,ADSC);
         cbi(ADCSRA,ADIF);
@@ -95,57 +95,74 @@ end
 input none ADC_DONE;
 
 var[6] bool available = [false,false,false,false,false,false];
+//var bool available = false;
 var[6] bool busy = [false,false,false,false,false,false];
-var[6] int sample;
+ var[6] int sample;
+//var int sample = 0;
 
 code/await An (var int channel) -> int do
-    _Serial.print("An()->"); _Serial.println(channel); _Serial.flush();
-    //_ceu_dbg_assert((outer.busy[channel])!=true);
-    _Serial.print("An()<-DONE ASSERT "); _Serial.println(channel); _Serial.flush();
-    //outer.busy[channel] = true;
-    // do finalize with
-    //     outer.busy[channel] = false;
-            _Serial.println("FINALIZE"); _Serial.flush();
-    // end
-    loop do
-        //atomic do
-            if outer.available[channel] == true then
-                _Serial.println("AVAILABLE"); _Serial.flush();
-                outer.available[channel] = false;
-                var int value = outer.sample[channel];
-                escape (10);
-            end
-        //end
-        _Serial.println("WAIT ADC_DONE"); _Serial.flush();
-        await ADC_DONE;
+    atomic do
+        _Serial.print("An()->"); _Serial.println(channel); _Serial.flush();
+        _Serial.print("An()<-DONE ASSERT "); _Serial.println(channel); _Serial.flush();
     end
+    // -->> UNCOMMENTING THIS LINE MAKES CODE BREAK (THIS TRAIL "FREEZES").
+    // -->> COMMENTING THIS LINE MAKES CODE BREAK (ASSERT).
+    //await 3s;
+        var bool is_available = false; 
+        if is_available == true then
+            var int value;
+            atomic do
+                _Serial.println("AVAILABLE"); _Serial.flush();
+            end
+        end
+        atomic do
+            _Serial.println("WAIT ADC_DONE"); //_Serial.flush();
+        // end
+        // atomic do
+            _Serial.println("DONE WAIT ADC_DONE"); _Serial.flush();
+        end
+    // Uncommenting this line with 110 commented makes code break (resets)
+    // escape(10);
 end
 
 spawn async/isr [_ADC_vect_num,0] do
-    _Serial.print("INT: "); _Serial.flush();
+    atomic do
+        _Serial.print("INT: "); _Serial.flush();
+    end 
     var u8 channel = (_ADMUX & 7);
-    _Serial.println(channel);
-    _Serial.println(_analogRead_read());
+    atomic do
+        _Serial.println(channel);
+        _Serial.println(_analogRead_read());
+    end
     _clear_elem(channel);
-    // Sets conversion ready
+    atomic do
+        _Serial.println("EMIT ADC_DONE"); _Serial.flush();
+    end
     //atomic do
-        // outer.available[channel] = true;
+        // Sets conversion ready
+        (outer.available[channel]) = true;
+        // Sets value in vector
+        var int value = _analogRead_read();
+
+        // --->> IF THIS LINE IS UNCOMMENTED, CODE BREAKS <<--
+        //(outer.sample[channel]) = value;
     //end
-    // Sets value in vector
-    //atomic do
-        // outer.sample[channel] = _analogRead_read();
-    //end
+
     // Emits ADC_DONE 
     emit ADC_DONE;
     // gets next conversion in queue
     var u8 next = _dequeue();
     // if none, clear the interrupt bit
     if next != _EMPTY_QUEUE then
-        _Serial.print("Next conversion: ");
-        _Serial.println(next);
-        _analogRead_begin(next);
+        atomic do
+            _Serial.print("Next conversion: ");
+            _Serial.println(next);
+            _analogRead_begin(next);
+        end
     else
         _bitClear( _ADCSRA, _ADIE );
     end
-    _Serial.println("INT DONE");
+    atomic do
+        _Serial.println("INT DONE");
+    end
 end

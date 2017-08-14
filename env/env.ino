@@ -69,11 +69,9 @@ tceu_callback_ret ceu_callback_arduino (int cmd, tceu_callback_arg p1,
             pinMode(13, OUTPUT);
             for (;;) {
                 digitalWrite(13, !digitalRead(13));
-                delayMicroseconds(50000);
-                delayMicroseconds(50000);
-                delayMicroseconds(50000);
-                delayMicroseconds(50000);
-                delayMicroseconds(50000);
+                for (int i=0; i<1000; i++) {
+                    delayMicroseconds(100);
+                }
             }
             interrupts();
         }

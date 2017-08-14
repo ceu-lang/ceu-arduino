@@ -1,6 +1,6 @@
 CEU_DIR  = $(error set absolute path to "<ceu>" repository)
 CEU_SRC ?= samples/blink-01.ceu
-CEU_ISR ?= true
+CEU_ISR ?= false
 
 INO_SRC ?= env/env.ino
 

@@ -122,9 +122,6 @@ var[6] int sample = [0,0,0,0,0,0];
 code/await An (var int channel) -> int do
     _ceu_dbg_assert(outer.busy[channel] == false);
     outer.busy[channel] = true;
-    do finalize with
-        outer.busy[channel] = false;
-    end
     emit ADC_REQUEST(channel);
     loop do
         await ADC_DONE;
@@ -132,6 +129,7 @@ code/await An (var int channel) -> int do
         if is_available == true then
             outer.available[channel] = false;
             var int value = outer.sample[channel];
+            outer.busy[channel] = false;
             escape (value);
         end
     end

@@ -1,0 +1,166 @@
+native/pre do
+    ##define CEU_FEATURES_ISR_SLEEP
+end
+
+#include "c.ceu"
+#include "arduino/avr.ceu"
+#include "arduino/arduino.ceu"
+#include "arduino/isr/timer.ceu"
+
+// Event that carries analog value
+
+
+native _analogRead_read,
+        _analogRead_begin,
+        _dequeue,
+        _clear_elem,
+        _EMPTY_QUEUE,
+        _bit_vector;
+
+native/pos do
+
+    // bit operations, set_bit and clear_bit
+    ##ifndef cbi
+    ##define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
+    ##endif
+    ##ifndef sbi
+    ##define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
+    ##endif
+
+    #define EMPTY_QUEUE 0xff
+    #define N_ADC 6
+
+    uint8_t bit_vector = 0;
+
+    void queue(uint8_t e){
+        bit_vector = bit_vector | (0b1 << e);
+    }
+
+    uint8_t dequeue(void){
+        uint8_t mask = 0b1;
+        for(int i = 0; i < N_ADC ; i++){
+            if(bit_vector & mask){
+                return i;
+            }
+            mask = mask << 1;
+        }
+        return EMPTY_QUEUE;
+    }
+
+    void clear_elem(uint8_t e){
+        bit_vector = bit_vector & ((0b1 << e) ^ 0xff );
+    }
+
+    //starts a conversion
+    void analogRead_begin( uint8_t pin ) {
+
+        // if there is a conversion in progress, queue this one
+        if(ADCSRA & _BV(ADSC)){
+            queue(pin);
+            return;
+        }
+
+        // set channel (low 3 bits).  this also sets ADLAR (left-adjust result)
+        // to 0 (the default).
+        ADMUX = (0x40) | ( pin & 0x07 );
+
+        //configures interrupt
+        sbi( ADCSRA, ADIE );
+
+        // start the conversion
+        sbi( ADCSRA, ADSC );
+    }
+    
+    int analogRead_read() {
+
+        uint8_t low, high;
+
+        cbi(ADCSRA,ADSC);
+        cbi(ADCSRA,ADIF);
+        cbi(ADCSRA,ADIE);
+
+        // we have to read ADCL first; doing so locks both ADCL
+        // and ADCH until ADCH is read.  reading ADCL second would
+        // cause the results of each conversion to be discarded,
+        // as ADCL and ADCH would be locked when it completed.
+
+        low  = ADCL;
+        high = ADCH;
+
+        // combine the two bytes
+        return ( high << 8 ) | low;
+    }
+end
+
+input none ADC_DONE;
+
+output int AN_REQ;
+
+var[6] bool available = [false,false,false,false,false,false];
+var[6] bool busy = [false,false,false,false,false,false];
+var[6] int sample = [0,0,0,0,0,0];
+
+code/await An (var int channel) -> int do
+    //do escape 0; end
+    _ceu_dbg_assert(outer.busy[channel] == false);
+    outer.busy[channel] = true;
+    do finalize with
+        outer.busy[channel] = false;
+    end
+    emit AN_REQ(channel);
+    loop do
+        await ADC_DONE;
+        //var bool is_available = outer.available[channel]; 
+        //if is_available == true then
+            outer.available[channel] = false;
+            var int value = outer.sample[channel];
+            //var int value = 10;
+            escape (value);
+        //end
+    end
+    escape (20);
+end
+
+spawn async/isr [_ADC_vect_num,0] do
+    var u8 channel = (_ADMUX & 7);
+    _clear_elem(channel);
+    (outer.available[channel]) = true;
+    var int value = _analogRead_read();
+    outer.sample[channel] = value;
+
+    emit ADC_DONE;
+
+    // gets next conversion in queue
+    var u8 next = _dequeue();
+    // if none, clear the interrupt bit
+
+    if next != _EMPTY_QUEUE then
+        _analogRead_begin(next);
+    else
+        _bitClear( _ADCSRA, _ADIE );
+    end
+end
+
+
+
+_Serial.begin(9600);
+_Serial.println("=");
+
+loop do
+    par/and do
+        await 500ms;
+        var int value = await An(0) ;
+        //atomic do
+            _Serial.print("AN 0 |"); _Serial.println(value); //_Serial.flush();
+            //_Serial.println(value);
+        //end
+        await 500ms;
+    with
+        var int value = await An(1) ;
+        //atomic do
+            _Serial.print("AN 1 |"); _Serial.println(value); //_Serial.flush();
+            //_Serial.println(value);
+        //end
+        await 1s;
+    end
+end

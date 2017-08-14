@@ -1,3 +1,4 @@
+#include "c.ceu"
 #include "arduino/avr.ceu"
 #include "arduino/arduino.ceu"
 
@@ -96,15 +97,14 @@ native/pos do
     {
         tceu_callback_ret ret = { .is_handled=0 };
         switch (cmd) {
-            case CEU_CALLBACK_OUTPUT: {
-                if (p1.num>=CEU_OUTPUT_AN_REQ_00 && p1.num<=CEU_OUTPUT_AN_REQ_05) {
-                    int v = p1.num-CEU_OUTPUT_AN_REQ_00;
-                    queue(v);
-                    analogRead_begin(v);
-                    ret.is_handled = 1;
-                    break;
+            case CEU_CALLBACK_OUTPUT:
+                switch (p1.num) {
+                    case CEU_OUTPUT_ADC_REQUEST:
+                        analogRead_begin(*((int*)p2.ptr));
+                        ret.is_handled = 1;
+                        break;
                 }
-            }
+                break;
         }
         return ret;
     }
@@ -113,77 +113,47 @@ end
 { ceu_callback_register(&CEU_CALLBACK_ANALOG); }
 
 input none ADC_DONE;
+output int ADC_REQUEST;
 
 var[6] bool available = [false,false,false,false,false,false];
-//var bool available = false;
 var[6] bool busy = [false,false,false,false,false,false];
- var[6] int sample;
-//var int sample = 0;
+var[6] int sample = [0,0,0,0,0,0];
 
 code/await An (var int channel) -> int do
-    atomic do
-        _Serial.print("An()->"); _Serial.println(channel); _Serial.flush();
-        _Serial.print("An()<-DONE ASSERT "); _Serial.println(channel); _Serial.flush();
+    _ceu_dbg_assert(outer.busy[channel] == false);
+    outer.busy[channel] = true;
+    do finalize with
+        outer.busy[channel] = false;
     end
-    // -->> UNCOMMENTING THIS LINE MAKES CODE BREAK (THIS TRAIL "FREEZES").
-    // -->> COMMENTING THIS LINE MAKES CODE BREAK (ASSERT).
-    //await 3s;
-        var bool is_available = false; 
+    emit ADC_REQUEST(channel);
+    loop do
+        await ADC_DONE;
+        var bool is_available = outer.available[channel];
         if is_available == true then
-            var int value;
-            atomic do
-                _Serial.println("AVAILABLE"); _Serial.flush();
-            end
+            outer.available[channel] = false;
+            var int value = outer.sample[channel];
+            escape (value);
         end
-        atomic do
-            _Serial.println("WAIT ADC_DONE"); //_Serial.flush();
-        // end
-        // atomic do
-            _Serial.println("DONE WAIT ADC_DONE"); _Serial.flush();
-        end
-    // Uncommenting this line with 110 commented makes code break (resets)
-    // escape(10);
+    end
+    escape (20);
 end
 
 spawn async/isr [_ADC_vect_num,0] do
-    atomic do
-        _Serial.print("INT: "); _Serial.flush();
-    end 
     var u8 channel = (_ADMUX & 7);
-    atomic do
-        _Serial.println(channel);
-        _Serial.println(_analogRead_read());
-    end
     _clear_elem(channel);
-    atomic do
-        _Serial.println("EMIT ADC_DONE"); _Serial.flush();
-    end
-    //atomic do
-        // Sets conversion ready
-        (outer.available[channel]) = true;
-        // Sets value in vector
-        var int value = _analogRead_read();
+    (outer.available[channel]) = true;
+    var int value = _analogRead_read();
+    outer.sample[channel] = value;
 
-        // --->> IF THIS LINE IS UNCOMMENTED, CODE BREAKS <<--
-        //(outer.sample[channel]) = value;
-    //end
-
-    // Emits ADC_DONE 
     emit ADC_DONE;
 
     // gets next conversion in queue
     var u8 next = _dequeue();
     // if none, clear the interrupt bit
+
     if next != _EMPTY_QUEUE then
-        atomic do
-            _Serial.print("Next conversion: ");
-            _Serial.println(next);
-            _analogRead_begin(next);
-        end
+        _analogRead_begin(next);
     else
         _bitClear( _ADCSRA, _ADIE );
-    end
-    atomic do
-        _Serial.println("INT DONE");
     end
 end

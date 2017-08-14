@@ -7,12 +7,15 @@ native/pre do
     ##define CEU_FEATURES_ISR_SLEEP
 end
 
-native _analogRead_read,
-        _analogRead_begin,
-        _dequeue,
-        _clear_elem,
-        _EMPTY_QUEUE,
-        _bit_vector;
+native
+    _analogRead_read,
+    _analogRead_begin,
+    _bit_vector,
+    _clear_elem,
+    _dequeue,
+    _EMPTY_QUEUE,
+;
+
 native/pos do
 
     // bit operations, set_bit and clear_bit
@@ -86,7 +89,28 @@ native/pos do
         // combine the two bytes
         return ( high << 8 ) | low;
     }
+
+    tceu_callback_ret ceu_callback_analog (int cmd, tceu_callback_arg p1,
+                                                    tceu_callback_arg p2,
+                                                    const char* file, u32 line)
+    {
+        tceu_callback_ret ret = { .is_handled=0 };
+        switch (cmd) {
+            case CEU_CALLBACK_OUTPUT: {
+                if (p1.num>=CEU_OUTPUT_AN_REQ_00 && p1.num<=CEU_OUTPUT_AN_REQ_05) {
+                    int v = p1.num-CEU_OUTPUT_AN_REQ_00;
+                    queue(v);
+                    analogRead_begin(v);
+                    ret.is_handled = 1;
+                    break;
+                }
+            }
+        }
+        return ret;
+    }
+    tceu_callback CEU_CALLBACK_ANALOG = { &ceu_callback_analog, NULL };
 end
+{ ceu_callback_register(&CEU_CALLBACK_ANALOG); }
 
 input int AN_00;
 input int AN_01;
@@ -95,11 +119,18 @@ input int AN_03;
 input int AN_04;
 input int AN_05;
 
+output void AN_REQ_00;
+output void AN_REQ_01;
+output void AN_REQ_02;
+output void AN_REQ_03;
+output void AN_REQ_04;
+output void AN_REQ_05;
+
 spawn async/isr [_ADC_vect_num,0] do
-    _Serial.print("INT: ");
+    //_Serial.print("INT: ");
     var u8 channel = (_ADMUX & 7);
-    _Serial.println(channel);
-    _Serial.println(_analogRead_read());
+    //_Serial.println(channel);
+    //_Serial.println(_analogRead_read());
 
     if channel == 0 then
         _Serial.println("EMIT 00");
@@ -127,11 +158,11 @@ spawn async/isr [_ADC_vect_num,0] do
     var u8 next = _dequeue();
     // if none, clear the interrupt bit
     if next != _EMPTY_QUEUE then
-        _Serial.print("Next conversion: ");
-        _Serial.println(next);
+        //_Serial.print("Next conversion: ");
+        //_Serial.println(next);
         _analogRead_begin(next);
     else
         _bitClear( _ADCSRA, _ADIE );
     end
-    _Serial.println("INT DONE");
+    //_Serial.println("INT DONE");
 end

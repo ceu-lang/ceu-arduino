@@ -175,3 +175,9 @@ case CEU_OUTPUT_PWM_13:
     analogWrite(13, *((int*)p2.ptr));
     break;
 #endif
+
+#ifdef _CEU_OUTPUT_SERIAL_SEND_BYTE_
+case CEU_OUTPUT_SERIAL_SEND_BYTE:
+    Serial.write(*((byte*)p2.ptr));
+    break;
+#endif

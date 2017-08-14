@@ -49,6 +49,7 @@ tceu_callback_ret ceu_callback_arduino (int cmd, tceu_callback_arg p1,
     tceu_callback_ret ret = { .is_handled=1 };
 
 #ifdef ceu_callback_user
+#error TODO: remove all this in v0.30
     ret = ceu_callback_user(cmd, p1, p2);
     if (ret.is_handled) {
         return ret;
@@ -68,11 +69,11 @@ tceu_callback_ret ceu_callback_arduino (int cmd, tceu_callback_arg p1,
             pinMode(13, OUTPUT);
             for (;;) {
                 digitalWrite(13, !digitalRead(13));
-                delayMicroseconds(10000);
-                delayMicroseconds(10000);
-                delayMicroseconds(10000);
-                delayMicroseconds(10000);
-                delayMicroseconds(10000);
+                delayMicroseconds(50000);
+                delayMicroseconds(50000);
+                delayMicroseconds(50000);
+                delayMicroseconds(50000);
+                delayMicroseconds(50000);
             }
             interrupts();
         }
@@ -157,7 +158,7 @@ s32 ceu_arduino_dt (void) {
 void setup () {
     #include "pins_modes.c.h"
 
-#ifdef _CEU_INPUT_SERIAL_
+#ifdef _CEU_INPUT_SERIAL_RECEIVE_BYTE_
     Serial.begin(CEU_ARDUINO_SERIAL_SPEED);
 #endif
 
@@ -218,10 +219,10 @@ _CEU_ARDUINO_AWAKE_:;
 
         ceu_input(CEU_INPUT__ASYNC, NULL);
         #include "pins_inputs.c.h"
-#ifdef _CEU_INPUT_SERIAL_
+#ifdef _CEU_INPUT_SERIAL_RECEIVE_BYTE_
         if (Serial.available()) {
             byte c = Serial.read();
-            ceu_input(CEU_INPUT_SERIAL, &c);
+            ceu_input(CEU_INPUT_SERIAL_RECEIVE_BYTE, &c);
         }
 #endif
 

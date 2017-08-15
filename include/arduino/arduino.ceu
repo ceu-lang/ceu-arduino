@@ -34,6 +34,7 @@ native
     _digitalPinToInterrupt,
     _digitalRead,
     _digitalWrite,
+    _F,
     _map,
     _micros,
     _millis,

@@ -61,12 +61,14 @@ code/await Analog (var int channel) -> int do
     _ceu_dbg_assert(outer.channels[channel].is_busy == false);
 
     outer.channels[channel].is_busy = true;
-    emit ADC_REQUEST(channel);
+    do finalize with
+        outer.channels[channel].is_busy = false;
+    end
 
+    emit ADC_REQUEST(channel);
     await ADC_DONE until outer.channels[channel].is_available;
     outer.channels[channel].is_available = false;
 
-    outer.channels[channel].is_busy = false;
     escape outer.channels[channel].value;
 end
 

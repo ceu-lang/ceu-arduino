@@ -1,9 +1,23 @@
-#define ceu_callback_assert_msg_ex(v,msg,file,line)                              \
-    if (!(v)) {                                                                  \
-        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL);                       \
+void ceu_arduino_abort (void);
+
+#define ceu_callback_assert_msg_ex(v,msg,file,line) \
+    if (!(v)) {                                     \
+        ceu_arduino_abort();                        \
     }
 
 #include "_ceu_app.c.h"
+
+void ceu_arduino_abort (void) {
+    noInterrupts();
+    pinMode(13, OUTPUT);
+    for (;;) {
+        digitalWrite(13, !digitalRead(13));
+        for (int i=0; i<100; i++) {
+            delayMicroseconds(1000);
+        }
+    }
+    interrupts();
+}
 
 #ifdef CEU_FEATURES_ISR
     #include "wiring_private.h"
@@ -63,33 +77,6 @@ tceu_callback_ret ceu_callback_arduino (int cmd, tceu_callback_arg p1,
             CEU_ARDUINO.pins_bits = 0;
 #endif
             break;
-
-        case CEU_CALLBACK_ABORT: {
-            noInterrupts();
-            pinMode(13, OUTPUT);
-            for (;;) {
-                digitalWrite(13, !digitalRead(13));
-                for (int i=0; i<1000; i++) {
-                    delayMicroseconds(100);
-                }
-            }
-            interrupts();
-        }
-
-        case CEU_CALLBACK_LOG: {
-            switch (p1.num) {
-                case 0:
-                    Serial.print((char*)p2.ptr);
-                    break;
-                case 1:
-                    Serial.print(p2.num,HEX);
-                    break;
-                case 2:
-                    Serial.print(p2.num);
-                    break;
-            }
-            break;
-        }
 
 #ifdef CEU_FEATURES_ISR
         case CEU_CALLBACK_ISR_ENABLE: {
@@ -177,7 +164,7 @@ void setup () {
 
 #endif
 
-    tceu_callback cb = { &ceu_callback_arduino, NULL };
+    static tceu_callback cb = { &ceu_callback_arduino, NULL };
     ceu_start(&cb, 0, NULL);
 
     while (!CEU_APP.end_ok)
@@ -185,8 +172,8 @@ void setup () {
 #ifdef CEU_FEATURES_ISR
         ceu_input(CEU_INPUT__ASYNC, NULL);
         {
-            tceu_evt_id_params evt;
-            int i;
+            static tceu_evt_id_params evt;
+            static int i;
             noInterrupts();
             for (i=0; i<_VECTORS_SIZE; i++) {
                 tceu_isr* isr = &isrs[i];

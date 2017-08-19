@@ -1,18 +1,19 @@
-void ceu_arduino_abort (void);
+void ceu_arduino_abort (int ms);
 
 #define ceu_callback_assert_msg_ex(v,msg,file,line) \
     if (!(v)) {                                     \
-        ceu_arduino_abort();                        \
+        ceu_arduino_abort(100);                     \
     }
 
 #include "_ceu_app.c.h"
 
-void ceu_arduino_abort (void) {
+void ceu_arduino_abort (int ms) {
+    SPI.end();
     noInterrupts();
     pinMode(13, OUTPUT);
     for (;;) {
         digitalWrite(13, !digitalRead(13));
-        for (int i=0; i<100; i++) {
+        for (int i=0; i<ms; i++) {
             delayMicroseconds(1000);
         }
     }

@@ -3,29 +3,29 @@
 #include "arduino/arduino.ceu"
 
 native/pre do
-  #define LSBFIRST 0
-  #define MSBFIRST 1
+    #define LSBFIRST 0
+    #define MSBFIRST 1
 
-  #define SPI_CLOCK_DIV4 0x00
-  #define SPI_CLOCK_DIV16 0x01
-  #define SPI_CLOCK_DIV64 0x02
-  #define SPI_CLOCK_DIV128 0x03
-  #define SPI_CLOCK_DIV2 0x04
-  #define SPI_CLOCK_DIV8 0x05
-  #define SPI_CLOCK_DIV32 0x06
+    #define SPI_CLOCK_DIV4 0x00
+    #define SPI_CLOCK_DIV16 0x01
+    #define SPI_CLOCK_DIV64 0x02
+    #define SPI_CLOCK_DIV128 0x03
+    #define SPI_CLOCK_DIV2 0x04
+    #define SPI_CLOCK_DIV8 0x05
+    #define SPI_CLOCK_DIV32 0x06
 
-  #define SPI_MODE0 0x00
-  #define SPI_MODE1 0x04
-  #define SPI_MODE2 0x08
-  #define SPI_MODE3 0x0C
+    #define SPI_MODE0 0x00
+    #define SPI_MODE1 0x04
+    #define SPI_MODE2 0x08
+    #define SPI_MODE3 0x0C
 
-  #define SPI_MODE_MASK 0x0C  // CPOL = bit 3, CPHA = bit 2 on SPCR
-  #define SPI_CLOCK_MASK 0x03  // SPR1 = bit 1, SPR0 = bit 0 on SPCR
-  #define SPI_2XCLOCK_MASK 0x01  // SPI2X = bit 0 on SPSR
+    #define SPI_MODE_MASK 0x0C  // CPOL = bit 3, CPHA = bit 2 on SPCR
+    #define SPI_CLOCK_MASK 0x03  // SPR1 = bit 1, SPR0 = bit 0 on SPCR
+    #define SPI_2XCLOCK_MASK 0x01  // SPI2X = bit 0 on SPSR
 
-  volatile bool SPI_busyFlag = false;
-  volatile uint8_t SPI_interruptSave = 0x0;
-  volatile uint8_t SPI_userCount = 0;
+    volatile bool SPI_busyFlag = false;
+    volatile uint8_t SPI_interruptSave = 0x0;
+    volatile uint8_t SPI_userCount = 0;
 end
 native/pos do
     tceu_callback_ret ceu_callback_spi (int cmd, tceu_callback_arg p1,
@@ -40,21 +40,21 @@ native/pos do
                         ret.is_handled = 1;
 
                         if(!usersCount){
-                          uint8_t port = digitalPinToPort(SS);
-                          uint8_t bit = digitalPinToBitMask(SS);
-                          volatile uint8_t *reg = portModeRegister(port);
-                          
-                          if(!(*reg & bit)){
-                              digitalWrite(SS, HIGH);
-                          }
-                          
-                          pinMode(SS, OUTPUT);
-                          
-                          SPCR |= _BV(MSTR);
-                          SPCR |= _BV(SPE);
+                            uint8_t port = digitalPinToPort(SS);
+                            uint8_t bit = digitalPinToBitMask(SS);
+                            volatile uint8_t *reg = portModeRegister(port);
+                            
+                            if(!(*reg & bit)){
+                                digitalWrite(SS, HIGH);
+                            }
+                            
+                            pinMode(SS, OUTPUT);
+                            
+                            SPCR |= _BV(MSTR);
+                            SPCR |= _BV(SPE);
 
-                          pinMode(SCK, OUTPUT);
-                          pinMode(MOSI, OUTPUT);
+                            pinMode(SCK, OUTPUT);
+                            pinMode(MOSI, OUTPUT);
                         }
                         usersCount++;                        
                         break;
@@ -64,8 +64,8 @@ native/pos do
 
                         SPI_userCount--;
                         if(SPI_userCount == 0){
-                          // disable SPI Module
-                          SPCR &= ~_BV(SPE);
+                            // disable SPI Module
+                            SPCR &= ~_BV(SPE);
                         }
 
                         break;
@@ -87,21 +87,21 @@ native/pos do
                         uint8_t clockDiv;
 
                         if (__builtin_constant_p(clock)) {
-                          if (clock >= F_CPU / 2) {
-                            clockDiv = 0;
-                          } else if (clock >= F_CPU / 4) {
-                            clockDiv = 1;
-                          } else if (clock >= F_CPU / 8) {
-                            clockDiv = 2;
-                          } else if (clock >= F_CPU / 16) {
-                            clockDiv = 3;
-                          } else if (clock >= F_CPU / 32) {
-                            clockDiv = 4;
-                          } else if (clock >= F_CPU / 64) {
-                            clockDiv = 5;
-                          } else {
-                            clockDiv = 6;
-                          }
+                            if (clock >= F_CPU / 2) {
+                                clockDiv = 0;
+                            } else if (clock >= F_CPU / 4) {
+                                clockDiv = 1;
+                            } else if (clock >= F_CPU / 8) {
+                                clockDiv = 2;
+                            } else if (clock >= F_CPU / 16) {
+                                clockDiv = 3;
+                            } else if (clock >= F_CPU / 32) {
+                                clockDiv = 4;
+                            } else if (clock >= F_CPU / 64) {
+                                clockDiv = 5;
+                            } else {
+                                clockDiv = 6;
+                            }
                         } else {
                           uint32_t clockSetting = F_CPU / 2;
                           clockDiv = 0;
@@ -126,6 +126,18 @@ native/pos do
                         
                         break;
                     }
+                    case CEU_OUTPUT_SPI_TRANSFER: {
+                        ret.is_handled = 1;
+
+                        tceu_output_SPI_TRANSFER* pt = (tceu_output_SPI_TRANSFER*) p2.ptr;
+
+                        uint8_t data = *((uint8_t*)p2.ptr);
+
+                        SPCR |= _BV(SPIE);
+                        SPDR = data;
+                       
+                        break;
+                    }
                     case CEU_OUTPUT_SPI_END_TRANSACTION: {
                         ret.is_handled = 1;
 
@@ -142,3 +154,20 @@ native/pos do
     tceu_callback CEU_CALLBACK_SPI = { &ceu_callback_spi, NULL };
 end
 { ceu_callback_register(&CEU_CALLBACK_SPI); }
+
+output none SPI_BEGIN;
+output none SPI_END;
+
+output u8,u8,u8 SPI_BEGIN_TRANSACTION;
+output none SPI_END_TRANSACTION;
+
+output u8 SPI_TRANSFER;
+
+input int SPI_DATA;
+
+spawn async/isr [_SPI_STC_vect_num,0] do
+    {
+        bitClear(SPCR,SPIE);
+    }
+    emit SPI_DATA({SPDR});
+end

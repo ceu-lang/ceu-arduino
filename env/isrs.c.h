@@ -25,6 +25,15 @@ ISR(TIMER1_OVF_vect)
 }
 #endif
 
+#ifdef CEU_ISR__SPI_STC_vect_num
+ISR(SPI_STC_vect)
+{
+    if (isrs[SPI_STC_vect_num].fun != NULL) {
+        isrs[SPI_STC_vect_num].fun(isrs[SPI_STC_vect_num].mem);
+    }
+}
+#endif
+
 #ifdef CEU_ISR__USART_RX_vect_num
 ISR(USART_RX_vect)
 {

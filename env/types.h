@@ -1,5 +1,7 @@
 #include <stdint.h>
 
+typedef void none;
+
 #ifndef __cplusplus
 typedef unsigned char bool;
 #endif

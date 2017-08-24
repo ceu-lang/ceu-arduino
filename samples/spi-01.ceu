@@ -1,0 +1,30 @@
+native/pre do
+    ##define CEU_FEATURES_ISR_SLEEP
+end
+
+native _BIN;
+
+#include "arduino/isr/spi.ceu"
+#include "arduino/isr/timer.ceu"
+
+output on/off PIN_09;
+output on/off PIN_13;
+output on/off PIN_12;
+
+_Serial.begin(9600);
+_Serial.println("=");
+
+emit SPI_BEGIN;
+
+loop do
+    emit PIN_09(off);
+    await (50)ms;
+    emit PIN_09(on);
+    await (50)ms;
+    emit SPI_BEGIN_TRANSACTION(1400000, _MSBFIRST, _SPI_MODE2);
+    emit SPI_TRANSFER(0x0);
+    var u8 received_data = 0;
+    received_data = await SPI_DATA;
+    _Serial.println("Data is:");_Serial.println(received_data,_BIN);
+    emit SPI_END_TRANSACTION;
+end

@@ -10,6 +10,7 @@ native _BIN;
 output on/off PIN_09;
 output on/off PIN_13;
 output on/off PIN_12;
+output on/off PIN_04;
 
 _Serial.begin(9600);
 _Serial.println("=");

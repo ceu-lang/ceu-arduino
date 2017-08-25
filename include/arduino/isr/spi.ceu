@@ -70,13 +70,16 @@ native/pos do
                                 digitalWrite(SS, HIGH);
                             }
                             
-                            pinMode(SS, OUTPUT);
+                            pinMode(SS, 1);
+                            //pinMode(SS, OUTPUT);
                             
                             SPCR |= _BV(MSTR);
                             SPCR |= _BV(SPE);
 
-                            pinMode(SCK, OUTPUT);
-                            pinMode(MOSI, OUTPUT);
+                            pinMode(SCK, 1);
+                            //pinMode(SCK, OUTPUT);
+                            pinMode(MOSI, 1);
+                            //pinMode(MOSI, OUTPUT);
                         }
                         SPI_userCount++;                        
                         break;
@@ -153,6 +156,7 @@ native/pos do
 
                         tceu_output_SPI_TRANSFER* pt = (tceu_output_SPI_TRANSFER*) p2.ptr;
 
+
                         uint8_t data = *((uint8_t*)p2.ptr);
 
                         SPCR |= _BV(SPIE);
@@ -188,8 +192,10 @@ output u8 SPI_TRANSFER;
 input int SPI_DATA;
 
 spawn async/isr [_SPI_STC_vect_num,0] do
+    _digitalWrite(4,1);
     {
         bitClear(SPCR,SPIE);
     }
+    
     emit SPI_DATA({SPDR});
 end

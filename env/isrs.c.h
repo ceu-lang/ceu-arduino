@@ -7,6 +7,15 @@ ISR(ADC_vect)
 }
 #endif
 
+#ifdef CEU_ISR__SPI_STC_vect_num
+ISR(SPI_STC_vect)
+{
+    if (isrs[SPI_STC_vect_num].fun != NULL) {
+        isrs[SPI_STC_vect_num].fun(isrs[SPI_STC_vect_num].mem);
+    }
+}
+#endif
+
 #ifdef CEU_ISR__TIMER1_COMPA_vect_num
 ISR(TIMER1_COMPA_vect)
 {

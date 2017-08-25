@@ -192,10 +192,8 @@ output u8 SPI_TRANSFER;
 input int SPI_DATA;
 
 spawn async/isr [_SPI_STC_vect_num,0] do
-    _digitalWrite(4,1);
     {
         bitClear(SPCR,SPIE);
     }
-    
     emit SPI_DATA({SPDR});
 end

@@ -200,13 +200,16 @@ var bool spi_transaction_busy;
 input u8 SPI_TRANSFER_DONE;
 
 code/await SPI_Transfer (var u8? value) -> u8 do
-    emit SPI_TRANSFER_REQUEST(value!);
-    var u8 recv = _; 
-    recv = await SPI_TRANSFER_DONE;
+    if value? then
+        emit SPI_TRANSFER_REQUEST(value!);
+    else
+        emit SPI_TRANSFER_REQUEST(_);
+    end
+    var u8 recv = await SPI_TRANSFER_DONE;
     escape recv;
 end
 
-code/await SPI_Transaction (var u8 freq, var u8 byte_order, var u8 mode) -> NEVER do
+code/await SPI_Transaction (var u8 freq, var u8 byte_order, var u8 mode) -> none do
     if outer.spi_transaction_busy then
         await outer.spi_transaction_end until outer.spi_transaction_busy == false;
     end
@@ -218,7 +221,9 @@ code/await SPI_Transaction (var u8 freq, var u8 byte_order, var u8 mode) -> NEVE
     await FOREVER;
 end
 
-code/await SPI_Begin (none) -> NEVER do
+output on/off PIN_04;
+
+code/await SPI_Begin (none) -> none  do
     emit SPI_BEGIN;
     do finalize with
         emit SPI_END;

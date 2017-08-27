@@ -161,10 +161,10 @@ native/pos do
 
                         tceu_output_SPI_TRANSFER_REQUEST* pt = (tceu_output_SPI_TRANSFER_REQUEST*) p2.ptr;
 
-                        uint8_t data = *((uint8_t*)p2.ptr);
-
                         SPCR |= _BV(SPIE);
-                        SPDR = data;
+                        if(pt->_1.is_set){
+                            SPDR = (uint8_t)pt->_1.value;
+                        }
                        
                         break;
                     }
@@ -200,7 +200,7 @@ var bool spi_transaction_busy;
 input u8 SPI_TRANSFER_DONE;
 
 code/await SPI_Transfer (var u8? value) -> u8 do
-    emit SPI_TRANSFER_REQUEST(value);
+    emit SPI_TRANSFER_REQUEST(value!);
     var u8 recv = _; 
     recv = await SPI_TRANSFER_DONE;
     escape recv;

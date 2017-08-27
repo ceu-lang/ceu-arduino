@@ -49,6 +49,8 @@ native/pre do
     volatile uint8_t SPI_userCount = 0;
 end
 
+#define A _A
+
 native/pos do
     tceu_callback_ret ceu_callback_spi (int cmd, tceu_callback_arg p1,
                                                  tceu_callback_arg p2,
@@ -70,16 +72,19 @@ native/pos do
                                 digitalWrite(SS, HIGH);
                             }
                             
-                            pinMode(SS, 1);
+                            //pinMode(SS, 1);
                             //pinMode(SS, OUTPUT);
+                            pinMode(SS, 1);
                             
                             SPCR |= _BV(MSTR);
                             SPCR |= _BV(SPE);
 
-                            pinMode(SCK, 1);
+                            //pinMode(SCK, 1);
                             //pinMode(SCK, OUTPUT);
-                            pinMode(MOSI, 1);
+                            pinMode(SCK, 1);
+                            //pinMode(MOSI, 1);
                             //pinMode(MOSI, OUTPUT);
+                            pinMode(MOSI, 1);
                         }
                         SPI_userCount++;                        
                         break;
@@ -95,10 +100,10 @@ native/pos do
 
                         break;
                     }
-                    case CEU_OUTPUT_SPI_BEGIN_TRANSACTION: {
+                    case CEU_OUTPUT_SPI_TRANSACTION_BEGIN: {
                         ret.is_handled = 1;
                         // Struct here maybe?
-                        tceu_output_SPI_BEGIN_TRANSACTION* pt = (tceu_output_SPI_BEGIN_TRANSACTION*) p2.ptr;
+                        tceu_output_SPI_TRANSACTION_BEGIN* pt = (tceu_output_SPI_TRANSACTION_BEGIN*) p2.ptr;
 
                         u8 clock    = pt->_1; 
                         u8 bitOrder = pt->_2; 
@@ -151,11 +156,10 @@ native/pos do
                         
                         break;
                     }
-                    case CEU_OUTPUT_SPI_TRANSFER: {
+                    case CEU_OUTPUT_SPI_TRANSFER_REQUEST: {
                         ret.is_handled = 1;
 
-                        tceu_output_SPI_TRANSFER* pt = (tceu_output_SPI_TRANSFER*) p2.ptr;
-
+                        tceu_output_SPI_TRANSFER_REQUEST* pt = (tceu_output_SPI_TRANSFER_REQUEST*) p2.ptr;
 
                         uint8_t data = *((uint8_t*)p2.ptr);
 
@@ -164,7 +168,7 @@ native/pos do
                        
                         break;
                     }
-                    case CEU_OUTPUT_SPI_END_TRANSACTION: {
+                    case CEU_OUTPUT_SPI_TRANSACTION_END: {
                         ret.is_handled = 1;
 
                         SPI_busyFlag = false;
@@ -184,16 +188,46 @@ end
 output none SPI_BEGIN;
 output none SPI_END;
 
-output (u8,u8,u8) SPI_BEGIN_TRANSACTION;
-output none SPI_END_TRANSACTION;
+output (u8,u8,u8) SPI_TRANSACTION_BEGIN;
+output none SPI_TRANSACTION_END;
 
-output u8 SPI_TRANSFER;
+output u8 SPI_TRANSFER_REQUEST;
 
-input int SPI_DATA;
+event void spi_transaction_end;
+
+var bool spi_transaction_busy;
+
+input int SPI_TRANSFER_DONE;
+
+code/await SPI_Transfer (var byte? value) -> byte do
+    emit SPI_TRANSFER_REQUEST(value);
+    var byte recv = await SPI_TRANSFER_DONE;
+    escape recv;
+end
+
+code/await SPI_Transaction (var u8 freq, var u8 byte_order, var u8 mode) -> NEVER do
+    if outer.spi_transaction_busy then
+        await outer.spi_transaction_end until outer.spi_transaction_busy == false;
+    end
+    emit SPI_TRANSACTION_BEGIN(freq,byte_order,mode);
+    do finalize with
+        emit outer.spi_transaction_end;
+        emit SPI_TRANSACTION_END;
+    end
+    await FOREVER;
+end
+
+code/await SPI_Begin (none) -> NEVER do
+    emit SPI_BEGIN;
+    do finalize with
+        emit SPI_END;
+    end
+    await FOREVER;
+end
 
 spawn async/isr [_SPI_STC_vect_num,0] do
     {
         bitClear(SPCR,SPIE);
     }
-    emit SPI_DATA({SPDR});
+    emit SPI_TRANSFER_DONE({SPDR});
 end

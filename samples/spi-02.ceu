@@ -12,16 +12,23 @@ _Serial.begin(9600);
 _Serial.println("=");
 
 emit SPI_BEGIN;
+ do finalize with
+    emit SPI_END;
+ end
 
 loop do
     emit PIN_09(off);
     emit PIN_08(off);
     await (50)ms;
     emit PIN_09(on);
+    // Gerar code/await que consulta a flag e da await no SPI_DONE;
     emit SPI_BEGIN_TRANSACTION(1400000, _MSBFIRST, _SPI_MODE0);
+    // Incluir flag de busy/available para impedir dois transfers antes de data
+    // Mudar para SPI_TRANSFER_REQUEST e SPI_TRANSFER_DONE
+    // SPI_TRANSACTION_BEGIN SPI_TRANSACTION_END
     emit SPI_TRANSFER(0x0);
-    var u8 received_data = 0;
-    received_data = await SPI_DATA;
+    var u8 received_data = await SPI_DATA;
+    // SUbir SPI_END_TRANSACTION com um do finalize with end
     emit SPI_END_TRANSACTION;
     emit SPI_BEGIN_TRANSACTION(1400000, _MSBFIRST, _SPI_MODE0);
     emit SPI_TRANSFER(~received_data);
@@ -29,4 +36,84 @@ loop do
     emit SPI_END_TRANSACTION;
     emit PIN_08(on);
     await (50)ms;
+end
+
+watching SPI_Begin() do
+    loop do
+        var byte b = _;
+        do
+            emit PIN_09(off);
+            await 50ms;         // TODO
+            emit PIN_09(on);
+            watching SPI_Transaction(...) do
+                b = await SPI_Transfer(_)
+            end
+        end
+        do
+            watching SPI_Transaction(...) do
+                await SPI_Transfer(b)
+            end
+            emit PIN_08(on);
+            await (50)ms;       // TODO
+            emit PIN_08(off);
+        end
+    end
+end
+
+var& SPI_Begin h = spawn SPI_Begin();
+par/or do
+    await h;
+with
+    ...
+end
+
+code/await SPI_Transfer (var byte? value) -> byte do
+    emit SPI_TRANSFER_REQUEST(value);
+    var byte recv = await SPI_TRANSFER_DONE;
+    escape recv;
+end
+
+code/await SPI_Begin (none) -> NEVER do
+    emit SPI_BEGIN;
+    do finalize with
+        emit SPI_END;
+    end
+    await FOREVER;
+end
+
+code/await SPI_Transaction (...) -> NEVER do
+    if outer.spi_transaction_busy then
+        await outer.spi_transaction_end until outer.spi_transaction_busy==false;
+    end
+    emit SPI_TRANSACTION_BEGIN(1400000, _MSBFIRST, _SPI_MODE0);
+    do finalize with
+        emit outer.spi_transaction_end;
+        emit SPI_TRANSACTION_END;
+    end
+    await FOREVER;
+end
+
+loop do
+    par/and do
+        watching SPI_Transaction(...) do
+            await SPI_Transfer(1)
+        end
+        emit PIN_08(on);
+        await (50)ms;       // TODO
+        emit PIN_08(off);
+    with
+        watching SPI_Transaction(...) do
+            await SPI_Transfer(2)
+        end
+        emit PIN_08(on);
+        await (50)ms;       // TODO
+        emit PIN_08(off);
+    with
+        watching SPI_Transaction(...) do
+            await SPI_Transfer(4)
+        end
+        emit PIN_08(on);
+        await (50)ms;       // TODO
+        emit PIN_08(off);
+    end
 end

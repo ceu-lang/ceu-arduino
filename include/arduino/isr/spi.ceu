@@ -105,7 +105,7 @@ native/pos do
                         // Struct here maybe?
                         tceu_output_SPI_TRANSACTION_BEGIN* pt = (tceu_output_SPI_TRANSACTION_BEGIN*) p2.ptr;
 
-                        u8 clock    = pt->_1; 
+                        u32 clock    = pt->_1; 
                         u8 bitOrder = pt->_2; 
                         u8 dataMode = pt->_3;
 
@@ -163,7 +163,9 @@ native/pos do
 
                         SPCR |= _BV(SPIE);
                         if(pt->_1.is_set){
-                            SPDR = (uint8_t)pt->_1.value;
+                            SPDR = (u8)(pt->_1).value;
+                        } else {
+                            SPDR = SPDR; // Have to write something to start conversion
                         }
                        
                         break;
@@ -188,7 +190,7 @@ end
 output none SPI_BEGIN;
 output none SPI_END;
 
-output (u8,u8,u8) SPI_TRANSACTION_BEGIN;
+output (u32,u8,u8) SPI_TRANSACTION_BEGIN;
 output none SPI_TRANSACTION_END;
 
 output u8? SPI_TRANSFER_REQUEST;
@@ -199,8 +201,10 @@ var bool spi_transaction_busy;
 
 input u8 SPI_TRANSFER_DONE;
 
+output on/off PIN_04;
+
 code/await SPI_Transfer (var u8? value) -> u8 do
-    if value? then
+    if value? == true then
         emit SPI_TRANSFER_REQUEST(value!);
     else
         emit SPI_TRANSFER_REQUEST(_);
@@ -209,19 +213,17 @@ code/await SPI_Transfer (var u8? value) -> u8 do
     escape recv;
 end
 
-code/await SPI_Transaction (var u8 freq, var u8 byte_order, var u8 mode) -> none do
+code/await SPI_Transaction (var u32 freq, var u8 byte_order, var u8 mode) -> none do
     if outer.spi_transaction_busy then
         await outer.spi_transaction_end until outer.spi_transaction_busy == false;
     end
     emit SPI_TRANSACTION_BEGIN(freq,byte_order,mode);
     do finalize with
-        emit outer.spi_transaction_end;
         emit SPI_TRANSACTION_END;
+        emit outer.spi_transaction_end;
     end
     await FOREVER;
 end
-
-output on/off PIN_04;
 
 code/await SPI_Begin (none) -> none  do
     emit SPI_BEGIN;

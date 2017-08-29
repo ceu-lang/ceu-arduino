@@ -14,4 +14,5 @@ pages:
     - Modes of Operation:   'modes/index.md'
     - Digital Pins:         'digital_pins/index.md'
     - Serial Communication: 'serial_communication/index.md'
+    - Devices:              'devices/index.md'
     - License:              'license.md'

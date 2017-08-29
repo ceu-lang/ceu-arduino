@@ -10,7 +10,7 @@ Céu-Arduino provides asynchronous reads of analog values. This driver provides 
 output (pin) ADC_REQUEST
 ```
 
-- Paraeters:
+- Parameters:
     - `pin` | `integer` : pin to queue read
 
 Queues an analog read for the specified analog pin.

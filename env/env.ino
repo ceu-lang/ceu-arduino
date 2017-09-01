@@ -22,7 +22,11 @@
         #error "Unsupported Platform!"
     #endif
 
-    static volatile tceu_isr isrs[_VECTORS_SIZE];
+    #ifndef _VECTOR_SIZE
+        #define _VECTOR_SIZE 26     /* defined for ATmega328p in iom328p.h */
+    #endif
+
+    static volatile tceu_isr isrs[_VECTOR_SIZE];
     #include "isrs.c.h"
 #else
     #ifdef CEU_FEATURES_ISR_SLEEP

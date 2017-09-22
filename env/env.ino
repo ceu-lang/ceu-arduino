@@ -1,3 +1,5 @@
+#define CEU_STACK_MAX 300
+
 #define ceu_callback_assert_msg_ex(v,msg,file,line)                              \
     if (!(v)) {                                                                  \
         ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL);                       \
@@ -73,15 +75,14 @@ tceu_callback_ret ceu_callback_arduino (int cmd, tceu_callback_arg p1,
             pinMode(13, OUTPUT);
             for (;;) {
                 digitalWrite(13, !digitalRead(13));
-                delayMicroseconds(50000);
-                delayMicroseconds(50000);
-                delayMicroseconds(50000);
-                delayMicroseconds(50000);
-                delayMicroseconds(50000);
+                for (int i=0; i<50; i++) {
+                    delayMicroseconds(1000);    /* max is 16383 */
+                }
             }
             interrupts();
         }
 
+#if 0
         case CEU_CALLBACK_LOG: {
             switch (p1.num) {
                 case 0:
@@ -96,6 +97,7 @@ tceu_callback_ret ceu_callback_arduino (int cmd, tceu_callback_arg p1,
             }
             break;
         }
+#endif
 
 #ifdef CEU_FEATURES_ISR
         case CEU_CALLBACK_ISR_ENABLE: {

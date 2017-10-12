@@ -1,4 +1,4 @@
-#define CEU_STACK_MAX 300
+#define CEU_STACK_MAX 1000
 
 #define ceu_callback_assert_msg_ex(v,msg,file,line)                              \
     if (!(v)) {                                                                  \
@@ -196,7 +196,7 @@ void setup () {
             tceu_evt_id_params evt;
             int i;
             noInterrupts();
-            for (i=0; i<_VECTORS_SIZE; i++) {
+            for (i=0; i<_VECTOR_SIZE; i++) {
                 tceu_isr* isr = &isrs[i];
                 if (isr->evt.id != CEU_INPUT__NONE) {
                     evt = isr->evt;

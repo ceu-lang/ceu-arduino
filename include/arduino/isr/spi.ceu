@@ -49,8 +49,6 @@ native/pre do
     volatile uint8_t SPI_userCount = 0;
 end
 
-#define A _A
-
 native/pos do
     tceu_callback_ret ceu_callback_spi (int cmd, tceu_callback_arg p1,
                                                  tceu_callback_arg p2,
@@ -72,18 +70,12 @@ native/pos do
                                 digitalWrite(SS, HIGH);
                             }
                             
-                            //pinMode(SS, 1);
-                            //pinMode(SS, OUTPUT);
                             pinMode(SS, 1);
                             
                             SPCR |= _BV(MSTR);
                             SPCR |= _BV(SPE);
 
-                            //pinMode(SCK, 1);
-                            //pinMode(SCK, OUTPUT);
                             pinMode(SCK, 1);
-                            //pinMode(MOSI, 1);
-                            //pinMode(MOSI, OUTPUT);
                             pinMode(MOSI, 1);
                         }
                         SPI_userCount++;                        
@@ -102,7 +94,6 @@ native/pos do
                     }
                     case CEU_OUTPUT_SPI_TRANSACTION_BEGIN: {
                         ret.is_handled = 1;
-                        // Struct here maybe?
                         tceu_output_SPI_TRANSACTION_BEGIN* pt = (tceu_output_SPI_TRANSACTION_BEGIN*) p2.ptr;
 
                         u32 clock    = pt->_1; 
@@ -200,8 +191,6 @@ event none spi_transaction_end;
 var bool spi_transaction_busy;
 
 input u8 SPI_TRANSFER_DONE;
-
-output on/off PIN_04;
 
 code/await SPI_Transfer (var u8? value) -> u8 do
     if value? == true then

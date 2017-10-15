@@ -1,8 +1,8 @@
-#define CEU_STACK_MAX 300
+//#define CEU_STACK_MAX 300
 
-#define ceu_callback_assert_msg_ex(v,msg,file,line)                              \
-    if (!(v)) {                                                                  \
-        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL);                       \
+#define ceu_sys_assert(v,msg)                              \
+    if (!(v)) {                                            \
+        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL); \
     }
 
 #include "_ceu_app.c.h"
@@ -235,7 +235,7 @@ _CEU_ARDUINO_AWAKE_:;
 #endif
     }
     ceu_stop();
-    ceu_dbg_assert(0);
+    ceu_sys_assert(0, "bug found");
     while (1);
 }
 

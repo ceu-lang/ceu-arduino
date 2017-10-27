@@ -206,9 +206,11 @@ code/await SPI_Transaction (var u32 freq, var u8 byte_order, var u8 mode) -> non
     if outer.spi_transaction_busy then
         await outer.spi_transaction_end until outer.spi_transaction_busy == false;
     end
+    outer.spi_transaction_busy = true;
     emit SPI_TRANSACTION_BEGIN(freq,byte_order,mode);
     do finalize with
         emit SPI_TRANSACTION_END;
+	outer.spi_transaction_busy = false;
         emit outer.spi_transaction_end;
     end
     await FOREVER;

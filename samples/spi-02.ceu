@@ -1,3 +1,4 @@
+// WORKS
 native/pre do
     ##define CEU_FEATURES_ISR_SLEEP
 end
@@ -14,19 +15,14 @@ watching SPI_Begin() do
         emit PIN_08(off);
         await (50)ms;
         emit PIN_09(on);
-        var u8 received_data = 0;
-
-        //emit SPI_TRANSACTION_BEGIN(1400000, _MSBFIRST, _SPI_MODE0);
-        watching SPI_Transaction(1400000, _MSBFIRST, _SPI_MODE0) do
-            //var u8 received_data = await SPI_Transfer(_);
-            received_data = await SPI_Transfer(_);
-        end
-        //emit SPI_TRANSACTION_END;
+        var u8 received_data = _;
 
         emit SPI_TRANSACTION_BEGIN(1400000, _MSBFIRST, _SPI_MODE0);
-        //watching SPI_Transaction(1400000, _MSBFIRST, _SPI_MODE0) do
+            received_data = await SPI_Transfer(_);
+        emit SPI_TRANSACTION_END;
+
+        emit SPI_TRANSACTION_BEGIN(1400000, _MSBFIRST, _SPI_MODE0);
             await SPI_Transfer(~received_data);
-        //end
         emit SPI_TRANSACTION_END;
 
         emit PIN_08(on);

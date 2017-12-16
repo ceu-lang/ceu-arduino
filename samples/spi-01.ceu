@@ -20,7 +20,7 @@ watching SPI_Begin() do
         emit PIN_09(on);
         await (50)ms;
         watching SPI_Transaction(1400000, _MSBFIRST, _SPI_MODE2) do
-            var u8 received_data = SPI_Transfer(_);
+            var u8 received_data = await SPI_Transfer(_);
             _Serial.println("Data is:");_Serial.println(received_data,_BIN);
 	end
     end

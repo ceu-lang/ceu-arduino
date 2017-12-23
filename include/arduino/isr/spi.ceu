@@ -193,7 +193,7 @@ var bool spi_transaction_busy;
 input u8 SPI_TRANSFER_DONE;
 
 code/await SPI_Transfer (var u8? value) -> u8 do
-    if value? == true then
+    if value? then
         emit SPI_TRANSFER_REQUEST(value!);
     else
         emit SPI_TRANSFER_REQUEST(_);
@@ -210,7 +210,7 @@ code/await SPI_Transaction (var u32 freq, var u8 byte_order, var u8 mode) -> non
     emit SPI_TRANSACTION_BEGIN(freq,byte_order,mode);
     do finalize with
         emit SPI_TRANSACTION_END;
-	outer.spi_transaction_busy = false;
+        outer.spi_transaction_busy = false;
         emit outer.spi_transaction_end;
     end
     await FOREVER;

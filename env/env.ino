@@ -1,4 +1,4 @@
-//#define CEU_STACK_MAX 300
+#define CEU_STACK_MAX 500
 
 #define ceu_sys_assert(v,msg)                              \
     if (!(v)) {                                            \
@@ -28,7 +28,7 @@
         #define _VECTOR_SIZE 26     /* defined for ATmega328p in iom328p.h */
     #endif
 
-    static volatile tceu_isr isrs[_VECTOR_SIZE];
+    static tceu_isr isrs[_VECTOR_SIZE];
     #include "isrs.c.h"
 #else
     #ifdef CEU_FEATURES_ISR_SLEEP
@@ -48,19 +48,11 @@ typedef struct tceu_arduino {
 static tceu_arduino CEU_ARDUINO;
 #endif
 
-tceu_callback_ret ceu_callback_arduino (int cmd, tceu_callback_arg p1,
-                                                 tceu_callback_arg p2,
-                                                 const char* file, u32 line)
+static int ceu_callback_arduino (int cmd, tceu_callback_val p1,
+                                 tceu_callback_val p2,
+                                 const char* file, u32 line)
 {
-    tceu_callback_ret ret = { .is_handled=1 };
-
-#ifdef ceu_callback_user
-#error TODO: remove all this in v0.30
-    ret = ceu_callback_user(cmd, p1, p2);
-    if (ret.is_handled) {
-        return ret;
-    }
-#endif
+    int is_handled = 1;
 
     switch (cmd) {
         case CEU_CALLBACK_START:
@@ -133,11 +125,11 @@ tceu_callback_ret ceu_callback_arduino (int cmd, tceu_callback_arg p1,
             break;
         }
         case CEU_CALLBACK_WCLOCK_DT:
-            ret.value.num = CEU_WCLOCK_INACTIVE;
+            ceu_callback_ret.num = CEU_WCLOCK_INACTIVE;
             break;
 #else
         case CEU_CALLBACK_WCLOCK_DT:
-            ret.value.num = ceu_arduino_dt();
+            ceu_callback_ret.num = ceu_arduino_dt();
             break;
 #endif
 
@@ -147,9 +139,9 @@ tceu_callback_ret ceu_callback_arduino (int cmd, tceu_callback_arg p1,
             }
             break;
         default:
-            ret.is_handled = 0;
+            is_handled = 0;
     }
-    return ret;
+    return is_handled;
 }
 
 #ifndef CEU_FEATURES_ISR

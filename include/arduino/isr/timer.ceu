@@ -17,11 +17,11 @@
 native _ceu_arduino_dt;
 native/pos do
     static u16 CEU_TIMER_old;
-    tceu_callback_ret ceu_callback_timer (int cmd, tceu_callback_arg p1,
-                                                   tceu_callback_arg p2,
-                                                   const char* file, u32 line)
+    static int ceu_callback_timer (int cmd, tceu_callback_val p1,
+                                   tceu_callback_val p2,
+                                   const char* file, u32 line)
     {
-        tceu_callback_ret ret = { .is_handled=1 };
+        int is_handled = 1;
         switch (cmd) {
             case CEU_CALLBACK_WCLOCK_MIN: {
                 s32 us = p1.num;
@@ -29,7 +29,7 @@ native/pos do
                     TIMSK1 = TIMSK1 & ~(1 << TOIE1);
                 } else {
                     s32 v = US_TO_OVERFLOW(us);
-                    ceu_dbg_assert(v > 0);
+                    ceu_assert(v > 0, "bug found");
                     TCNT1 = v;
                     CEU_TIMER_old = v;
                     TIMSK1 = TIMSK1 | (1 << TOIE1);
@@ -37,9 +37,9 @@ native/pos do
                 break;
             }
             default:
-                ret.is_handled = 0;
+                is_handled = 0;
         }
-        return ret;
+        return is_handled;
     }
     tceu_callback CEU_CALLBACK_TIMER = { &ceu_callback_timer, NULL };
 

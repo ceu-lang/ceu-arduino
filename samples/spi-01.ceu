@@ -1,3 +1,4 @@
+// WORKS
 native/pre do
     ##define CEU_FEATURES_ISR_SLEEP
 end
@@ -12,17 +13,15 @@ output on/off PIN_09;
 _Serial.begin(9600);
 _Serial.println("=");
 
-emit SPI_BEGIN;
-
-loop do
-    emit PIN_09(off);
-    await (50)ms;
-    emit PIN_09(on);
-    await (50)ms;
-    emit SPI_BEGIN_TRANSACTION(1400000, _MSBFIRST, _SPI_MODE2);
-    emit SPI_TRANSFER(0x0);
-    var u8 received_data = 0;
-    received_data = await SPI_DATA;
-    _Serial.println("Data is:");_Serial.println(received_data,_BIN);
-    emit SPI_END_TRANSACTION;
+watching SPI_Begin() do
+    loop do
+        emit PIN_09(off);
+        await (50)ms;
+        emit PIN_09(on);
+        await (50)ms;
+        watching SPI_Transaction(1400000, _MSBFIRST, _SPI_MODE2) do
+            var u8 received_data = await SPI_Transfer(_);
+            _Serial.println("Data is:");_Serial.println(received_data,_BIN);
+        end
+    end
 end

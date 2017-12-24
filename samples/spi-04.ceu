@@ -1,3 +1,4 @@
+// WORKS
 native/pre do
     ##define CEU_FEATURES_ISR_SLEEP
 end
@@ -24,9 +25,10 @@ watching SPI_Begin() do
             end
         end
         do
-            watching SPI_Transaction(1400000, _MSBFIRST, _SPI_MODE0) do
-                await SPI_Transfer(~b);
-            end
+            emit SPI_TRANSACTION_BEGIN(1400000, _MSBFIRST, _SPI_MODE0);
+            emit SPI_TRANSFER_REQUEST(~b);
+            await SPI_TRANSFER_DONE;
+            emit SPI_TRANSACTION_END;
             emit PIN_08(on);
             await(50)ms;
         end

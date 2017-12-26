@@ -1,0 +1,120 @@
+native pre do
+    /*
+     * This application consists of a node of a distributed smart lighting system.
+     */
+    
+    #include <SPI.h>
+    #include <nRF24L01.h>
+    #include <RF24.h>
+    #include "printf.h"
+    
+    #define RADIO_ID 0x66
+    
+    #define SENSOR_PIN A0
+    #define LED_PIN 3
+    
+    #define FULL_POWER 1023
+    #define HALF_POWER 300
+    
+    #define SENSOR_THRESHOLD 500
+    
+    #define TIME_THRESHOLD 2000
+    
+    #define SEND_INTERVAL 100
+    //
+    // Hardware configuration
+    //
+    
+    // Set up nRF24L01 radio on SPI bus plus pins 9 & 10 
+    
+    RF24 radio(9,10);
+    
+    //
+    // Topology
+    //
+    
+    // Radio pipe addresses for the nodes to communicate.
+    const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xE8E8F0F0E1LL };
+    
+    //
+    // Role management
+    //
+    // Set up role.  This sketch uses the same software for all the nodes
+    // in this system.  Doing so greatly simplifies testing.  
+    //
+    
+    // The various roles supported by this sketch
+    typedef enum { role_speak = 1, role_listen, role_none } role_e;
+    
+    // The role of the current running sketch
+    role_e role = role_none;
+    role_e newRole = role_none;
+    
+    unsigned long timeLastMessage = 0;
+
+    //
+    // Print preamble
+    //
+
+
+    pinMode(SENSOR_PIN,INPUT);
+    pinMode(LED_PIN,OUTPUT);
+
+    //
+    // Setup and configure rf radio
+    //
+
+    // optionally, increase the delay between retries & # of retries
+    //  radio.setPayloadSize(sizeof(uint8_t));
+
+    radio.begin();
+end
+
+#include "arduino/isr/analog.ceu"
+#include "arduino/isr/timer.ceu"
+
+input none RADIO_AVAILABLE;
+
+// Generate the event detector
+spawn do
+  loop do
+    await async do
+      if {radio.isAvailable()} as bool then
+        emit RADIO_AVAILABLE;
+      end
+    end
+  end
+end
+
+loop do
+    var int value = _;
+    par do
+        loop do
+            value = await Analog(0);
+            if value > THRESHOLD then
+                emit PRESENCE;
+            end
+        end
+    with
+        loop do
+            // We can do one of two things here:
+            // 1-Check the value variable
+            // Await two different events that will be emitted
+            // Based on the value of "value"
+            // Can we make one abort when the event comes
+            // and another one start?
+            par do
+                par/or do
+                    // abort when PRESENCE
+                    await PRESENCE;
+                with
+                    // LISTEN TO NEIGHBOURS
+                end 
+            with
+                await PRESENCE;
+                // SEND TO NEIGHBOURS
+            end
+        end
+    end
+end
+

@@ -109,10 +109,49 @@ loop do
                     await PRESENCE;
                 with
                     // LISTEN TO NEIGHBOURS
+                    {
+                        timeLastMessage = millis();
+                        radio.openReadingPipe(1,pipes[1]);
+                        radio.startListening();
+                    }
+                    loop do
+                        await RADIO_AVAILABLE;
+                        {
+                            bool done = false;
+                            while (!done)
+                            {
+                              uint8_t signal_id = 0;
+                              // Fetch the payload, and see if this was the last one.
+                              done = radio.read( &signal_id, sizeof(uint8_t) );
+	                          // Delay just a little bit to let the other unit
+	                          // make the transition to receiver
+	                          delay(20);
+                            }
+                              analogWrite(LED_PIN,HALF_POWER);
+                              timeLastMessage = millis();
+                            }
+                            if(millis() - timeLastMessage > SEND_INTERVAL * 2){
+                              analogWrite(LED_PIN,LOW);
+                            }
+                        }
+                    end 
                 end 
             with
                 await PRESENCE;
                 // SEND TO NEIGHBOURS
+                {
+                    analogWrite(LED_PIN,FULL_POWER);
+                    radio.openWritingPipe(pipes[1]);
+                    //radio.openReadingPipe(1,pipes[0]);
+                    radio.stopListening();
+                }
+                loop do
+                    {
+                        uint8_t radio_id = RADIO_ID;
+                        radio.write( &radio_id, sizeof(uint8_t) );
+                        delay(SEND_INTERVAL);
+                    }
+                end
             end
         end
     end

@@ -1,12 +1,12 @@
-native pre do
+native/pre do
     /*
      * This application consists of a node of a distributed smart lighting system.
      */
     
-    #include <SPI.h>
-    #include <nRF24L01.h>
-    #include <RF24.h>
-    #include "printf.h"
+    ##include <SPI.h>
+    ##include <nRF24L01.h>
+    ##include <RF24.h>
+    ##include "printf.h"
     
     #define RADIO_ID 0x66
     
@@ -15,12 +15,11 @@ native pre do
     
     #define FULL_POWER 1023
     #define HALF_POWER 300
-    
+
     #define SENSOR_THRESHOLD 500
     
     #define TIME_THRESHOLD 2000
     
-    #define SEND_INTERVAL 100
     //
     // Hardware configuration
     //
@@ -73,6 +72,9 @@ end
 #include "arduino/isr/analog.ceu"
 #include "arduino/isr/timer.ceu"
 
+#define SENSOR_THRESHOLD 500
+#define SEND_INTERVAL 100
+
 input none RADIO_AVAILABLE;
 
 // Generate the event detector
@@ -91,7 +93,7 @@ loop do
     par do
         loop do
             value = await Analog(0);
-            if value > THRESHOLD then
+            if value > SENSOR_THRESHOLD then
                 emit PRESENCE;
             end
         end
@@ -115,6 +117,7 @@ loop do
                         radio.startListening();
                     }
                     loop do
+                        par/or do
                         await RADIO_AVAILABLE;
                         {
                             bool done = false;
@@ -127,13 +130,12 @@ loop do
 	                          // make the transition to receiver
 	                          delay(20);
                             }
-                              analogWrite(LED_PIN,HALF_POWER);
-                              timeLastMessage = millis();
-                            }
-                            if(millis() - timeLastMessage > SEND_INTERVAL * 2){
-                              analogWrite(LED_PIN,LOW);
-                            }
+                            analogWrite(LED_PIN,HALF_POWER);
                         }
+                        with
+                            await (SEND_INTERVAL * 2)ms;
+                            {analogWrite(LED_PIN,LOW);}
+                        end
                     end 
                 end 
             with

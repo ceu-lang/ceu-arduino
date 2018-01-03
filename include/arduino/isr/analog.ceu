@@ -58,7 +58,7 @@ do
 end
 
 code/await Analog (var int channel) -> int do
-    _ceu_dbg_assert(outer.channels[channel].is_busy == false);
+    ceu_assert(outer.channels[channel].is_busy == false, "Simultaneous waits on same pin");
 
     outer.channels[channel].is_busy = true;
     do finalize with

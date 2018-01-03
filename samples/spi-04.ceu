@@ -26,8 +26,8 @@ watching SPI_Begin() do
         end
         do
             emit SPI_TRANSACTION_BEGIN(1400000, _MSBFIRST, _SPI_MODE0);
-    		emit SPI_TRANSFER_REQUEST(~b);
-		await SPI_TRANSFER_DONE;
+            emit SPI_TRANSFER_REQUEST(~b);
+            await SPI_TRANSFER_DONE;
             emit SPI_TRANSACTION_END;
             emit PIN_08(on);
             await(50)ms;

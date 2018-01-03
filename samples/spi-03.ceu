@@ -22,7 +22,8 @@ watching SPI_Begin() do
             emit PIN_09(on);
 	    watching SPI_Transaction(1400000, _MSBFIRST, _SPI_MODE0) do
                 b = await SPI_Transfer(_);
-	    end
+                _Serial.println("Data is:");_Serial.println(b,{BIN});
+            end
         end
         do
 	    watching SPI_Transaction(1400000, _MSBFIRST, _SPI_MODE0) do

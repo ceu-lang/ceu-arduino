@@ -136,8 +136,11 @@ static int ceu_callback_arduino (int cmd, tceu_callback_val p1,
         case CEU_CALLBACK_OUTPUT:
             switch (p1.num) {
                 #include "pins_outputs.c.h"
+                default:
+                    is_handled = 0;
             }
             break;
+
         default:
             is_handled = 0;
     }

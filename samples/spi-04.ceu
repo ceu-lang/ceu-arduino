@@ -20,12 +20,12 @@ watching SPI_Begin() do
             emit PIN_09(off);
             await(50)ms;
             emit PIN_09(on);
-            watching SPI_Transaction(1400000, _MSBFIRST, _SPI_MODE0) do
+            watching SPI_Transaction(1400000, SPI_MSBFIRST, SPI_MODE0) do
                 b = await SPI_Transfer(_);
             end
         end
         do
-            emit SPI_TRANSACTION_BEGIN(1400000, _MSBFIRST, _SPI_MODE0);
+            emit SPI_TRANSACTION_BEGIN(1400000, SPI_MSBFIRST, SPI_MODE0);
             emit SPI_TRANSFER_REQUEST(~b);
             await SPI_TRANSFER_DONE;
             emit SPI_TRANSACTION_END;

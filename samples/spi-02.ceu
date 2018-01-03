@@ -21,12 +21,12 @@ watching SPI_Begin() do
         emit PIN_09(on);
         var u8 received_data = _;
 
-        emit SPI_TRANSACTION_BEGIN(1400000, _MSBFIRST, _SPI_MODE0);
+        emit SPI_TRANSACTION_BEGIN(1400000, SPI_MSBFIRST, SPI_MODE0);
             received_data = await SPI_Transfer(_);
             _Serial.println("Data is:");_Serial.println(received_data,_BIN);
         emit SPI_TRANSACTION_END;
 
-        emit SPI_TRANSACTION_BEGIN(1400000, _MSBFIRST, _SPI_MODE0);
+        emit SPI_TRANSACTION_BEGIN(1400000, SPI_MSBFIRST, SPI_MODE0);
             await SPI_Transfer(~received_data);
         emit SPI_TRANSACTION_END;
 

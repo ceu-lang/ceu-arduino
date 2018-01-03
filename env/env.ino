@@ -2,7 +2,7 @@
 
 #define ceu_sys_assert(v,msg)                              \
     if (!(v)) {                                            \
-        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL); \
+        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL, CEU_TRACE_null); \
     }
 
 #include "_ceu_app.c.h"
@@ -48,9 +48,7 @@ typedef struct tceu_arduino {
 static tceu_arduino CEU_ARDUINO;
 #endif
 
-static int ceu_callback_arduino (int cmd, tceu_callback_val p1,
-                                 tceu_callback_val p2,
-                                 const char* file, u32 line)
+static int ceu_callback_arduino (int cmd, tceu_callback_val p1, tceu_callback_val p2)
 {
     int is_handled = 1;
 

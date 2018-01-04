@@ -2,15 +2,6 @@
 #include "arduino/isr/timer.ceu"
 #include "arduino/arduino.ceu"
 
-native/pre do
-    /*
-     * This application consists of a node of a distributed smart lighting system.
-     */
-    
-    ##include <SPI.h>
-    ##include <nRF24L01.h>
-    ##include <RF24.h>
-    
     #define RADIO_ID 0x66
     
     #define SENSOR_PIN A0
@@ -22,7 +13,16 @@ native/pre do
     #define SENSOR_THRESHOLD 500
     
     #define TIME_THRESHOLD 2000
+ native/pre do
+    /*
+     * This application consists of a node of a distributed smart lighting system.
+     */
     
+    ##include <SPI.h>
+    ##include <nRF24L01.h>
+    ##include <RF24.h>
+    
+   
     //
     // Hardware configuration
     //
@@ -59,9 +59,6 @@ native/pre do
     //
 
 
-    pinMode(SENSOR_PIN,INPUT);
-    pinMode(LED_PIN,OUTPUT);
-
     //
     // Setup and configure rf radio
     //
@@ -69,7 +66,6 @@ native/pre do
     // optionally, increase the delay between retries & # of retries
     //  radio.setPayloadSize(sizeof(uint8_t));
 
-    radio.begin();
 end
 
 #define SENSOR_THRESHOLD 500
@@ -78,11 +74,16 @@ end
 input none RADIO_AVAILABLE;
 event none presence;
 
+    _pinMode(A0,INPUT);
+    _pinMode(LED_PIN,OUTPUT);
+{
+    radio.begin();
+}
 // Generate the event detector
 spawn do
   loop do
     await async do
-      if {radio.isAvailable()} as bool then
+      if {radio.available()} as bool then
         emit RADIO_AVAILABLE;
       end
     end
@@ -149,9 +150,9 @@ loop do
             radio.stopListening();
         }
         loop do
+            var u8 radio_id = RADIO_ID;
             {
-                uint8_t radio_id = RADIO_ID;
-                radio.write( &radio_id, sizeof(uint8_t) );
+                radio.write( &@radio_id, sizeof(uint8_t) );
                 //delay(SEND_INTERVAL);
             }
             await SEND_INTERVAL ms;

@@ -227,7 +227,7 @@ _CEU_ARDUINO_AWAKE_:;
 #endif
     }
     ceu_stop();
-    ceu_sys_assert(0, "bug found");
+    ceu_assert(0, "bug found");
     while (1);
 }
 

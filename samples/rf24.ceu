@@ -1,3 +1,7 @@
+#include "arduino/isr/analog.ceu"
+#include "arduino/isr/timer.ceu"
+#include "arduino/arduino.ceu"
+
 native/pre do
     /*
      * This application consists of a node of a distributed smart lighting system.
@@ -67,9 +71,6 @@ native/pre do
 
     radio.begin();
 end
-
-#include "arduino/isr/analog.ceu"
-#include "arduino/isr/timer.ceu"
 
 #define SENSOR_THRESHOLD 500
 #define SEND_INTERVAL 100

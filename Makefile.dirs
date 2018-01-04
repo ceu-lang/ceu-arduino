@@ -1,0 +1,1 @@
+CEU_DIR = $(error set absolute path to "<ceu>" repository)

@@ -2,42 +2,6 @@
 #include "arduino/avr.ceu"
 #include "arduino/arduino.ceu"
 
-native/pos do
-    tceu_callback_ret ceu_callback_analog (int cmd, tceu_callback_arg p1,
-                                                    tceu_callback_arg p2,
-                                                    const char* file, u32 line)
-    {
-        tceu_callback_ret ret = { .is_handled=0 };
-        switch (cmd) {
-            case CEU_CALLBACK_OUTPUT:
-                switch (p1.num) {
-                    case CEU_OUTPUT_ADC_REQUEST: {
-                        ret.is_handled = 1;
-                        u8 pin = *((int*)p2.ptr);
-
-                        // if there is a conversion in progress, queue this one
-                        if (ADCSRA & _BV(ADSC)) {
-                            CEU_APP.root.bit_vector = CEU_APP.root.bit_vector | (0b1 << pin);
-                            return;
-                        }
-
-                        // set channel (low 3 bits)
-                        // this also sets ADLAR (left-adjust result) to 0 (the default).
-                        ADMUX = 0x40 | (pin & 0x07);
-
-                        bitSet(ADCSRA, ADIE);    // configures interrupt
-                        bitSet(ADCSRA, ADSC);    // starts the conversion
-                        break;
-                    }
-                }
-                break;
-        }
-        return ret;
-    }
-    tceu_callback CEU_CALLBACK_ANALOG = { &ceu_callback_analog, NULL };
-end
-{ ceu_callback_register(&CEU_CALLBACK_ANALOG); }
-
 #define N_ADC 6
 
 output int  ADC_REQUEST;
@@ -57,19 +21,20 @@ do
     channels = channels .. [ ch, ch, ch, ch, ch, ch ];
 end
 
-code/await Analog (var int channel) -> int do
-    _ceu_assert(outer.channels[channel].is_busy == false, "Simultaneous waits on same pin");
-
-    outer.channels[channel].is_busy = true;
-    do finalize with
-        outer.channels[channel].is_busy = false;
+output (int pin) ADC_REQUEST do
+    if ({ADCSRA & _BV(ADSC)} as bool) then
+        outer.bit_vector = outer.bit_vector | ({0b1} << pin);
+        escape;
     end
 
-    emit ADC_REQUEST(channel);
-    await ADC_DONE until outer.channels[channel].is_available;
-    outer.channels[channel].is_available = false;
+    {
+        // sets channel (low 3 bits)
+        // this also sets ADLAR (left-adjust result) to 0 (the default).
+        ADMUX = 0x40 | (@pin & 0x07);
 
-    escape outer.channels[channel].value;
+        bitSet(ADCSRA, ADIE);    // configures interrupt
+        bitSet(ADCSRA, ADSC);    // starts the conversion
+    }
 end
 
 spawn async/isr [_ADC_vect_num,0] do
@@ -107,4 +72,19 @@ spawn async/isr [_ADC_vect_num,0] do
         end
         {bitClear(ADCSRA, ADIE);}       // if none, clears the interrupt bit
     end
+end
+
+code/await Analog (var int channel) -> int do
+    _ceu_assert(not outer.channels[channel].is_busy, "bug found");
+
+    outer.channels[channel].is_busy = true;
+    do finalize with
+        outer.channels[channel].is_busy = false;
+    end
+
+    emit ADC_REQUEST(channel);
+    await ADC_DONE until outer.channels[channel].is_available;
+    outer.channels[channel].is_available = false;
+
+    escape outer.channels[channel].value;
 end

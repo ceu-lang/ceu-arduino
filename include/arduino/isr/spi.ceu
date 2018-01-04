@@ -2,215 +2,132 @@
 #include "arduino/avr.ceu"
 #include "arduino/arduino.ceu"
 
-native
-    _LSBFIRST,
-    _MSBFIRST,
+// Constants copied from "<arduino>/hardware/avr/libraries/SPI/src/SPI.h"
 
-    _SPI_CLOCK_DIV4,
-    _SPI_CLOCK_DIV16,
-    _SPI_CLOCK_DIV64,
-    _SPI_CLOCK_DIV128,
-    _SPI_CLOCK_DIV2,
-    _SPI_CLOCK_DIV8,
-    _SPI_CLOCK_DIV32,
+#define SPI_LSBFIRST 0
+#define SPI_MSBFIRST 1
 
-    _SPI_MODE0,
-    _SPI_MODE1,
-    _SPI_MODE2,
-    _SPI_MODE3,
+#define SPI_MODE0 0x00
+#define SPI_MODE1 0x04
+#define SPI_MODE2 0x08
+#define SPI_MODE3 0x0C
 
-    _SPI_MODE_MASK,   // CPOL = bit 3, CPHA = bit 2 on
-    _SPI_CLOCK_MASK,   // SPR1 = bit 1, SPR0 = bit 0 on
-    _SPI_2XCLOCK_MASK   // SPI2X = bit 0 on
-;
-native/pre do
-    ##define LSBFIRST 0
-    ##define MSBFIRST 1
-
-    ##define SPI_CLOCK_DIV4 0x00
-    ##define SPI_CLOCK_DIV16 0x01
-    ##define SPI_CLOCK_DIV64 0x02
-    ##define SPI_CLOCK_DIV128 0x03
-    ##define SPI_CLOCK_DIV2 0x04
-    ##define SPI_CLOCK_DIV8 0x05
-    ##define SPI_CLOCK_DIV32 0x06
-
-    ##define SPI_MODE0 0x00
-    ##define SPI_MODE1 0x04
-    ##define SPI_MODE2 0x08
-    ##define SPI_MODE3 0x0C
-
-    ##define SPI_MODE_MASK 0x0C  // CPOL = bit 3, CPHA = bit 2 on SPCR
-    ##define SPI_CLOCK_MASK 0x03  // SPR1 = bit 1, SPR0 = bit 0 on SPCR
-    ##define SPI_2XCLOCK_MASK 0x01  // SPI2X = bit 0 on SPSR
-
-    volatile bool SPI_busyFlag = false;
-    volatile uint8_t SPI_interruptSave = 0x0;
-    volatile uint8_t SPI_userCount = 0;
-end
+#define SPI_MODE_MASK    0x0C  // CPOL = bit 3, CPHA = bit 2 on SPCR
+#define SPI_CLOCK_MASK   0x03  // SPR1 = bit 1, SPR0 = bit 0 on SPCR
+#define SPI_2XCLOCK_MASK 0x01  // SPI2X = bit 0 on SPSR
 
 native/pos do
-    int ceu_callback_spi (int cmd, tceu_callback_val p1, tceu_callback_val p2,
-                          const char* file, u32 line)
+    int ceu_callback_spi (int cmd, tceu_callback_val p1, tceu_callback_val p2)
     {
-        int is_handled = 0;
-        switch (cmd) {
-            case CEU_CALLBACK_ABORT:
-                is_handled = 0;     // let runtime abort
-                SPCR &= ~_BV(SPE);  // release PIN13
-                break;
-
-            case CEU_CALLBACK_OUTPUT:
-                switch (p1.num) {
-                    case CEU_OUTPUT_SPI_BEGIN: {
-                        is_handled = 1;
-
-                        if(!SPI_userCount){
-                            uint8_t port = digitalPinToPort(SS);
-                            uint8_t bit = digitalPinToBitMask(SS);
-                            volatile uint8_t *reg = portModeRegister(port);
-                            
-                            if(!(*reg & bit)){
-                                digitalWrite(SS, HIGH);
-                            }
-                            
-                            pinMode(SS, 1);
-                            
-                            SPCR |= _BV(MSTR);
-                            SPCR |= _BV(SPE);
-
-                            pinMode(SCK, 1);
-                            pinMode(MOSI, 1);
-                        }
-                        SPI_userCount++;                        
-                        break;
-                    }
-                    case CEU_OUTPUT_SPI_END: {
-                        is_handled = 1;
-
-                        SPI_userCount--;
-                        if(SPI_userCount == 0){
-                            // disable SPI Module
-                            SPCR &= ~_BV(SPE);
-                        }
-
-                        break;
-                    }
-                    case CEU_OUTPUT_SPI_TRANSACTION_BEGIN: {
-                        is_handled = 1;
-                        tceu_output_SPI_TRANSACTION_BEGIN* pt = (tceu_output_SPI_TRANSACTION_BEGIN*) p2.ptr;
-
-                        u32 clock    = pt->_1; 
-                        u8 bitOrder = pt->_2; 
-                        u8 dataMode = pt->_3;
-
-                        ceu_assert(SPI_busyFlag == false, "bug found");
-                        SPI_busyFlag = true;
-
-                        SPI_interruptSave = SREG;
-
-                        uint8_t clockDiv;
-
-                        if (__builtin_constant_p(clock)) {
-                            if (clock >= F_CPU / 2) {
-                                clockDiv = 0;
-                            } else if (clock >= F_CPU / 4) {
-                                clockDiv = 1;
-                            } else if (clock >= F_CPU / 8) {
-                                clockDiv = 2;
-                            } else if (clock >= F_CPU / 16) {
-                                clockDiv = 3;
-                            } else if (clock >= F_CPU / 32) {
-                                clockDiv = 4;
-                            } else if (clock >= F_CPU / 64) {
-                                clockDiv = 5;
-                            } else {
-                                clockDiv = 6;
-                            }
-                        } else {
-                          uint32_t clockSetting = F_CPU / 2;
-                          clockDiv = 0;
-                          while (clockDiv < 6 && clock < clockSetting) {
-                            clockSetting /= 2;
-                            clockDiv++;
-                          }
-                        }
-
-                        // Compensate for the duplicate fosc/64
-                        if (clockDiv == 6)
-                        clockDiv = 7;
-
-                        // Invert the SPI2X bit
-                        clockDiv ^= 0x1;
-
-                        SPCR = _BV(SPE) | _BV(MSTR) | ((bitOrder == LSBFIRST) ? _BV(DORD) : 0) |
-                          (dataMode & SPI_MODE_MASK) | ((clockDiv >> 1) & SPI_CLOCK_MASK);
-                        SPSR = clockDiv & SPI_2XCLOCK_MASK;
-                        
-                        SPI_busyFlag = false;
-                        
-                        break;
-                    }
-                    case CEU_OUTPUT_SPI_TRANSFER_REQUEST: {
-                        is_handled = 1;
-
-                        tceu_output_SPI_TRANSFER_REQUEST* pt = (tceu_output_SPI_TRANSFER_REQUEST*) p2.ptr;
-
-                        SPCR |= _BV(SPIE);
-                        if(pt->_1.is_set){
-                            SPDR = (u8)(pt->_1).value;
-                        } else {
-                            SPDR = SPDR; // Have to write something to start conversion
-                        }
-                       
-                        break;
-                    }
-                    case CEU_OUTPUT_SPI_TRANSACTION_END: {
-                        is_handled = 1;
-
-                        SPI_busyFlag = false;
-                        SREG = SPI_interruptSave;
-                       
-                        break;
-                    }
-                }
-                break;
+        if (cmd == CEU_CALLBACK_ABORT) {
+            SPCR &= ~_BV(SPE);  // releases PIN13
         }
-        return is_handled;
+        return 0;               // lets the Ceu runtime abort
     }
     tceu_callback CEU_CALLBACK_SPI = { &ceu_callback_spi, NULL };
 end
 { ceu_callback_register(&CEU_CALLBACK_SPI); }
 
-output none SPI_BEGIN;
-output none SPI_END;
+var u8   spi_ref_count = 0;
+var bool spi_is_busy   = false;
+var u8   spi_sreg      = _;       // TODO: why is this needed?
 
-output (u32,u8,u8) SPI_TRANSACTION_BEGIN;
-output none SPI_TRANSACTION_END;
+output none SPI_BEGIN do
+    outer.spi_ref_count = outer.spi_ref_count + 1;
+    if outer.spi_ref_count > 1 then
+        escape;
+    end
 
-output u8? SPI_TRANSFER_REQUEST;
+    var u8   port = {digitalPinToPort(SS)};
+    var u8   bit  = {digitalPinToBitMask(SS)};
+    var u8&& reg  = {portModeRegister(@port)};
 
-event none spi_transaction_end;
+    if (*reg & bit) == 0 then
+        {digitalWrite(SS, HIGH);}
+    end
 
-var bool spi_transaction_busy;
+    {
+        pinMode(SS, 1);
+
+        SPCR |= _BV(MSTR);
+        SPCR |= _BV(SPE);
+
+        pinMode(SCK, 1);
+        pinMode(MOSI, 1);
+    }
+end
+
+output none SPI_END do
+    outer.spi_ref_count = outer.spi_ref_count - 1;
+    if outer.spi_ref_count > 0 then
+        escape;
+    end
+    { SPCR &= ~_BV(SPE); }      // disables the SPI Module
+end
+
+output (u32 clock, u8 bit_order, u8 data_mode) SPI_TRANSACTION_BEGIN do
+    _ceu_assert(not outer.spi_is_busy, "bug found");
+    outer.spi_is_busy = true;
+    outer.spi_sreg    = {SREG};
+    {
+        u32 clockSetting = F_CPU / 2;
+        u8  clock_div    = 0;
+        while (clock_div<6 && @(clock)<clockSetting) {
+            clockSetting /= 2;
+            clock_div++;
+        }
+
+        // Compensate for the duplicate fosc/64
+        if (clock_div == 6) {
+            clock_div = 7;
+        }
+
+        // Invert the SPI2X bit
+        clock_div ^= 0x1;
+
+        SPCR = _BV(SPE) | _BV(MSTR) | ((@bit_order == SPI_LSBFIRST) ? _BV(DORD) : 0) |
+          (@data_mode & SPI_MODE_MASK) | ((clock_div >> 1) & SPI_CLOCK_MASK);
+        SPSR = clock_div & SPI_2XCLOCK_MASK;
+    }
+end
+
+output none SPI_TRANSACTION_END do
+    outer.spi_is_busy = false;
+    { SREG = @outer.spi_sreg; }
+end
+
+output (u8? value) SPI_TRANSFER_REQUEST do
+    {SPCR |= _BV(SPIE);}
+    if value? then
+        {SPDR = @(value!);}
+    else
+        {SPDR = SPDR;}  // Have to write something to start conversion
+    end
+end
 
 input u8 SPI_TRANSFER_DONE;
-
-code/await SPI_Transfer (var u8? value) -> u8 do
-    if value? then
-        emit SPI_TRANSFER_REQUEST(value!);
-    else
-        emit SPI_TRANSFER_REQUEST(_);
-    end
-    var u8 recv = await SPI_TRANSFER_DONE;
-    escape recv;
+spawn async/isr [_SPI_STC_vect_num,0] do
+    { bitClear(SPCR,SPIE); }
+    emit SPI_TRANSFER_DONE({SPDR});
 end
+
+code/await SPI_Begin (none) -> none do
+    emit SPI_BEGIN;
+    do finalize with
+        emit SPI_END;
+    end
+    await FOREVER;
+end
+
+event none spi_transaction_end;
+var   bool spi_transaction_busy;
 
 code/await SPI_Transaction (var u32 freq, var u8 byte_order, var u8 mode) -> none do
     if outer.spi_transaction_busy then
         await outer.spi_transaction_end until outer.spi_transaction_busy == false;
     end
     outer.spi_transaction_busy = true;
+
     emit SPI_TRANSACTION_BEGIN(freq,byte_order,mode);
     do finalize with
         emit SPI_TRANSACTION_END;
@@ -220,17 +137,8 @@ code/await SPI_Transaction (var u32 freq, var u8 byte_order, var u8 mode) -> non
     await FOREVER;
 end
 
-code/await SPI_Begin (none) -> none  do
-    emit SPI_BEGIN;
-    do finalize with
-        emit SPI_END;
-    end
-    await FOREVER;
-end
-
-spawn async/isr [_SPI_STC_vect_num,0] do
-    {
-        bitClear(SPCR,SPIE);
-    }
-    emit SPI_TRANSFER_DONE({SPDR});
+code/await SPI_Transfer (var u8? value) -> u8 do
+    emit SPI_TRANSFER_REQUEST(value);
+    var u8 recv = await SPI_TRANSFER_DONE;
+    escape recv;
 end

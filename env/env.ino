@@ -2,14 +2,14 @@
 
 #define ceu_sys_assert(v,msg)                              \
     if (!(v)) {                                            \
-        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL); \
+        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL, CEU_TRACE_null); \
     }
 
 #include "_ceu_app.c.h"
 
 #ifdef CEU_FEATURES_ISR
     #include "wiring_private.h"
-    #ifdef __AVR
+    #ifdef ARDUINO_ARCH_AVR
         #include <avr/interrupt.h>
         #ifdef CEU_FEATURES_ISR_SLEEP
             #include <avr/sleep.h>
@@ -25,7 +25,13 @@
     #endif
 
     #ifndef _VECTOR_SIZE
-        #define _VECTOR_SIZE 26     /* defined for ATmega328p in iom328p.h */
+        #ifdef ARDUINO_ARCH_AVR
+            #define _VECTOR_SIZE 26     /* defined as _VECTORS_SIZE for ATmega328p in "iom328p.h" */
+        #elif ARDUINO_ARCH_SAMD
+            #define _VECTOR_SIZE PERIPH_COUNT_IRQn
+        #else
+            #error "Unsupported Platform!"
+        #endif
     #endif
 
     static tceu_isr isrs[_VECTOR_SIZE];
@@ -48,9 +54,7 @@ typedef struct tceu_arduino {
 static tceu_arduino CEU_ARDUINO;
 #endif
 
-static int ceu_callback_arduino (int cmd, tceu_callback_val p1,
-                                 tceu_callback_val p2,
-                                 const char* file, u32 line)
+static int ceu_callback_arduino (int cmd, tceu_callback_val p1, tceu_callback_val p2)
 {
     int is_handled = 1;
 
@@ -136,8 +140,11 @@ static int ceu_callback_arduino (int cmd, tceu_callback_val p1,
         case CEU_CALLBACK_OUTPUT:
             switch (p1.num) {
                 #include "pins_outputs.c.h"
+                default:
+                    is_handled = 0;
             }
             break;
+
         default:
             is_handled = 0;
     }

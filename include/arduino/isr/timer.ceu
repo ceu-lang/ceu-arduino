@@ -1,18 +1,10 @@
 #include "arduino/avr.ceu"
 #include "arduino/arduino.ceu"
 
-/*
- * With 1024 prescaler: 16M/1024 incs/s : 15625 incs/s
- * 4194304 us for 65536 incs
- */
-#define CPU_FREQ        16000000                          // 16Mhz
-#define INCS_PER_SECOND (CPU_FREQ/1024)                   // 15625
-#define US_PER_CYCLE    (65536*1000000 / INCS_PER_SECOND) // 4194304
-#define US_TO_INCS(us)  ((us)*65536/US_PER_CYCLE)
-//#define US_TO_OVERFLOW(us) (65536 - US_TO_INCS(us))
-// all simplified goes to this:
-#define US_TO_OVERFLOW(us) (65536 - (us/64) - 1)
-#define INCS_TO_US(incs) (((s32)(incs))*64)
+#define CEU_TIMER_PRESCALER 1024
+#define CEU_TIMER_US_TO_INCS(us)     ((us)*F_CPU/CEU_TIMER_PRESCALER/1000000L)
+#define CEU_TIMER_US_TO_OVERFLOW(us) (65536 - CEU_TIMER_US_TO_INCS(us) - 1)
+#define CEU_TIMER_INCS_TO_US(incs)   (((s32)(incs))*1000000L*CEU_TIMER_PRESCALER/F_CPU)
 
 native _ceu_arduino_dt;
 native/pos do
@@ -28,7 +20,7 @@ native/pos do
                 if (us == CEU_WCLOCK_INACTIVE) {
                     TIMSK1 = TIMSK1 & ~(1 << TOIE1);
                 } else {
-                    s32 v = US_TO_OVERFLOW(us);
+                    s32 v = CEU_TIMER_US_TO_OVERFLOW(us);
                     ceu_assert(v > 0, "bug found");
                     TCNT1 = v;
                     CEU_TIMER_old = v;
@@ -47,12 +39,13 @@ native/pos do
         u16 now = TCNT1;
         s32 dt  = (now - CEU_TIMER_old);
         CEU_TIMER_old = now;
-        return INCS_TO_US(dt);
+        return CEU_TIMER_INCS_TO_US(dt);
     }
 end
 
 {
     ceu_callback_register(&CEU_CALLBACK_TIMER);
+
     CEU_TIMER_old = TCNT1;
     TCCR1A = 0;
     TCCR1B = (1 << CS12) | (1 << CS10); // 1024 prescaler

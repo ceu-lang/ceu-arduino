@@ -12,6 +12,9 @@ ARD_PORT  = /dev/ttyACM*
 
 PRESERVE = --preserve-temp-files
 
+ARD_ARCH_UPPER = $(shell echo $(ARD_ARCH) | tr a-z A-Z)
+#ARD_ARCH_UPPER = $(call uc,$(ARD_ARCH))
+
 all: ceu c
 
 c:
@@ -21,10 +24,9 @@ c:
 	           --upload $(INO_SRC)
 
 ceu:
-	ceu --pre --pre-args="-I$(CEU_DIR)/include -I./include -DCEUMAKER_ARDUINO" \
+	ceu --pre --pre-args="-I$(CEU_DIR)/include -I./include -DCEUMAKER_ARDUINO -DARDUINO_ARCH_$(ARD_ARCH_UPPER)" \
 	          --pre-input=$(CEU_SRC)                                           \
 	    --ceu --ceu-err-unused=pass --ceu-err-uninitialized=pass               \
-	          --ceu-callbacks-lines=false                                      \
 	          --ceu-features-lua=false --ceu-features-thread=false             \
 	          --ceu-features-isr=$(CEU_ISR)                                    \
 	    --env --env-types=env/types.h                                          \

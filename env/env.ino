@@ -9,7 +9,7 @@
 
 #ifdef CEU_FEATURES_ISR
     #include "wiring_private.h"
-    #ifdef __AVR
+    #ifdef ARDUINO_ARCH_AVR
         #include <avr/interrupt.h>
         #ifdef CEU_FEATURES_ISR_SLEEP
             #include <avr/sleep.h>
@@ -25,7 +25,13 @@
     #endif
 
     #ifndef _VECTOR_SIZE
-        #define _VECTOR_SIZE 26     /* defined for ATmega328p in iom328p.h */
+        #ifdef ARDUINO_ARCH_AVR
+            #define _VECTOR_SIZE 26     /* defined as _VECTORS_SIZE for ATmega328p in "iom328p.h" */
+        #elif ARDUINO_ARCH_SAMD
+            #define _VECTOR_SIZE PERIPH_COUNT_IRQn
+        #else
+            #error "Unsupported Platform!"
+        #endif
     #endif
 
     static tceu_isr isrs[_VECTOR_SIZE];

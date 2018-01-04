@@ -51,3 +51,12 @@ ISR(USART_TX_vect)
     }
 }
 #endif
+
+#ifdef CEU_ISR__TC3_IRQn
+void TC3_Handler()
+{
+    if (isrs[TC3_IRQn].fun != NULL) {
+        isrs[TC3_IRQn].fun(isrs[TC3_IRQn].mem);
+    }
+}
+#endif

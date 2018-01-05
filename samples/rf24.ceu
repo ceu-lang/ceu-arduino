@@ -73,6 +73,7 @@ end
 
 input none RADIO_AVAILABLE;
 event none presence;
+event none no_presence;
 
     _pinMode(A0,INPUT);
     _pinMode(LED_PIN,OUTPUT);
@@ -96,6 +97,8 @@ spawn do
         var int value = await Analog(0);
         if value > SENSOR_THRESHOLD then
             emit presence;
+        else
+            emit no_presence;
         end
     end
 end
@@ -152,13 +155,14 @@ loop do
         par/or do
             // If doesnt receive presence in an interval of time then abort?
             // Alternative would be to have a different event for lack of presence?
-            loop do
-                par/or do
-                    await SEND_INTERVAL ms;
-                with
-                    await presence;
-                end
-            end
+            //loop do
+            //    par/or do
+            //        await SEND_INTERVAL ms;
+            //    with
+            //        await presence;
+            //    end
+            //end
+            await no_presence;
         with
             loop do
                 var u8 radio_id = RADIO_ID;

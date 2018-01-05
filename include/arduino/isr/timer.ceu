@@ -72,57 +72,58 @@ end
 #include "arduino/samd.ceu"
 
 native/pos do
-    #define CEU_TIMER_WAIT(x) while (x->STATUS.bit.SYNCBUSY == 1)
+    #define CEU_TIMER_WAIT(x) while ((x).STATUS.bit.SYNCBUSY == 1)
     #define CEU_TIMER_TC      ((TcCount16*) TC3)
 
     static u16 ceu_timer_old;
 
     void ceu_timer_init (void)
     {
-        GCLK->CLKCTRL.reg = (u16) (GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK0 | GCLK_CLKCTRL_ID(GCM_TCC2_TC3));
-        CEU_TIMER_WAIT(GCLK);
+        // Set up the generic clock (GCLK4) used to clock timers
+        REG_GCLK_GENDIV = GCLK_GENDIV_DIV(1) |          // Divide the 48MHz clock source by divisor 1: 48MHz/1=48MHz
+                          GCLK_GENDIV_ID(4);            // Select Generic Clock (GCLK) 4
+        CEU_TIMER_WAIT(*GCLK);
 
-        TcCount16* TC = (TcCount16*) TC3;
+        REG_GCLK_GENCTRL = GCLK_GENCTRL_IDC |           // Set the duty cycle to 50/50 HIGH/LOW
+                           GCLK_GENCTRL_GENEN |         // Enable GCLK4
+                           GCLK_GENCTRL_SRC_DFLL48M |   // Set the 48MHz clock source
+                           GCLK_GENCTRL_ID(4);          // Select GCLK4
+        CEU_TIMER_WAIT(*GCLK);
 
-        CEU_TIMER_TC->CTRLA.reg &= ~TC_CTRLA_ENABLE;        // disables TC
-        CEU_TIMER_WAIT(CEU_TIMER_TC);
+        // Feed GCLK4 to TC4 and TC5
+        REG_GCLK_CLKCTRL = GCLK_CLKCTRL_CLKEN |         // Enable GCLK4 to TC4 and TC5
+                           GCLK_CLKCTRL_GEN_GCLK4 |     // Select GCLK4
+                           GCLK_CLKCTRL_ID_TC4_TC5;     // Feed the GCLK4 to TC4 and TC5
+        CEU_TIMER_WAIT(*GCLK);
 
-        CEU_TIMER_TC->CTRLA.reg |= TC_CTRLA_MODE_COUNT16;   // sets mode to 16 bits
-        CEU_TIMER_WAIT(CEU_TIMER_TC);
+        NVIC_SetPriority(TC4_IRQn, 0);                  // Set the NVIC priority to highest
+        NVIC_EnableIRQ(TC4_IRQn);                       // Connect TC4 to NVIC
 
-        CEU_TIMER_TC->CTRLA.reg |= TC_CTRLA_WAVEGEN_NFRQ;   // sets normal freq
-        CEU_TIMER_WAIT(CEU_TIMER_TC);
+        REG_TC4_INTFLAG |= TC_INTFLAG_OVF;              // Clear the interrupt flags
+        REG_TC4_INTENSET = TC_INTENSET_OVF;             // Enable TC4 interrupts
 
-        CEU_TIMER_TC->CTRLA.reg |= TC_CTRLA_PRESCALER_DIV1024; // sets 1024 prescaler
-        CEU_TIMER_WAIT(CEU_TIMER_TC);
+        ceu_timer_old = REG_TC4_COUNT16_COUNT;
 
-        CEU_TIMER_TC->INTENSET.reg = 0;                     // disables all interrupts
-        CEU_TIMER_TC->INTENSET.bit.OVF = 1;                 // enables overfollow interrupt
-        NVIC_EnableIRQ(TC3_IRQn);                           // enables InterruptVector
-
-        ceu_timer_old = REG_TC3_COUNT16_COUNT;
-        { S.print("F_CPU "); S.println(F_CPU); }
-        { S.print("INIT "); S.println(ceu_timer_old); }
-
-        CEU_TIMER_TC->CTRLA.reg |= TC_CTRLA_ENABLE;         // enables the timer
-        CEU_TIMER_WAIT(CEU_TIMER_TC);
+        REG_TC4_CTRLA |= TC_CTRLA_PRESCALER_DIV1024 |   // Set prescaler to 1024, 48MHz/1024 = 46.875kHz
+                         TC_CTRLA_WAVEGEN_NFRQ |        // Put the timer TC4 into match frequency (MFRQ) mode
+                         TC_CTRLA_ENABLE;               // Enable TC4
+        CEU_TIMER_WAIT(TC4->COUNT16);
     }
 
     void ceu_timer_set (s32 us) {
         if (us == CEU_WCLOCK_INACTIVE) {
-            CEU_TIMER_TC->CTRLBSET.reg |= TC_CTRLBSET_CMD_STOP;      // stops the timer
+            REG_TC4_CTRLBSET |= TCC_CTRLBSET_CMD_STOP;
         } else {
             s32 v = CEU_TIMER_US_TO_OVERFLOW(us);
             ceu_assert(v > 0, "bug found");
-            REG_TC3_COUNT16_COUNT = v;
+            REG_TC4_COUNT16_COUNT = v;
             ceu_timer_old = v;
-            { S.print("SET // US "); S.print(us); S.print(" INCS "); S.println(v); }
-            CEU_TIMER_TC->CTRLBSET.reg |= TC_CTRLBSET_CMD_RETRIGGER; // starts the timer
+            REG_TC4_CTRLBSET |= TCC_CTRLBSET_CMD_RETRIGGER;
         }
     }
 
     s32 ceu_timer_dt (void) {
-        u16 now = REG_TC3_COUNT16_COUNT;
+        u16 now = REG_TC4_COUNT16_COUNT;
         s32 dt  = (u16)(now - ceu_timer_old);
         ceu_timer_old = now;
         { S.print("NOW "); S.print(now); S.print(" DT "); S.print(dt); S.print(" US "); S.println(CEU_TIMER_INCS_TO_US(dt)); }
@@ -130,8 +131,8 @@ native/pos do
     }
 end
 
-spawn async/isr [_TC3_IRQn, 0] do
-    { CEU_TIMER_TC->INTFLAG.bit.OVF = 1; }                   // clears the ovf flag
+spawn async/isr [_TC4_IRQn, 0] do
+    { REG_TC4_INTFLAG = TC_INTFLAG_OVF; }         // clears the ovf flag
     emit ({ceu_timer_dt()})us;
 end
 

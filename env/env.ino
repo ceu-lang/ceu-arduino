@@ -5,6 +5,14 @@
         ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL, CEU_TRACE_null); \
     }
 
+#define _DELAY(ms)                      \
+    {                                   \
+        int i;                          \
+        for (i=0; i<ms; i++) {          \
+            delayMicroseconds(1000);    \
+        }                               \
+    }
+
 #include "_ceu_app.c.h"
 
 #ifdef CEU_FEATURES_ISR
@@ -20,6 +28,8 @@
  *     the handler exits, ...
  * <http://www.nongnu.org/avr-libc/user-manual/group__avr__interrupts.html>
  */
+    #elif ARDUINO_ARCH_SAMD
+        // OK
     #else
         #error "Unsupported Platform!"
     #endif

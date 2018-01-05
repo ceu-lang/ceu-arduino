@@ -1,9 +1,9 @@
 #include "arduino/arduino.ceu"
 
 #define CEU_TIMER_PRESCALER 1024
-#define CEU_TIMER_US_TO_INCS(us)     ((us)*F_CPU/CEU_TIMER_PRESCALER/1000000L)
+#define CEU_TIMER_US_TO_INCS(us)     ((s32)(((double)(us))*F_CPU/CEU_TIMER_PRESCALER/1000000L))
 #define CEU_TIMER_US_TO_OVERFLOW(us) (65536 - CEU_TIMER_US_TO_INCS(us) - 1)
-#define CEU_TIMER_INCS_TO_US(incs)   (((s32)(incs))*1000000L*CEU_TIMER_PRESCALER/F_CPU)
+#define CEU_TIMER_INCS_TO_US(incs)   ((s32)(((double)(incs))*1000000L*CEU_TIMER_PRESCALER/F_CPU))
 
 native/pos do
     void ceu_timer_init (void);
@@ -22,6 +22,9 @@ native/pos do
     static tceu_callback CEU_CALLBACK_TIMER = { &ceu_callback_timer, NULL };
 end
 
+#define S SerialUSB
+{ S.begin(9600); }
+
 {
     ceu_callback_register(&CEU_CALLBACK_TIMER);
     ceu_timer_init();
@@ -32,10 +35,10 @@ end
 #include "arduino/avr.ceu"
 
 native/pos do
-    static u16 CEU_TIMER_old;
+    static u16 ceu_timer_old;
 
     void ceu_timer_init (void) {
-        CEU_TIMER_old = TCNT1;
+        ceu_timer_old = TCNT1;
         TCCR1A = 0;
         TCCR1B = (1 << CS12) | (1 << CS10); // 1024 prescaler
     }
@@ -47,15 +50,15 @@ native/pos do
             s32 v = CEU_TIMER_US_TO_OVERFLOW(us);
             ceu_assert(v > 0, "bug found");
             TCNT1 = v;
-            CEU_TIMER_old = v;
+            ceu_timer_old = v;
             TIMSK1 = TIMSK1 | (1 << TOIE1);
         }
     }
 
     s32 ceu_timer_dt (void) {
         u16 now = TCNT1;
-        s32 dt  = (now - CEU_TIMER_old);
-        CEU_TIMER_old = now;
+        s32 dt  = (u16)(now - ceu_timer_old);
+        ceu_timer_old = now;
         return CEU_TIMER_INCS_TO_US(dt);
     }
 end
@@ -70,8 +73,9 @@ end
 
 native/pos do
     #define CEU_TIMER_WAIT(x) while (x->STATUS.bit.SYNCBUSY == 1)
+    #define CEU_TIMER_TC      ((TcCount16*) TC3)
 
-    static u16 CEU_TIMER_old;
+    static u16 ceu_timer_old;
 
     void ceu_timer_init (void)
     {
@@ -80,47 +84,54 @@ native/pos do
 
         TcCount16* TC = (TcCount16*) TC3;
 
-        TC->CTRLA.reg &= ~TC_CTRLA_ENABLE;              // disables TC
-        CEU_TIMER_WAIT(TC);
+        CEU_TIMER_TC->CTRLA.reg &= ~TC_CTRLA_ENABLE;        // disables TC
+        CEU_TIMER_WAIT(CEU_TIMER_TC);
 
-        TC->CTRLA.reg |= TC_CTRLA_MODE_COUNT16;         // sets mode to 16 bits
-        CEU_TIMER_WAIT(TC);
+        CEU_TIMER_TC->CTRLA.reg |= TC_CTRLA_MODE_COUNT16;   // sets mode to 16 bits
+        CEU_TIMER_WAIT(CEU_TIMER_TC);
 
-        TC->CTRLA.reg |= TC_CTRLA_WAVEGEN_NFRQ;         // sets normal freq
-        CEU_TIMER_WAIT(TC);
+        CEU_TIMER_TC->CTRLA.reg |= TC_CTRLA_WAVEGEN_NFRQ;   // sets normal freq
+        CEU_TIMER_WAIT(CEU_TIMER_TC);
 
-        TC->CTRLA.reg |= TC_CTRLA_PRESCALER_DIV1024;    // sets 1024 prescaler
-        CEU_TIMER_WAIT(TC);
+        CEU_TIMER_TC->CTRLA.reg |= TC_CTRLA_PRESCALER_DIV1024; // sets 1024 prescaler
+        CEU_TIMER_WAIT(CEU_TIMER_TC);
 
-        TC->INTENSET.reg = 0;                           // disables all interrupts
-        TC->INTENSET.bit.OVF = 1;                       // enables overfollow interrupt
-        NVIC_EnableIRQ(TC3_IRQn);                       // enables InterruptVector
+        CEU_TIMER_TC->INTENSET.reg = 0;                     // disables all interrupts
+        CEU_TIMER_TC->INTENSET.bit.OVF = 1;                 // enables overfollow interrupt
+        NVIC_EnableIRQ(TC3_IRQn);                           // enables InterruptVector
 
-        TC->CTRLA.reg |= TC_CTRLA_ENABLE;               // enables the timer
-        CEU_TIMER_WAIT(TC);
+        ceu_timer_old = REG_TC3_COUNT16_COUNT;
+        { S.print("F_CPU "); S.println(F_CPU); }
+        { S.print("INIT "); S.println(ceu_timer_old); }
+
+        CEU_TIMER_TC->CTRLA.reg |= TC_CTRLA_ENABLE;         // enables the timer
+        CEU_TIMER_WAIT(CEU_TIMER_TC);
     }
 
     void ceu_timer_set (s32 us) {
         if (us == CEU_WCLOCK_INACTIVE) {
-            TIMSK1 = TIMSK1 & ~(1 << TOIE1);
+            CEU_TIMER_TC->CTRLBSET.reg |= TC_CTRLBSET_CMD_STOP;      // stops the timer
         } else {
             s32 v = CEU_TIMER_US_TO_OVERFLOW(us);
             ceu_assert(v > 0, "bug found");
-            TCNT1 = v;
-            CEU_TIMER_old = v;
-            TIMSK1 = TIMSK1 | (1 << TOIE1);
+            REG_TC3_COUNT16_COUNT = v;
+            ceu_timer_old = v;
+            { S.print("SET // US "); S.print(us); S.print(" INCS "); S.println(v); }
+            CEU_TIMER_TC->CTRLBSET.reg |= TC_CTRLBSET_CMD_RETRIGGER; // starts the timer
         }
     }
 
     s32 ceu_timer_dt (void) {
-        u16 now = TCNT1;
-        s32 dt  = (now - CEU_TIMER_old);
-        CEU_TIMER_old = now;
+        u16 now = REG_TC3_COUNT16_COUNT;
+        s32 dt  = (u16)(now - ceu_timer_old);
+        ceu_timer_old = now;
+        { S.print("NOW "); S.print(now); S.print(" DT "); S.print(dt); S.print(" US "); S.println(CEU_TIMER_INCS_TO_US(dt)); }
         return CEU_TIMER_INCS_TO_US(dt);
     }
 end
 
 spawn async/isr [_TC3_IRQn, 0] do
+    { CEU_TIMER_TC->INTFLAG.bit.OVF = 1; }                   // clears the ovf flag
     emit ({ceu_timer_dt()})us;
 end
 

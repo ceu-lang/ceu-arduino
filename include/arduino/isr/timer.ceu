@@ -79,6 +79,8 @@ native/pos do
 
     void ceu_timer_init (void)
     {
+        /* Based on <https://forum.arduino.cc/index.php?topic=425385.msg2931200#msg2931200> */
+
         // Set up the generic clock (GCLK4) used to clock timers
         REG_GCLK_GENDIV = GCLK_GENDIV_DIV(1) |          // Divide the 48MHz clock source by divisor 1: 48MHz/1=48MHz
                           GCLK_GENDIV_ID(4);            // Select Generic Clock (GCLK) 4

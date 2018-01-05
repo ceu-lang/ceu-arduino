@@ -149,13 +149,25 @@ loop do
             //radio.openReadingPipe(1,pipes[0]);
             radio.stopListening();
         }
-        loop do
-            var u8 radio_id = RADIO_ID;
-            {
-                radio.write( &@radio_id, sizeof(uint8_t) );
-                //delay(SEND_INTERVAL);
-            }
-            await SEND_INTERVAL ms;
+        par/or do
+            // If doesnt receive presence in an interval of time then abort?
+            // Alternative would be to have a different event for lack of presence?
+            loop do
+                par/or do
+                    await SEND_INTERVAL ms;
+                with
+                    await presence;
+                end
+            end
+        with
+            loop do
+                var u8 radio_id = RADIO_ID;
+                {
+                    radio.write( &@radio_id, sizeof(uint8_t) );
+                    //delay(SEND_INTERVAL);
+                }
+                await SEND_INTERVAL ms;
+            end
         end
     end
 end

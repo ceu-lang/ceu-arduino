@@ -22,9 +22,6 @@ native/pos do
     static tceu_callback CEU_CALLBACK_TIMER = { &ceu_callback_timer, NULL };
 end
 
-#define S SerialUSB
-{ S.begin(9600); }
-
 {
     ceu_callback_register(&CEU_CALLBACK_TIMER);
     ceu_timer_init();
@@ -128,7 +125,6 @@ native/pos do
         u16 now = REG_TC4_COUNT16_COUNT;
         s32 dt  = (u16)(now - ceu_timer_old);
         ceu_timer_old = now;
-        { S.print("NOW "); S.print(now); S.print(" DT "); S.print(dt); S.print(" US "); S.println(CEU_TIMER_INCS_TO_US(dt)); }
         return CEU_TIMER_INCS_TO_US(dt);
     }
 end

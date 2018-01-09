@@ -1,0 +1,12 @@
+#ifndef _ARDUINO_SAMD_CEU
+#define _ARDUINO_SAMD_CEU
+
+native/const
+    _ADC_IRQn,
+    _TC3_IRQn,
+    _TC4_IRQn,
+;
+
+#define CEU_SAMD_WAIT(x) while ((x).STATUS.bit.SYNCBUSY == 1)
+
+#endif

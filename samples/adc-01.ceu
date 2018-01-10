@@ -3,7 +3,7 @@ native/pre do
 end
 
 #include "arduino/isr/timer.ceu"
-#include "arduino/isr/adc.ceu"
+#include "adc.ceu"
 
 output on/off PIN_13;
 

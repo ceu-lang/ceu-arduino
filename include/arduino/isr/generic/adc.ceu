@@ -1,0 +1,76 @@
+#define ADC_N 6
+
+output int  ADC_REQUEST;
+input  none ADC_DONE;
+
+var int? adc_channel_busy;      // current working channel
+var byte adc_pending = 0;       // bit vectors with requested pending channels
+
+data ADC_Channel with
+    var bool is_available = false;
+    var bool is_busy      = false;
+    var int  value;
+end
+
+var[ADC_N] ADC_Channel adc_channels;
+do
+    var ADC_Channel ch = val ADC_Channel(_,_,_);
+    adc_channels = adc_channels .. [ ch, ch, ch, ch, ch, ch ];
+end
+
+output (int pin) ADC_REQUEST do
+    var int idx = (pin - _A0);
+    _ceu_assert(idx>=0 and idx<ADC_N, "pin is out of range");
+
+    if outer.adc_channel_busy? then
+        outer.adc_pending = outer.adc_pending | (1 << idx);
+        escape;
+    end
+
+    outer.adc_channel_busy = idx;
+
+    { ceu_adc_request(@pin); }
+end
+
+spawn async/isr [CEU_ADC_IRQ_N, 0] do
+    var int idx = outer.adc_channel_busy!;
+    outer.adc_channel_busy = _;
+
+    var u16 value = { ceu_adc_done() };
+
+    outer.adc_channels[idx].value = value as int;
+    outer.adc_channels[idx].is_available = true;
+    emit ADC_DONE;
+
+    // gets next conversion in queue
+    outer.adc_pending = outer.adc_pending & ((1 << idx) ^ 0xFF);
+    do
+        var byte mask = {0b00000001};
+        var int i;
+        loop i in [0 -> ADC_N[ do
+            if (outer.adc_pending & mask) != 0 then
+                emit ADC_REQUEST(_A0+i);    // starts new conversion
+                escape;                     // prevents interrupt clear below
+            end
+            mask = mask << 1;
+        end
+    end
+end
+
+code/await Adc (var int pin) -> int do
+    var int idx = (pin - _A0);
+    _ceu_assert(idx>=0 and idx<ADC_N, "pin is out of range");
+
+    _ceu_assert(not outer.adc_channels[idx].is_busy, "bug found");
+
+    outer.adc_channels[idx].is_busy = true;
+    do finalize with
+        outer.adc_channels[idx].is_busy = false;
+    end
+
+    emit ADC_REQUEST(pin);
+    await ADC_DONE until outer.adc_channels[idx].is_available;
+    outer.adc_channels[idx].is_available = false;
+
+    escape outer.adc_channels[idx].value;
+end

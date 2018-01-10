@@ -1,0 +1,31 @@
+#include "arduino/avr.ceu"
+
+#define CEU_ADC_IRQ_N _ADC_vect_num
+
+native/pre do
+    void ceu_adc_request (int pin) {
+        // sets channel (low 3 bits)
+        // this also sets ADLAR (left-adjust result) to 0 (the default).
+        ADMUX = 0x40 | ((pin-A0) & 0x07);
+        bitSet(ADCSRA, ADIE);    // configures interrupt
+        bitSet(ADCSRA, ADSC);    // starts the conversion
+    }
+
+    u16 ceu_adc_done (void) {
+        bitClear(ADCSRA, ADSC);
+        bitClear(ADCSRA, ADIF);
+        bitClear(ADCSRA, ADIE);
+
+        // we have to read ADCL first; doing so locks both ADCL
+        // and ADCH until ADCH is read.  reading ADCL second would
+        // cause the results of each conversion to be discarded,
+        // as ADCL and ADCH would be locked when it completed.
+        byte low   = ADCL;
+        byte high  = ADCH;
+        u16  value = ((high << 8) | low);
+
+        return value;
+    }
+end
+
+#include "generic/adc.ceu"

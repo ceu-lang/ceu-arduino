@@ -2,8 +2,8 @@ native/pre do
     ##define CEU_FEATURES_ISR_SLEEP
 end
 
-#include "arduino/isr/adc.ceu"
 #include "arduino/isr/timer.ceu"
+#include "adc.ceu"
 
 _Serial.begin(9600);
 _Serial.println("=");

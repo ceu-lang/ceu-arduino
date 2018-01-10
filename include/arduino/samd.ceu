@@ -16,9 +16,8 @@ extern "C" {
 ##endif
 
 ##ifdef CEU_FEATURES_ISR_SLEEP
-##define ceu_pm_sleep ceu_samd_sleep
 ##include "LowPower.h"
-void ceu_samd_sleep (void) {
+void ceu_pm_sleep (void) {
     LowPower.idle(IDLE_2);
     //LowPower.standby();
 }

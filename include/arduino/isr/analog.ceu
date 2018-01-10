@@ -7,6 +7,7 @@
 output int  ADC_REQUEST;
 input  none ADC_DONE;
 
+var int? adc_channel_busy;      // current working channel
 var byte adc_pending = 0;       // bit vectors with requested pending channels
 
 data ADC_Channel with
@@ -21,40 +22,21 @@ do
     adc_channels = adc_channels .. [ ch, ch, ch, ch, ch, ch ];
 end
 
-#if ARDUINO_ARCH_SAMD
-var int? adc_channel_busy;
-#endif
-
 output (int pin) ADC_REQUEST do
     var int idx = (pin - _A0);
     _ceu_assert(idx>=0 and idx<ADC_N, "pin is out of range");
 
-    if
-#if ARDUINO_ARCH_AVR
-        {ADCSRA & _BV(ADSC)} as bool
-#elif ARDUINO_ARCH_SAMD
-        outer.adc_channel_busy?
-#else
-        #error "Unsupported Platform!"
-#endif
-    then
+    if outer.adc_channel_busy? then
         outer.adc_pending = outer.adc_pending | (1 << idx);
         escape;
     end
 
-#if ARDUINO_ARCH_AVR
-    // ok
-#elif ARDUINO_ARCH_SAMD
     outer.adc_channel_busy = idx;
-#else
-    #error "Unsupported Platform!"
-#endif
 
     {
 #if ARDUINO_ARCH_AVR
         // sets channel (low 3 bits)
         // this also sets ADLAR (left-adjust result) to 0 (the default).
-ceu_assert(@pin == idx, "bug found");
         ADMUX = 0x40 | (@pin & 0x07);
         bitSet(ADCSRA, ADIE);    // configures interrupt
         bitSet(ADCSRA, ADSC);    // starts the conversion
@@ -95,9 +77,10 @@ spawn async/isr [_ADC_IRQn,0] do
 #error "Unsupported Platform!"
 #endif
 
-#if ARDUINO_ARCH_AVR
+    var int idx = outer.adc_channel_busy!;
+    outer.adc_channel_busy = _;
 
-    var int idx = {ADMUX & 7};
+#if ARDUINO_ARCH_AVR
 
     {
         bitClear(ADCSRA, ADSC);
@@ -113,9 +96,6 @@ spawn async/isr [_ADC_IRQn,0] do
     var u16  value = ((high << 8) | low) as u16;
 
 #elif ARDUINO_ARCH_SAMD
-
-    var int idx = outer.adc_channel_busy!;
-    outer.adc_channel_busy = _;
 
     { ceu_assert(ADC->INTFLAG.bit.RESRDY == 1, "bug found"); }
     var u16 value = {ADC->RESULT.reg};
@@ -143,8 +123,8 @@ spawn async/isr [_ADC_IRQn,0] do
         var int i;
         loop i in [0 -> ADC_N[ do
             if (outer.adc_pending & mask) != 0 then
-                emit ADC_REQUEST(i);    // starts new conversion
-                escape;                 // prevents interrupt clear below
+                emit ADC_REQUEST(_A0+i);    // starts new conversion
+                escape;                     // prevents interrupt clear below
             end
             mask = mask << 1;
         end

@@ -9,8 +9,14 @@ output on/off PIN_13;
 
 loop do
     await 1s;
-    var int value = await Analog(_A0);
-    if value > 1000 then
+    var int v1 = _;
+    var int v2 = _;
+    par/and do
+        v1 = await Analog(_A0);
+    with
+        v2 = await Analog(_A1);
+    end
+    if v1+v2 > 2000 then
         emit PIN_13(on);
     else
         emit PIN_13(off);

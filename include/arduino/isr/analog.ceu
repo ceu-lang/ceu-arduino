@@ -2,12 +2,12 @@
 #include "arduino/avr.ceu"
 #include "arduino/arduino.ceu"
 
-#define N_ADC 6
+#define ADC_N 6
 
 output int  ADC_REQUEST;
 input  none ADC_DONE;
 
-var byte bit_vector = 0;
+var byte adc_pending = 0;       // bit vectors with requested pending channels
 
 data ADC_Channel with
     var bool is_available = false;
@@ -15,76 +15,159 @@ data ADC_Channel with
     var int  value;
 end
 
-var[6] ADC_Channel channels;
+var[ADC_N] ADC_Channel channels;
 do
     var ADC_Channel ch = val ADC_Channel(_,_,_);
     channels = channels .. [ ch, ch, ch, ch, ch, ch ];
 end
 
+#if ARDUINO_ARCH_SAMD
+var int? adc_channel_busy;
+#endif
+
 output (int pin) ADC_REQUEST do
-    if ({ADCSRA & _BV(ADSC)} as bool) then
-        outer.bit_vector = outer.bit_vector | ({0b1} << pin);
+    var int idx = (pin - _A0);
+    _ceu_assert(idx>=0 and idx<ADC_N, "pin is out of range");
+
+    if
+#if ARDUINO_ARCH_AVR
+        {ADCSRA & _BV(ADSC)} as bool
+#elif ARDUINO_ARCH_SAMD
+        outer.adc_channel_busy?
+#else
+        #error "Unsupported Platform!"
+#endif
+    then
+        outer.adc_pending = outer.adc_pending | (1 << idx);
         escape;
     end
 
+#if ARDUINO_ARCH_AVR
+    // ok
+#elif ARDUINO_ARCH_SAMD
+    outer.adc_channel_busy = idx;
+#else
+    #error "Unsupported Platform!"
+#endif
+
     {
+#if ARDUINO_ARCH_AVR
         // sets channel (low 3 bits)
         // this also sets ADLAR (left-adjust result) to 0 (the default).
+ceu_assert(@pin == idx, "bug found");
         ADMUX = 0x40 | (@pin & 0x07);
-
         bitSet(ADCSRA, ADIE);    // configures interrupt
         bitSet(ADCSRA, ADSC);    // starts the conversion
+#elif ARDUINO_ARCH_SAMD
+
+        /* from wiring_analog.c */
+        ceu_samd_pinPeripheral(@pin, PIO_ANALOG);
+
+        CEU_SAMD_WAIT(*ADC);
+        ADC->INPUTCTRL.bit.MUXPOS = g_APinDescription[@pin].ulADCChannelNumber; // Selection for the positive ADC input
+
+        CEU_SAMD_WAIT(*ADC);
+        ADC->CTRLA.bit.ENABLE = 0x01;               // Enable ADC
+
+        CEU_SAMD_WAIT(*ADC);
+        ADC->SWTRIG.bit.START = 1;                  // Start conversion
+        ADC->INTFLAG.reg = ADC_INTFLAG_RESRDY;      // Clear the Data Ready flag
+
+        CEU_SAMD_WAIT(*ADC);
+        NVIC_SetPriority(ADC_IRQn, 0);              //set priority of the interrupt
+        NVIC_EnableIRQ(ADC_IRQn);                   // enable ADC interrupts
+        ADC->INTENSET.reg |= ADC_INTENSET_RESRDY;   // enable ADC result ready interrupt
+
+        CEU_SAMD_WAIT(*ADC);
+        ADC->SWTRIG.bit.START = 1;                  // Start conversion again, since The first conversion after the reference is changed must not be used.
+
+#else
+    #error "Unsupported Platform!"
+#endif
     }
 end
 
+#if ARDUINO_ARCH_AVR
 spawn async/isr [_ADC_vect_num,0] do
-    var u8 channel = {ADMUX & 7};
+#elif ARDUINO_ARCH_SAMD
+spawn async/isr [_ADC_IRQn,0] do
+#else
+#error "Unsupported Platform!"
+#endif
 
-    outer.bit_vector = outer.bit_vector & (({0b00000001} << channel) ^ 0xFF);
+#if ARDUINO_ARCH_AVR
+
+    var int channel = {ADMUX & 7};
 
     {
         bitClear(ADCSRA, ADSC);
         bitClear(ADCSRA, ADIF);
         bitClear(ADCSRA, ADIE);
     }
-
     // we have to read ADCL first; doing so locks both ADCL
     // and ADCH until ADCH is read.  reading ADCL second would
     // cause the results of each conversion to be discarded,
     // as ADCL and ADCH would be locked when it completed.
-    var byte low  = {ADCL};
-    var byte high = {ADCH};
+    var byte low   = {ADCL};
+    var byte high  = {ADCH};
+    var u16  value = ((high << 8) | low) as u16;
 
-    outer.channels[channel].value = (high << 8) | low;
-    outer.channels[channel].is_available = true;
+#elif ARDUINO_ARCH_SAMD
+
+    var int idx = outer.adc_channel_busy!;
+    outer.adc_channel_busy = _;
+
+    { ceu_assert(ADC->INTFLAG.bit.RESRDY == 1, "bug found"); }
+    var u16 value = {ADC->RESULT.reg};
+    {
+        CEU_SAMD_WAIT(*ADC);
+
+        ADC->CTRLA.bit.ENABLE = 0x00;             // Disable ADC
+        CEU_SAMD_WAIT(*ADC);
+    }
+
+#else
+
+    #error "Unsupported Platform!"
+
+#endif
+
+    outer.channels[idx].value = value as int;
+    outer.channels[idx].is_available = true;
     emit ADC_DONE;
 
     // gets next conversion in queue
+    outer.adc_pending = outer.adc_pending & ((1 << idx) ^ 0xFF);
     do
         var byte mask = {0b00000001};
         var int i;
-        loop i in [0 -> N_ADC[ do
-            if (outer.bit_vector & mask) != 0 then
+        loop i in [0 -> ADC_N[ do
+            if (outer.adc_pending & mask) != 0 then
                 emit ADC_REQUEST(i);    // starts new conversion
                 escape;                 // prevents interrupt clear below
             end
             mask = mask << 1;
         end
+#if ARDUINO_ARCH_AVR
         {bitClear(ADCSRA, ADIE);}       // if none, clears the interrupt bit
+#endif
     end
 end
 
-code/await Analog (var int channel) -> int do
-    _ceu_assert(not outer.channels[channel].is_busy, "bug found");
+code/await Analog (var int pin) -> int do
+    var int idx = (pin - _A0);
+    _ceu_assert(idx>=0 and idx<ADC_N, "pin is out of range");
 
-    outer.channels[channel].is_busy = true;
+    _ceu_assert(not outer.channels[idx].is_busy, "bug found");
+
+    outer.channels[idx].is_busy = true;
     do finalize with
-        outer.channels[channel].is_busy = false;
+        outer.channels[idx].is_busy = false;
     end
 
-    emit ADC_REQUEST(channel);
-    await ADC_DONE until outer.channels[channel].is_available;
-    outer.channels[channel].is_available = false;
+    emit ADC_REQUEST(pin);
+    await ADC_DONE until outer.channels[idx].is_available;
+    outer.channels[idx].is_available = false;
 
-    escape outer.channels[channel].value;
+    escape outer.channels[idx].value;
 end

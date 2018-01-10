@@ -1,0 +1,18 @@
+native/pre do
+    ##define CEU_FEATURES_ISR_SLEEP
+end
+
+#include "arduino/isr/timer.ceu"
+#include "arduino/isr/analog.ceu"
+
+output on/off PIN_13;
+
+loop do
+    await 1s;
+    var int value = await Analog(_A4);
+    if value > 500 then
+        emit PIN_13(on);
+    else
+        emit PIN_13(off);
+    end
+end

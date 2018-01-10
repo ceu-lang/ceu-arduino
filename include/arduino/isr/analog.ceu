@@ -15,10 +15,10 @@ data ADC_Channel with
     var int  value;
 end
 
-var[ADC_N] ADC_Channel channels;
+var[ADC_N] ADC_Channel adc_channels;
 do
     var ADC_Channel ch = val ADC_Channel(_,_,_);
-    channels = channels .. [ ch, ch, ch, ch, ch, ch ];
+    adc_channels = adc_channels .. [ ch, ch, ch, ch, ch, ch ];
 end
 
 #if ARDUINO_ARCH_SAMD
@@ -97,7 +97,7 @@ spawn async/isr [_ADC_IRQn,0] do
 
 #if ARDUINO_ARCH_AVR
 
-    var int channel = {ADMUX & 7};
+    var int idx = {ADMUX & 7};
 
     {
         bitClear(ADCSRA, ADSC);
@@ -132,8 +132,8 @@ spawn async/isr [_ADC_IRQn,0] do
 
 #endif
 
-    outer.channels[idx].value = value as int;
-    outer.channels[idx].is_available = true;
+    outer.adc_channels[idx].value = value as int;
+    outer.adc_channels[idx].is_available = true;
     emit ADC_DONE;
 
     // gets next conversion in queue
@@ -158,16 +158,16 @@ code/await Analog (var int pin) -> int do
     var int idx = (pin - _A0);
     _ceu_assert(idx>=0 and idx<ADC_N, "pin is out of range");
 
-    _ceu_assert(not outer.channels[idx].is_busy, "bug found");
+    _ceu_assert(not outer.adc_channels[idx].is_busy, "bug found");
 
-    outer.channels[idx].is_busy = true;
+    outer.adc_channels[idx].is_busy = true;
     do finalize with
-        outer.channels[idx].is_busy = false;
+        outer.adc_channels[idx].is_busy = false;
     end
 
     emit ADC_REQUEST(pin);
-    await ADC_DONE until outer.channels[idx].is_available;
-    outer.channels[idx].is_available = false;
+    await ADC_DONE until outer.adc_channels[idx].is_available;
+    outer.adc_channels[idx].is_available = false;
 
-    escape outer.channels[idx].value;
+    escape outer.adc_channels[idx].value;
 end

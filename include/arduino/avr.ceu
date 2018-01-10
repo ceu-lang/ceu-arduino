@@ -1,10 +1,6 @@
 #ifndef _ARDUINO_AVR_CEU
 #define _ARDUINO_AVR_CEU
 
-native/pre do
-    ##include <avr/io.h>
-end
-
 native/const
     _ADC_vect_num,
     _TIMER1_COMPA_vect_num,
@@ -42,5 +38,21 @@ native
     _USBS0,
     _WGM12,
 ;
+
+native/pre do
+    ##include <avr/io.h>
+
+##ifdef CEU_FEATURES_ISR_SLEEP
+    ##define ceu_pm_sleep ceu_avr_sleep
+    ##include "LowPower.h"
+
+    void ceu_avr_sleep (void) {
+        LowPower.idle(SLEEP_FOREVER, ADC_ON, TIMER2_OFF, TIMER1_ON, TIMER0_OFF, SPI_OFF, USART0_OFF, TWI_OFF);
+        //LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
+        //LowPower.adcNoiseReduction(SLEEP_FOREVER, ADC_ON, TIMER2_OFF);
+    }
+##endif
+
+end
 
 #endif

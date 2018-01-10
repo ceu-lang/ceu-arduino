@@ -23,9 +23,6 @@
 
 #ifdef CEU_FEATURES_ISR
     #include "wiring_private.h"
-    #ifdef CEU_FEATURES_ISR_SLEEP
-        #include "LowPower.h"
-    #endif
 
     #ifndef _VECTOR_SIZE
         #ifdef ARDUINO_ARCH_AVR
@@ -198,17 +195,9 @@ pinMode(11, OUTPUT);
                 }
             }
 #ifdef CEU_FEATURES_ISR_SLEEP
-            //sleep_mode();
             if (!CEU_APP.async_pending) {
 digitalWrite(12,0);
-                #ifdef ARDUINO_ARCH_AVR
-                LowPower.idle(SLEEP_FOREVER, ADC_ON, TIMER2_OFF, TIMER1_ON, TIMER0_OFF, SPI_OFF, USART0_OFF, TWI_OFF);
-                //LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
-                //LowPower.adcNoiseReduction(SLEEP_FOREVER, ADC_ON, TIMER2_OFF);
-                #else
-                LowPower.idle(IDLE_2);
-                //LowPower.standby();
-                #endif
+                ceu_pm_sleep();
             }
 #endif
             interrupts();

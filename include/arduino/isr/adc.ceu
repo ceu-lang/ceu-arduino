@@ -1,6 +1,14 @@
 #include "c.ceu"
-#include "arduino/avr.ceu"
+
 #include "arduino/arduino.ceu"
+
+#if ARDUINO_ARCH_AVR
+    #include "arduino/avr.ceu"
+#elif ARDUINO_ARCH_SAMD
+    #include "arduino/samd.ceu"
+#else
+    #error "Unsupported Platform!"
+#endif
 
 #define ADC_N 6
 

@@ -38,7 +38,7 @@ output (int pin) ADC_REQUEST do
 
         // sets channel (low 3 bits)
         // this also sets ADLAR (left-adjust result) to 0 (the default).
-        ADMUX = 0x40 | (@pin & 0x07);
+        ADMUX = 0x40 | (@idx & 0x07);
         bitSet(ADCSRA, ADIE);    // configures interrupt
         bitSet(ADCSRA, ADSC);    // starts the conversion
 

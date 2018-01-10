@@ -12,7 +12,7 @@ loop do
     emit ADC_REQUEST(_A0);
     await ADC_DONE;
     var int value = adc_channels[_A0-_A0].value;
-    if value > 1000 then
+    if value > 500 then
         emit PIN_13(on);
     else
         emit PIN_13(off);

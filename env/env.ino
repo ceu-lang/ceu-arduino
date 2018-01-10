@@ -1,4 +1,10 @@
-#define CEU_STACK_MAX 500
+#if ARDUINO_ARCH_AVR
+    #define CEU_STACK_MAX  500
+#elif ARDUINO_ARCH_SAMD
+    #define CEU_STACK_MAX 1000
+#else
+    #error "Unsupported Platform!"
+#endif
 
 #define ceu_sys_assert(v,msg)                              \
     if (!(v)) {                                            \
@@ -17,21 +23,8 @@
 
 #ifdef CEU_FEATURES_ISR
     #include "wiring_private.h"
-    #ifdef ARDUINO_ARCH_AVR
-        #include <avr/interrupt.h>
-        #ifdef CEU_FEATURES_ISR_SLEEP
-            #include <avr/sleep.h>
-            #include <avr/power.h>
-        #endif
-/*
- * ... Thus, normally interrupts will remain disabled inside the handler until
- *     the handler exits, ...
- * <http://www.nongnu.org/avr-libc/user-manual/group__avr__interrupts.html>
- */
-    #elif ARDUINO_ARCH_SAMD
-        // OK
-    #else
-        #error "Unsupported Platform!"
+    #ifdef CEU_FEATURES_ISR_SLEEP
+        #include "LowPower.h"
     #endif
 
     #ifndef _VECTOR_SIZE
@@ -178,20 +171,9 @@ void setup () {
 #endif
 
 #ifdef CEU_FEATURES_ISR
-
     memset((void*)&isrs, 0, sizeof(isrs));
-
-#ifdef CEU_FEATURES_ISR_SLEEP
-    set_sleep_mode(SLEEP_MODE_IDLE);
-#if 0
-    set_sleep_mode(SLEEP_MODE_ADC);
-    set_sleep_mode(SLEEP_MODE_PWR_SAVE);
-    set_sleep_mode(SLEEP_MODE_STANDBY);
-    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-#endif
-    power_timer0_disable();     // disables "millis()" clock
-#endif
-
+pinMode(12, OUTPUT);
+pinMode(11, OUTPUT);
 #endif
 
     tceu_callback cb = { &ceu_callback_arduino, NULL };
@@ -211,8 +193,6 @@ void setup () {
                     evt = isr->evt;
                     isr->evt.id = CEU_INPUT__NONE;
                     interrupts();
-                    //pinMode(12, 1);
-                    //digitalWrite(12, !digitalRead(12));
                     ceu_input(evt.id, evt.params);
                     goto _CEU_ARDUINO_AWAKE_;
                 }
@@ -220,14 +200,21 @@ void setup () {
 #ifdef CEU_FEATURES_ISR_SLEEP
             //sleep_mode();
             if (!CEU_APP.async_pending) {
-                sleep_enable();
-                interrupts();
-                sleep_cpu();
-                sleep_disable();
+digitalWrite(12,0);
+                #ifdef ARDUINO_ARCH_AVR
+                LowPower.idle(SLEEP_FOREVER, ADC_ON, TIMER2_OFF, TIMER1_ON, TIMER0_OFF, SPI_OFF, USART0_OFF, TWI_OFF);
+                //LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
+                //LowPower.adcNoiseReduction(SLEEP_FOREVER, ADC_ON, TIMER2_OFF);
+                #else
+                LowPower.idle(IDLE_2);
+                //LowPower.standby();
+                #endif
             }
 #endif
             interrupts();
 _CEU_ARDUINO_AWAKE_:;
+digitalWrite(12,1);
+_DELAY(25);
         }
 
 #else // !CEU_FEATURES_ISR

@@ -35,11 +35,13 @@ output (int pin) ADC_REQUEST do
 
     {
 #if ARDUINO_ARCH_AVR
+
         // sets channel (low 3 bits)
         // this also sets ADLAR (left-adjust result) to 0 (the default).
         ADMUX = 0x40 | (@pin & 0x07);
         bitSet(ADCSRA, ADIE);    // configures interrupt
         bitSet(ADCSRA, ADSC);    // starts the conversion
+
 #elif ARDUINO_ARCH_SAMD
 
         /* from wiring_analog.c */
@@ -64,7 +66,9 @@ output (int pin) ADC_REQUEST do
         ADC->SWTRIG.bit.START = 1;                  // Start conversion again, since The first conversion after the reference is changed must not be used.
 
 #else
+
     #error "Unsupported Platform!"
+
 #endif
     }
 end
@@ -134,7 +138,7 @@ spawn async/isr [_ADC_IRQn,0] do
     end
 end
 
-code/await Analog (var int pin) -> int do
+code/await Adc (var int pin) -> int do
     var int idx = (pin - _A0);
     _ceu_assert(idx>=0 and idx<ADC_N, "pin is out of range");
 

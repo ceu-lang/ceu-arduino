@@ -1,7 +1,19 @@
-#define ADC_N 6
+///////////////////////////////////////////////////////////////////////////////
+// INTERFACE
+///////////////////////////////////////////////////////////////////////////////
 
-output int  ADC_REQUEST;
-input  none ADC_DONE;
+output on/off ADC;
+output int    ADC_REQUEST;
+input  none   ADC_DONE;
+
+code/await Adc (none) -> none;
+code/await Adc_Conversion (var int pin) -> int;
+
+///////////////////////////////////////////////////////////////////////////////
+// INITIALIZATION
+///////////////////////////////////////////////////////////////////////////////
+
+#define ADC_N 6
 
 var int? adc_channel_busy;      // current working channel
 var byte adc_pending = 0;       // bit vectors with requested pending channels
@@ -16,6 +28,16 @@ var[ADC_N] ADC_Channel adc_channels;
 do
     var ADC_Channel ch = val ADC_Channel(_,_,_);
     adc_channels = adc_channels .. [ ch, ch, ch, ch, ch, ch ];
+end
+
+{ ceu_adc_init(); }
+
+///////////////////////////////////////////////////////////////////////////////
+// INPUT / OUTPUT
+///////////////////////////////////////////////////////////////////////////////
+
+output (on/off v) ADC do
+    { ceu_adc(@v); }
 end
 
 output (int pin) ADC_REQUEST do
@@ -57,14 +79,28 @@ spawn async/isr [CEU_ADC_IRQ_N, 0] do
     end
 end
 
-code/await Adc (var int pin) -> int do
+///////////////////////////////////////////////////////////////////////////////
+// ABSTRACTIONS
+///////////////////////////////////////////////////////////////////////////////
+
+code/await Adc (none) -> NEVER do
+    emit ADC(on);
+    do finalize with
+        emit ADC(off);
+    end
+    await FOREVER;
+end
+
+code/await Adc_Conversion (var int pin) -> int do
     var int idx = (pin - _A0);
     _ceu_assert(idx>=0 and idx<ADC_N, "pin is out of range");
 
     _ceu_assert(not outer.adc_channels[idx].is_busy, "bug found");
 
+    {ceu_adc_pm(1);}
     outer.adc_channels[idx].is_busy = true;
     do finalize with
+        {ceu_adc_pm(0);}
         outer.adc_channels[idx].is_busy = false;
     end
 

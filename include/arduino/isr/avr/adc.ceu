@@ -3,6 +3,18 @@
 #define CEU_ADC_IRQ_N _ADC_vect_num
 
 native/pre do
+    void ceu_adc_pm (bool v) {
+        // ???
+    }
+
+    void ceu_adc_init (void) {
+        bitClear(ADCSRA, ADEN);  // "wiring.c" inits with "bitSet"
+    }
+
+    void ceu_adc (bool v) {
+        bitWrite(ADCSRA, ADEN, v);
+    }
+
     void ceu_adc_request (int pin) {
         // sets channel (low 3 bits)
         // this also sets ADLAR (left-adjust result) to 0 (the default).

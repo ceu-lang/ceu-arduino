@@ -196,14 +196,11 @@ pinMode(11, OUTPUT);
             }
 #ifdef CEU_FEATURES_ISR_SLEEP
             if (!CEU_APP.async_pending) {
-digitalWrite(12,0);
                 ceu_pm_sleep();
             }
 #endif
             interrupts();
 _CEU_ARDUINO_AWAKE_:;
-digitalWrite(12,1);
-_DELAY(25);
         }
 
 #else // !CEU_FEATURES_ISR

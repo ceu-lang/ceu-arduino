@@ -41,6 +41,7 @@ native/pos do
     }
 
     void ceu_timer_set (s32 us) {
+        ceu_pm_set(CEU_PM_TIMER1, (us!=CEU_WCLOCK_INACTIVE));
         if (us == CEU_WCLOCK_INACTIVE) {
             TIMSK1 = TIMSK1 & ~(1 << TOIE1);
         } else {

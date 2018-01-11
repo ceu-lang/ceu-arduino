@@ -97,10 +97,10 @@ code/await Adc_Conversion (var int pin) -> int do
 
     _ceu_assert(not outer.adc_channels[idx].is_busy, "bug found");
 
-    {ceu_adc_pm(1);}
+    {ceu_pm_set(CEU_PM_ADC, 1);}
     outer.adc_channels[idx].is_busy = true;
     do finalize with
-        {ceu_adc_pm(0);}
+        {ceu_pm_set(CEU_PM_ADC, 0);}
         outer.adc_channels[idx].is_busy = false;
     end
 

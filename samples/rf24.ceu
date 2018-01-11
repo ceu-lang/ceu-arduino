@@ -52,8 +52,6 @@
     role_e role = role_none;
     role_e newRole = role_none;
     
-    unsigned long timeLastMessage = 0;
-
     //
     // Print preamble
     //
@@ -91,89 +89,30 @@ spawn do
   end
 end
 
-// Keep checking the button
-spawn do
-    loop do
-        var int value = await Analog(0);
-        if value > SENSOR_THRESHOLD then
-            emit presence;
-        else
-            emit no_presence;
-        end
-    end
-end
-
+// LISTEN TO NEIGHBOURS
+{
+    radio.openReadingPipe(1,pipes[1]);
+    radio.startListening();
+}
 loop do
-    // We can do one of two things here:
-    // 1-Check the value variable
-    // Await two different events that will be emitted
-    // Based on the value of "value"
-    // Can we make one abort when the event comes
-    // and another one start?
-    par/and do
-        par/or do
-            // abort when PRESENCE
-            await presence;
-        with
-            // LISTEN TO NEIGHBOURS
-            {
-                timeLastMessage = millis();
-                radio.openReadingPipe(1,pipes[1]);
-                radio.startListening();
-            }
-            loop do
-                par/or do
-                    await RADIO_AVAILABLE;
-                    {
-                        bool done = false;
-                        while (!done)
-                        {
-                          uint8_t signal_id = 0;
-                          // Fetch the payload, and see if this was the last one.
-                          done = radio.read( &signal_id, sizeof(uint8_t) );
-                          // Delay just a little bit to let the other unit
-                          // make the transition to receiver
-                          delay(20);
-                        }
-                        analogWrite(LED_PIN,HALF_POWER);
-                    }
-                with
-                    await (SEND_INTERVAL * 2)ms;
-                    {analogWrite(LED_PIN,LOW);}
-                end
-            end 
-        end 
-    with
-        await presence;
-        // SEND TO NEIGHBOURS
+    par/or do
+        await RADIO_AVAILABLE;
         {
-            analogWrite(LED_PIN,FULL_POWER);
-            radio.openWritingPipe(pipes[1]);
-            //radio.openReadingPipe(1,pipes[0]);
-            radio.stopListening();
+            bool done = false;
+            while (!done)
+            {
+              uint8_t signal_id = 0;
+              // Fetch the payload, and see if this was the last one.
+              done = radio.read( &signal_id, sizeof(uint8_t) );
+              // Delay just a little bit to let the other unit
+              // make the transition to receiver
+              delay(20);
+            }
+            analogWrite(LED_PIN,HALF_POWER);
         }
-        par/or do
-            // If doesnt receive presence in an interval of time then abort?
-            // Alternative would be to have a different event for lack of presence?
-            //loop do
-            //    par/or do
-            //        await SEND_INTERVAL ms;
-            //    with
-            //        await presence;
-            //    end
-            //end
-            await no_presence;
-            {analogWrite(LED_PIN,LOW);}
-        with
-            loop do
-                var u8 radio_id = RADIO_ID;
-                {
-                    radio.write( &@radio_id, sizeof(uint8_t) );
-                    //delay(SEND_INTERVAL);
-                }
-                await SEND_INTERVAL ms;
-            end
-        end
+    with
+        await (SEND_INTERVAL * 2)ms;
+        {analogWrite(LED_PIN,LOW);}
     end
-end
+end 
 

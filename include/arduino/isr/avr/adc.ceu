@@ -3,10 +3,6 @@
 #define CEU_ADC_IRQ_N _ADC_vect_num
 
 native/pre do
-    void ceu_adc_pm (bool v) {
-        // ???
-    }
-
     void ceu_adc_init (void) {
         bitClear(ADCSRA, ADEN);  // "wiring.c" inits with "bitSet"
     }
@@ -24,19 +20,9 @@ native/pre do
     }
 
     u16 ceu_adc_done (void) {
-        bitClear(ADCSRA, ADSC);
-        bitClear(ADCSRA, ADIF);
+        ceu_assert(bitRead(ADCSRA,ADSC) == 0, "bug found");
         bitClear(ADCSRA, ADIE);
-
-        // we have to read ADCL first; doing so locks both ADCL
-        // and ADCH until ADCH is read.  reading ADCL second would
-        // cause the results of each conversion to be discarded,
-        // as ADCL and ADCH would be locked when it completed.
-        byte low   = ADCL;
-        byte high  = ADCH;
-        u16  value = ((high << 8) | low);
-
-        return value;
+        return ADC;
     }
 end
 

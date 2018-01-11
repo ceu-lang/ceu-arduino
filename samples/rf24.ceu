@@ -123,20 +123,20 @@ loop do
             }
             loop do
                 par/or do
-                await RADIO_AVAILABLE;
-                {
-                    bool done = false;
-                    while (!done)
+                    await RADIO_AVAILABLE;
                     {
-                      uint8_t signal_id = 0;
-                      // Fetch the payload, and see if this was the last one.
-                      done = radio.read( &signal_id, sizeof(uint8_t) );
-                      // Delay just a little bit to let the other unit
-                      // make the transition to receiver
-                      delay(20);
+                        bool done = false;
+                        while (!done)
+                        {
+                          uint8_t signal_id = 0;
+                          // Fetch the payload, and see if this was the last one.
+                          done = radio.read( &signal_id, sizeof(uint8_t) );
+                          // Delay just a little bit to let the other unit
+                          // make the transition to receiver
+                          delay(20);
+                        }
+                        analogWrite(LED_PIN,HALF_POWER);
                     }
-                    analogWrite(LED_PIN,HALF_POWER);
-                }
                 with
                     await (SEND_INTERVAL * 2)ms;
                     {analogWrite(LED_PIN,LOW);}

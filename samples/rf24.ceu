@@ -110,7 +110,7 @@ loop do
     // Based on the value of "value"
     // Can we make one abort when the event comes
     // and another one start?
-    par do
+    par/and do
         par/or do
             // abort when PRESENCE
             await presence;
@@ -163,6 +163,7 @@ loop do
             //    end
             //end
             await no_presence;
+            {analogWrite(LED_PIN,LOW);}
         with
             loop do
                 var u8 radio_id = RADIO_ID;

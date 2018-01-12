@@ -2,6 +2,8 @@
 
 #define CEU_ADC_IRQ_N _ADC_vect_num
 
+#include "../adc.ceu"
+
 native/pre do
     void ceu_adc_init (void) {
         bitClear(ADCSRA, ADEN);  // "wiring.c" inits with "bitSet"
@@ -25,5 +27,3 @@ native/pre do
         return ADC;
     }
 end
-
-#include "../adc.ceu"

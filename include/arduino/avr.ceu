@@ -43,9 +43,6 @@ native/pre do
     ##include <avr/io.h>
 
 ##ifdef CEU_FEATURES_ISR_SLEEP
-    ##define CEU_PM_STATE(peripheral) bitRead(ceu_pm_state, peripheral)
-    static u8 ceu_pm_state = 0;
-
     enum {
         CEU_PM_ADC = 0,
         CEU_PM_EXT,
@@ -80,10 +77,6 @@ digitalWrite(11,0);
         {
             LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
         }
-    }
-
-    void ceu_pm_set (u8 peripheral, bool state) {
-        bitWrite(ceu_pm_state, peripheral, state);
     }
 ##endif
 

@@ -16,9 +16,6 @@ extern "C" {
 ##endif
 
 ##ifdef CEU_FEATURES_ISR_SLEEP
-    ##define CEU_PM_STATE(peripheral) bitRead(ceu_pm_state, peripheral)
-    static u8 ceu_pm_state = 0;
-
     enum {
         CEU_PM_ADC = 0,
         CEU_PM_EXT,
@@ -26,14 +23,10 @@ extern "C" {
         CEU_PM_N,
     };
 
-##include "LowPower.h"
-void ceu_pm_sleep (void) {
-    //LowPower.idle(IDLE_2);
-    //LowPower.standby();
-}
-
-    void ceu_pm_set (u8 peripheral, bool state) {
-        bitWrite(ceu_pm_state, peripheral, state);
+    ##include "LowPower.h"
+    void ceu_pm_sleep (void) {
+        //LowPower.idle(IDLE_2);
+        //LowPower.standby();
     }
 ##endif
 

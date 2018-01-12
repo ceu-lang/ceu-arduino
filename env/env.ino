@@ -6,11 +6,6 @@
     #error "Unsupported Platform!"
 #endif
 
-#define ceu_sys_assert(v,msg)                              \
-    if (!(v)) {                                            \
-        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL, CEU_TRACE_null); \
-    }
-
 #define _DELAY(ms)                      \
     {                                   \
         int i;                          \
@@ -18,6 +13,13 @@
             delayMicroseconds(1000);    \
         }                               \
     }
+
+// TODO: w/ this comment, all programs will allocate `ceu_pm_state`
+// how to pass to arduino command line an additional definition?
+//#ifdef CEU_FEATURES_ISR_SLEEP
+#include "types.h"
+#include "pm.c.h"
+//#endif
 
 #include "_ceu_app.c.h"
 
@@ -36,6 +38,9 @@
 
     static tceu_isr isrs[_VECTOR_SIZE];
     #include "isrs.c.h"
+    #ifdef CEU_FEATURES_ISR_SLEEP
+        //#include "pm.c.h"
+    #endif
 #else
     #ifdef CEU_FEATURES_ISR_SLEEP
         #error "Invalid option!"
@@ -217,7 +222,7 @@ _CEU_ARDUINO_AWAKE_:;
 #endif
     }
     ceu_stop();
-    ceu_sys_assert(0, "bug found");
+    ceu_assert_ex(0, "bug found", CEU_TRACE_null);
     while (1);
 }
 

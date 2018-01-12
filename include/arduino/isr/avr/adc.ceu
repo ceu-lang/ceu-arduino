@@ -26,4 +26,4 @@ native/pre do
     }
 end
 
-#include "generic/adc.ceu"
+#include "../adc.ceu"

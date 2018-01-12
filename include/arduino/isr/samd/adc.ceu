@@ -3,6 +3,16 @@
 #define CEU_ADC_IRQ_N _ADC_IRQn
 
 native/pre do
+    void ceu_adc_init (void) {
+        // TODO
+        //bitClear(ADCSRA, ADEN);  // "wiring.c" inits with "bitSet"
+    }
+
+    void ceu_adc (bool v) {
+        // TODO
+        //bitWrite(ADCSRA, ADEN, v);
+    }
+
     void ceu_adc_request (int pin) {
         /* from wiring_analog.c */
         ceu_samd_pinPeripheral(pin, PIO_ANALOG);
@@ -36,4 +46,4 @@ native/pre do
     }
 end
 
-#include "generic/adc.ceu"
+#include "../adc.ceu"

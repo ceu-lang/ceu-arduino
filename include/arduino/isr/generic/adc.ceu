@@ -100,7 +100,9 @@ code/await Adc_Conversion (var int pin) -> int do
     {ceu_pm_set(CEU_PM_ADC, 1);}
     outer.adc_channels[idx].is_busy = true;
     do finalize with
-        {ceu_pm_set(CEU_PM_ADC, 0);}
+        if outer.adc_pending == 0 then
+            {ceu_pm_set(CEU_PM_ADC, 0);}
+        end
         outer.adc_channels[idx].is_busy = false;
     end
 

@@ -29,6 +29,7 @@ native/const
 native
     _bitClear,
     _analogRead,
+    _analogWrite,
     _delay,
     _delayMicroseconds,
     _digitalPinToInterrupt,

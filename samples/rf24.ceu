@@ -31,49 +31,36 @@
     
     RF24 radio(9,10);
     
-    //
-    // Topology
-    //
-    
     // Radio pipe addresses for the nodes to communicate.
     const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xE8E8F0F0E1LL };
-    
-    //
-    // Role management
-    //
-    // Set up role.  This sketch uses the same software for all the nodes
-    // in this system.  Doing so greatly simplifies testing.  
-    //
-    
-    // The various roles supported by this sketch
-    typedef enum { role_speak = 1, role_listen, role_none } role_e;
-    
-    // The role of the current running sketch
-    role_e role = role_none;
-    role_e newRole = role_none;
 end
+
+native  _radio,
+        _uint8_t,
+        _pipes;
 
 #define SENSOR_THRESHOLD 500
 #define SEND_INTERVAL 100
 
-input none RADIO_AVAILABLE;
+input byte RADIO_AVAILABLE;
 event none presence;
 event none no_presence;
 
-    _pinMode(A0,INPUT);
-    _pinMode(LED_PIN,OUTPUT);
-{
-    radio.begin();
-}
+_pinMode(A0,INPUT);
+_pinMode(LED_PIN,OUTPUT);
+
 // Generate the event detector
 spawn do
-  loop do
-    await async do
-      if {radio.available()} as bool then
-        emit RADIO_AVAILABLE;
-      end
+    _radio.begin();
+    loop do
+        await async do
+            if _radio.available() as bool then
+                var byte signal_id = 0;
+                {radio.read( &@signal_id, sizeof(uint8_t) );}
+                emit RADIO_AVAILABLE(signal_id);
+            end
+        end
     end
-  end
 end
 
 // Keep checking the button
@@ -95,41 +82,31 @@ loop do
             await presence;
         with
             // LISTEN TO NEIGHBOURS
-            {
-                radio.openReadingPipe(1,pipes[1]);
-                radio.startListening();
-            }
+            _radio.openReadingPipe(1,_pipes[1]);
+            _radio.startListening();
             loop do
                 par/or do
                     await RADIO_AVAILABLE;
-                    {
-                        uint8_t signal_id = 0;
-                        radio.read( &signal_id, sizeof(uint8_t) );
-                        analogWrite(LED_PIN,HALF_POWER);
-                    }
+                    _analogWrite(LED_PIN,HALF_POWER);
                 with
                     await (SEND_INTERVAL * 2)ms;
-                    {analogWrite(LED_PIN,LOW);}
+                    _analogWrite(LED_PIN,LOW);
                 end
             end 
         end 
     with
         await presence;
         // SEND TO NEIGHBOURS
-        {
-            analogWrite(LED_PIN,FULL_POWER);
-            radio.openWritingPipe(pipes[1]);
-            radio.stopListening();
-        }
+        _analogWrite(LED_PIN,FULL_POWER);
+        _radio.openWritingPipe(_pipes[1]);
+        _radio.stopListening();
         par/or do
             await no_presence;
-            {analogWrite(LED_PIN,LOW);}
+            _analogWrite(LED_PIN,LOW);
         with
             loop do
                 var u8 radio_id = RADIO_ID;
-                {
-                    radio.write( &@radio_id, sizeof(uint8_t) );
-                }
+                {radio.write( &@radio_id, sizeof(uint8_t) );}
                 await SEND_INTERVAL ms;
             end
         end

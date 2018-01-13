@@ -1,8 +1,4 @@
-native/pre do
-    //##define CEU_FEATURES_ISR_SLEEP
-end
-
-#include "arduino/isr/timer.ceu"
+#include "timer.ceu"
 
 output bool PIN_13;
 

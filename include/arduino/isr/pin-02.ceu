@@ -1,3 +1,5 @@
+#include "arduino/arduino.ceu"
+
 input bool PIN_02;
 
 spawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do

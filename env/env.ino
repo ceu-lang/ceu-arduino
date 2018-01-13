@@ -14,6 +14,14 @@
         }                               \
     }
 
+// Set SLEEP always.
+// Currently, if ISR is set, but not ISR_SLEEP, the timer will not work well
+// because `ceu_timer_request` is called every tick and intermediary ticks are
+// lost due to prescaling.
+//#ifdef CEU_FEATURES_ISR
+#define CEU_FEATURES_ISR_SLEEP
+//#endif
+
 // TODO: w/ this comment, all programs will allocate `ceu_pm_state`
 // how to pass to arduino command line an additional definition?
 //#ifdef CEU_FEATURES_ISR_SLEEP
@@ -174,8 +182,6 @@ void setup () {
 
 #ifdef CEU_FEATURES_ISR
     memset((void*)&isrs, 0, sizeof(isrs));
-pinMode(12, OUTPUT);
-pinMode(11, OUTPUT);
 #endif
 
     tceu_callback cb = { &ceu_callback_arduino, NULL };

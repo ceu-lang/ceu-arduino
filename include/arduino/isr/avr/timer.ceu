@@ -15,19 +15,26 @@ native/pos do
     }
 
     void ceu_timer_request (s32 us) {
+##ifdef CEU_FEATURES_ISR_SLEEP
         ceu_pm_set(CEU_PM_TIMER1, (us!=CEU_WCLOCK_INACTIVE));
+##endif
         if (us == CEU_WCLOCK_INACTIVE) {
-            TIMSK1 = TIMSK1 & ~(1 << TOIE1);
+            bitClear(TIMSK1, TOIE1);
         } else {
-            s32 v = CEU_TIMER_US_TO_OVERFLOW(us);
+            u16 passed = TCNT1 - ceu_timer_old;
+            s32 v = CEU_TIMER_US_TO_OVERFLOW(us) + passed;
             ceu_assert(v > 0, "bug found");
             TCNT1 = v;
             ceu_timer_old = v;
-            TIMSK1 = TIMSK1 | (1 << TOIE1);
+            bitSet(TIMSK1, TOIE1);
         }
     }
 
-    s32 ceu_timer_done (void) {
+    void ceu_timer_done (void) {
+        // ok
+    }
+
+    s32 ceu_timer_dt (void) {
         u16 now = TCNT1;
         s32 dt  = (u16)(now - ceu_timer_old);
         ceu_timer_old = now;

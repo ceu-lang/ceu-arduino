@@ -45,13 +45,13 @@ native/pre do
 ##ifdef CEU_FEATURES_ISR_SLEEP
     enum {
         CEU_PM_ADC = 0,
-        CEU_PM_EXT,
         CEU_PM_TIMER1,
         CEU_PM_N,
     };
 
     ##include "LowPower.h"
-    void ceu_pm_sleep (void) {
+    void ceu_pm_sleep (void)
+    {
         if (CEU_PM_STATE(CEU_PM_TIMER1))
         {
             LowPower.idle(SLEEP_FOREVER,
@@ -59,19 +59,13 @@ native/pre do
                           TIMER2_OFF,
                           CEU_PM_STATE(CEU_PM_TIMER1),
                           TIMER0_OFF, SPI_OFF, USART0_OFF, TWI_OFF);
-digitalWrite(12,1);
-_DELAY(25);
-digitalWrite(12,0);
         }
         else if (CEU_PM_STATE(CEU_PM_ADC))
         {
-ceu_assert(0,"");
+ceu_assert(0, "never entered this mode before");
             LowPower.adcNoiseReduction(SLEEP_FOREVER,
                                        CEU_PM_STATE(CEU_PM_ADC),
                                        TIMER2_OFF);
-digitalWrite(11,1);
-_DELAY(25);
-digitalWrite(11,0);
         }
         else
         {

@@ -52,6 +52,7 @@ _pinMode(LED_PIN,OUTPUT);
 // Generate the event detector
 spawn do
     _radio.begin();
+    _radio.setPayloadSize(1);
     loop do
         await async do
             if _radio.available() as bool then

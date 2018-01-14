@@ -30,7 +30,7 @@ end
 
 #define CEU_TIMER_US_TO_INCS(us)     ((s32)(((double)(us))*F_CPU/CEU_TIMER_PRESCALER/1000000L))
 #define CEU_TIMER_US_TO_OVERFLOW(us) (65536 - CEU_TIMER_US_TO_INCS(us) - 1) // -1: sleep one more tick to compensate math rounds
-#define CEU_TIMER_INCS_TO_US(incs)   ((s32)(((double)(incs))*1000000L*CEU_TIMER_PRESCALER/F_CPU))
+#define CEU_TIMER_INCS_TO_US(incs)   ((s32)(((double)(incs))*1000000L*CEU_TIMER_PRESCALER/F_CPU)+1) // +1: add one more us to compensate math round
 
 native/pos do
     static int ceu_callback_timer (int cmd, tceu_callback_val p1, tceu_callback_val p2)
@@ -58,6 +58,8 @@ end
 // INPUT / OUTPUT
 ///////////////////////////////////////////////////////////////////////////////
 
+input none CEU_TIMER;
 spawn async/isr [CEU_TIMER_IRQ_N, 0] do
     {ceu_timer_done();}
+    emit CEU_TIMER;         // dummy emit to trigger `ceu_input` in env.ino
 end

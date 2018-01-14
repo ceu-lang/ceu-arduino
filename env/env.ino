@@ -193,7 +193,6 @@ void setup () {
     while (!CEU_APP.end_ok)
     {
 #ifdef CEU_FEATURES_ISR
-        ceu_input(CEU_INPUT__ASYNC, NULL);
         {
             tceu_evt_id_params evt;
             int i;
@@ -213,7 +212,11 @@ void setup () {
             if (!CEU_APP.async_pending) {
                 ceu_pm_sleep();
             }
+            else
 #endif
+            {
+                ceu_input(CEU_INPUT__ASYNC, NULL);
+            }
 _CEU_ARDUINO_AWAKE_:;
         }
 

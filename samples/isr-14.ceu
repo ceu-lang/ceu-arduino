@@ -3,8 +3,8 @@
 output bool PIN_13;
 
 loop do
-    await 500ms;
+    await 2s;
     emit PIN_13(on);
-    await 500ms;
+    await 2s;
     emit PIN_13(off);
 end

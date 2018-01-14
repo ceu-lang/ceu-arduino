@@ -185,6 +185,9 @@ void setup () {
 #endif
 
     tceu_callback cb = { &ceu_callback_arduino, NULL };
+#ifdef CEU_FEATURES_ISR_SLEEP
+    ceu_pm_init();
+#endif
     ceu_start(&cb, 0, NULL);
 
     while (!CEU_APP.end_ok)
@@ -205,12 +208,12 @@ void setup () {
                     goto _CEU_ARDUINO_AWAKE_;
                 }
             }
+            interrupts();
 #ifdef CEU_FEATURES_ISR_SLEEP
             if (!CEU_APP.async_pending) {
                 ceu_pm_sleep();
             }
 #endif
-            interrupts();
 _CEU_ARDUINO_AWAKE_:;
         }
 

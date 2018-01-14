@@ -41,6 +41,7 @@ native
 
 native/pre do
     ##include <avr/io.h>
+    ##include "LowPower.h"
 
 ##ifdef CEU_FEATURES_ISR_SLEEP
     enum {
@@ -49,7 +50,10 @@ native/pre do
         CEU_PM_N,
     };
 
-    ##include "LowPower.h"
+    void ceu_pm_init (void) {
+        // ok
+    }
+
     void ceu_pm_sleep (void)
     {
         if (CEU_PM_STATE(CEU_PM_TIMER1))

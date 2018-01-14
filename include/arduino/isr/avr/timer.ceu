@@ -23,9 +23,9 @@ native/pos do
         } else {
             u16 passed = TCNT1 - ceu_timer_old;
             s32 v = CEU_TIMER_US_TO_OVERFLOW(us) + passed;
-            ceu_assert(v > 0, "bug found");
+            ceu_assert(v>0 && v<65536, "bug found");
             TCNT1 = v;
-            ceu_timer_old = v;
+            ceu_timer_old = (v - passed);
             bitSet(TIMSK1, TOIE1);
         }
     }

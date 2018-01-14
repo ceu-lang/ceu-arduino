@@ -29,7 +29,7 @@ end
 ///////////////////////////////////////////////////////////////////////////////
 
 #define CEU_TIMER_US_TO_INCS(us)     ((s32)(((double)(us))*F_CPU/CEU_TIMER_PRESCALER/1000000L))
-#define CEU_TIMER_US_TO_OVERFLOW(us) (65536 - CEU_TIMER_US_TO_INCS(us) - 1)
+#define CEU_TIMER_US_TO_OVERFLOW(us) (65536 - CEU_TIMER_US_TO_INCS(us) - 1) // -1: sleep one more tick to compensate math rounds
 #define CEU_TIMER_INCS_TO_US(incs)   ((s32)(((double)(incs))*1000000L*CEU_TIMER_PRESCALER/F_CPU))
 
 native/pos do

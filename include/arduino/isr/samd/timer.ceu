@@ -50,14 +50,15 @@ native/pos do
         if (us == CEU_WCLOCK_INACTIVE) {
             REG_TC4_CTRLBSET |= TCC_CTRLBSET_CMD_STOP;
         } else {
-            u16 passed = REG_TC4_COUNT16_COUNT - ceu_timer_old;
-            s32 v = CEU_TIMER_US_TO_OVERFLOW(us) + passed;
+            // if was inactive, no time elapsed since previous `ceu_timer_dt`
+            u16 elapsed = (ceu_timer_is_active) ? (REG_TC4_COUNT16_COUNT - ceu_timer_old) : 0;
+            s32 v = CEU_TIMER_US_TO_OVERFLOW(us) + elapsed;
             if (v < 128) {  // since 16-bit counter can count ~1s, needs to overflow many times
                 v = 128;    // 128 >>> "overflow + incs-before-request"
             }
             ceu_assert(v<65536, "bug found");
             REG_TC4_COUNT16_COUNT = v;
-            ceu_timer_old = (v - passed);
+            ceu_timer_old = (v - elapsed);
             REG_TC4_CTRLBSET |= TCC_CTRLBSET_CMD_RETRIGGER;
         }
     }

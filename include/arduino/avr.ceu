@@ -1,10 +1,6 @@
 #ifndef _ARDUINO_AVR_CEU
 #define _ARDUINO_AVR_CEU
 
-native/pre do
-    ##include <avr/io.h>
-end
-
 native/const
     _ADC_vect_num,
     _TIMER1_COMPA_vect_num,
@@ -42,5 +38,46 @@ native
     _USBS0,
     _WGM12,
 ;
+
+native/pre do
+    ##include <avr/io.h>
+    ##include "LowPower.h"
+
+##ifdef CEU_FEATURES_ISR_SLEEP
+    enum {
+        CEU_PM_ADC = 0,
+        CEU_PM_TIMER1,
+        CEU_PM_N,
+    };
+
+    void ceu_pm_init (void) {
+        // ok
+    }
+
+    void ceu_pm_sleep (void)
+    {
+        if (CEU_PM_STATE(CEU_PM_TIMER1))
+        {
+            LowPower.idle(SLEEP_FOREVER,
+                          CEU_PM_STATE(CEU_PM_ADC),
+                          TIMER2_OFF,
+                          CEU_PM_STATE(CEU_PM_TIMER1),
+                          TIMER0_OFF, SPI_OFF, USART0_OFF, TWI_OFF);
+        }
+        else if (CEU_PM_STATE(CEU_PM_ADC))
+        {
+ceu_assert(0, "never entered this mode before");
+            LowPower.adcNoiseReduction(SLEEP_FOREVER,
+                                       CEU_PM_STATE(CEU_PM_ADC),
+                                       TIMER2_OFF);
+        }
+        else
+        {
+            LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
+        }
+    }
+##endif
+
+end
 
 #endif

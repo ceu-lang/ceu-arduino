@@ -1,0 +1,18 @@
+#include "timer.ceu"
+#include "pin-02.ceu"
+
+output on/off PIN_13;
+
+loop do
+    par/or do
+        loop do
+            await 1s;
+            emit PIN_13(on);
+            await 1s;
+            emit PIN_13(off);
+        end
+    with
+        await PIN_02;
+    end
+    await 4s;
+end

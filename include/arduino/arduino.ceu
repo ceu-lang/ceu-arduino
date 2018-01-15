@@ -1,21 +1,8 @@
 #ifndef _ARDUINO_CEU
 #define _ARDUINO_CEU
 
-#define INPUT   _INPUT
-#define OUTPUT  _OUTPUT
-#define HIGH    true
-#define LOW     false
-#define A0      _A0
-#define A1      _A1
-#define A2      _A2
-#define A3      _A3
-#define A5      _A5
-#define A6      _A6
-#define A7      _A7
-#define HEX     _HEX
-
 native/const
-    _A0, _A1, _A2, _A3, _A5, _A6, _A7,
+    _A0, _A1, _A2, _A3, _A4, _A5, _A6, _A7,
     _CHANGE,
     _DEFAULT,
     _HIGH,

@@ -1,6 +1,5 @@
-// DOES NOT WORK
 native/pre do
-    ##define CEU_FEATURES_ISR_SLEEP
+    //##define CEU_FEATURES_ISR_SLEEP
 end
 
 #include "arduino/isr/spi.ceu"
@@ -12,26 +11,15 @@ output on/off PIN_08;
 _Serial.begin(9600);
 _Serial.println("=");
 
-emit SPI_BEGIN;
-    loop do
-        var u8 b = _;
-        do
-            emit PIN_08(off);
-            emit PIN_09(off);
-            await(50)ms;
-            emit PIN_09(on);
-	    watching SPI_Transaction(1400000, _MSBFIRST, _SPI_MODE0) do
-    		emit SPI_TRANSFER_REQUEST(_);
-		await SPI_TRANSFER_DONE;
-	    end
+watching SPI_Begin() do
+    var u8 b;
+    loop b do
+        emit PIN_08(off);
+        await 50ms;         // TODO
+        watching SPI_Transaction(1400000, SPI_MSBFIRST, SPI_MODE0) do
+            await SPI_Transfer(~b);
         end
-        do
-	    watching SPI_Transaction(1400000, _MSBFIRST, _SPI_MODE0) do
-    		emit SPI_TRANSFER_REQUEST(~b);
-		await SPI_TRANSFER_DONE;
-            end
-            emit PIN_08(on);
-            await(50)ms;
-        end
+        emit PIN_08(on);
+        await (50)ms;       // TODO
     end
-emit SPI_END;
+end

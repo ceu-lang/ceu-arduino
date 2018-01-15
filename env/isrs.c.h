@@ -60,3 +60,21 @@ void TC3_Handler()
     }
 }
 #endif
+
+#ifdef CEU_ISR__TC4_IRQn
+void TC4_Handler()
+{
+    if (isrs[TC4_IRQn].fun != NULL) {
+        isrs[TC4_IRQn].fun(isrs[TC4_IRQn].mem);
+    }
+}
+#endif
+
+#ifdef CEU_ISR__ADC_IRQn
+void ADC_Handler (void)
+{
+    if (isrs[ADC_IRQn].fun != NULL) {
+        isrs[ADC_IRQn].fun(isrs[ADC_IRQn].mem);
+    }
+}
+#endif

@@ -1,28 +1,38 @@
-#define CEU_STACK_MAX 500
+#if ARDUINO_ARCH_AVR
+    #define CEU_STACK_MAX  500
+#elif ARDUINO_ARCH_SAMD
+    #define CEU_STACK_MAX 1000
+#else
+    #error "Unsupported Platform!"
+#endif
 
-#define ceu_sys_assert(v,msg)                              \
-    if (!(v)) {                                            \
-        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL, CEU_TRACE_null); \
+#define _DELAY(ms)                      \
+    {                                   \
+        int i;                          \
+        for (i=0; i<ms; i++) {          \
+            delayMicroseconds(1000);    \
+        }                               \
     }
+
+// Set SLEEP always.
+// Currently, if ISR is set, but not ISR_SLEEP, the timer will not work well
+// because `ceu_timer_request` is called every tick and intermediary ticks are
+// lost due to prescaling.
+//#ifdef CEU_FEATURES_ISR
+#define CEU_FEATURES_ISR_SLEEP
+//#endif
+
+// TODO: w/ this comment, all programs will allocate `ceu_pm_state`
+// how to pass to arduino command line an additional definition?
+//#ifdef CEU_FEATURES_ISR_SLEEP
+#include "types.h"
+#include "pm.c.h"
+//#endif
 
 #include "_ceu_app.c.h"
 
 #ifdef CEU_FEATURES_ISR
     #include "wiring_private.h"
-    #ifdef ARDUINO_ARCH_AVR
-        #include <avr/interrupt.h>
-        #ifdef CEU_FEATURES_ISR_SLEEP
-            #include <avr/sleep.h>
-            #include <avr/power.h>
-        #endif
-/*
- * ... Thus, normally interrupts will remain disabled inside the handler until
- *     the handler exits, ...
- * <http://www.nongnu.org/avr-libc/user-manual/group__avr__interrupts.html>
- */
-    #else
-        #error "Unsupported Platform!"
-    #endif
 
     #ifndef _VECTOR_SIZE
         #ifdef ARDUINO_ARCH_AVR
@@ -36,6 +46,9 @@
 
     static tceu_isr isrs[_VECTOR_SIZE];
     #include "isrs.c.h"
+    #ifdef CEU_FEATURES_ISR_SLEEP
+        //#include "pm.c.h"
+    #endif
 #else
     #ifdef CEU_FEATURES_ISR_SLEEP
         #error "Invalid option!"
@@ -168,29 +181,18 @@ void setup () {
 #endif
 
 #ifdef CEU_FEATURES_ISR
-
     memset((void*)&isrs, 0, sizeof(isrs));
-
-#ifdef CEU_FEATURES_ISR_SLEEP
-    set_sleep_mode(SLEEP_MODE_IDLE);
-#if 0
-    set_sleep_mode(SLEEP_MODE_ADC);
-    set_sleep_mode(SLEEP_MODE_PWR_SAVE);
-    set_sleep_mode(SLEEP_MODE_STANDBY);
-    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-#endif
-    power_timer0_disable();     // disables "millis()" clock
-#endif
-
 #endif
 
     tceu_callback cb = { &ceu_callback_arduino, NULL };
+#ifdef CEU_FEATURES_ISR_SLEEP
+    ceu_pm_init();
+#endif
     ceu_start(&cb, 0, NULL);
 
     while (!CEU_APP.end_ok)
     {
 #ifdef CEU_FEATURES_ISR
-        ceu_input(CEU_INPUT__ASYNC, NULL);
         {
             tceu_evt_id_params evt;
             int i;
@@ -201,22 +203,20 @@ void setup () {
                     evt = isr->evt;
                     isr->evt.id = CEU_INPUT__NONE;
                     interrupts();
-                    //pinMode(12, 1);
-                    //digitalWrite(12, !digitalRead(12));
                     ceu_input(evt.id, evt.params);
                     goto _CEU_ARDUINO_AWAKE_;
                 }
             }
-#ifdef CEU_FEATURES_ISR_SLEEP
-            //sleep_mode();
-            if (!CEU_APP.async_pending) {
-                sleep_enable();
-                interrupts();
-                sleep_cpu();
-                sleep_disable();
-            }
-#endif
             interrupts();
+#ifdef CEU_FEATURES_ISR_SLEEP
+            if (!CEU_APP.async_pending) {
+                ceu_pm_sleep();
+            }
+            else
+#endif
+            {
+                ceu_input(CEU_INPUT__ASYNC, NULL);
+            }
 _CEU_ARDUINO_AWAKE_:;
         }
 
@@ -234,7 +234,7 @@ _CEU_ARDUINO_AWAKE_:;
 #endif
     }
     ceu_stop();
-    ceu_assert(0, "bug found");
+    ceu_assert_ex(0, "bug found", CEU_TRACE_null);
     while (1);
 }
 

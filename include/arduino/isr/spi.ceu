@@ -28,15 +28,13 @@ native/pos do
 end
 { ceu_callback_register(&CEU_CALLBACK_SPI); }
 
-var u8   spi_ref_count = 0;
-var bool spi_is_busy   = false;
-var u8   spi_sreg      = _;       // TODO: why is this needed?
+var bool spi_busy_spi = false;
+var bool spi_busy_transaction = false;
+var u8   spi_sreg = _;       // TODO: why is this needed?
 
 output none SPI_BEGIN do
-    outer.spi_ref_count = outer.spi_ref_count + 1;
-    if outer.spi_ref_count > 1 then
-        escape;
-    end
+    _ceu_assert(not outer.spi_busy_spi, "bug found");
+    outer.spi_busy_spi = true;
 
     var u8   port = {digitalPinToPort(SS)};
     var u8   bit  = {digitalPinToBitMask(SS)};
@@ -58,17 +56,14 @@ output none SPI_BEGIN do
 end
 
 output none SPI_END do
-    outer.spi_ref_count = outer.spi_ref_count - 1;
-    if outer.spi_ref_count > 0 then
-        escape;
-    end
+    outer.spi_busy_spi = false;
     { SPCR &= ~_BV(SPE); }      // disables the SPI Module
 end
 
 output (u32 clock, u8 bit_order, u8 data_mode) SPI_TRANSACTION_BEGIN do
-    _ceu_assert(not outer.spi_is_busy, "bug found");
-    outer.spi_is_busy = true;
-    outer.spi_sreg    = {SREG};
+    _ceu_assert(not outer.spi_busy_transaction, "bug found");
+    outer.spi_busy_transaction = true;
+    outer.spi_sreg = {SREG};
     {
         u32 clockSetting = F_CPU / 2;
         u8  clock_div    = 0;
@@ -92,7 +87,7 @@ output (u32 clock, u8 bit_order, u8 data_mode) SPI_TRANSACTION_BEGIN do
 end
 
 output none SPI_TRANSACTION_END do
-    outer.spi_is_busy = false;
+    outer.spi_busy_transaction = false;
     { SREG = @outer.spi_sreg; }
 end
 

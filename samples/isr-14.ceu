@@ -1,0 +1,10 @@
+#include "timer.ceu"
+
+output bool PIN_13;
+
+loop do
+    emit PIN_13(on);
+    await 5s;
+    emit PIN_13(off);
+    await 5s;
+end

@@ -10,6 +10,7 @@ native/const
 #define CEU_SAMD_WAIT(x) while ((x).STATUS.bit.SYNCBUSY == 1)
 
 native/pre do
+    ##include "LowPower.h"
 
 ##ifdef __cplusplus
 extern "C" {
@@ -18,14 +19,19 @@ extern "C" {
 ##ifdef CEU_FEATURES_ISR_SLEEP
     enum {
         CEU_PM_ADC = 0,
-        CEU_PM_EXT,
         CEU_PM_TC4,
         CEU_PM_N,
     };
 
-    ##include "LowPower.h"
-    void ceu_pm_sleep (void) {
-        //LowPower.idle(IDLE_2);
+    void ceu_pm_init (void) {
+        // ok
+    }
+
+    void ceu_pm_sleep (void)
+    {
+        LowPower.idle(IDLE_2);  // ADC:OK, TC4:OK
+        //LowPower.idle(IDLE_1);
+        //LowPower.idle(IDLE_0);  // ADC:OK, TC4:OK
         //LowPower.standby();
     }
 ##endif

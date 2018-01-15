@@ -45,19 +45,17 @@ native/pos do
         CEU_SAMD_WAIT(TC4->COUNT16);
     }
 
-    ##define CEU_TIMER_MIN 128  // 128 >>> "overflow + incs-before-request"
-
     void ceu_timer_request (s32 us) {
 ##ifdef CEU_FEATURES_ISR_SLEEP
-        ceu_pm_set(CEU_PM_TC4, (us!=CEU_WCLOCK_INACTIVE));
+        ceu_pm_set(CEU_PM_TC4, (us != CEU_WCLOCK_INACTIVE));
 ##endif
         if (us == CEU_WCLOCK_INACTIVE) {
             REG_TC4_CTRLBSET |= TCC_CTRLBSET_CMD_STOP;
         } else {
             u16 passed = REG_TC4_COUNT16_COUNT - ceu_timer_old;
             s32 v = CEU_TIMER_US_TO_OVERFLOW(us) + passed;
-            if (v < CEU_TIMER_MIN) {    // since 16-bit counter can count ~1s, needs to overflow many times
-                v = CEU_TIMER_MIN;
+            if (v < 128) {  // since 16-bit counter can count ~1s, needs to overflow many times
+                v = 128;    // 128 >>> "overflow + incs-before-request"
             }
             ceu_assert(v<65536, "bug found");
             REG_TC4_COUNT16_COUNT = v;
@@ -72,7 +70,7 @@ native/pos do
 
     s32 ceu_timer_dt (void) {
         u16 now = REG_TC4_COUNT16_COUNT;
-        ceu_assert(now<CEU_TIMER_MIN, "bug found");
+        //ceu_assert(now<128, "bug found");     (not really, only if called due to CEU_TIMER)
         s32 dt  = (u16)(now - ceu_timer_old);
         ceu_timer_old = now;
         return CEU_TIMER_INCS_TO_US(dt);

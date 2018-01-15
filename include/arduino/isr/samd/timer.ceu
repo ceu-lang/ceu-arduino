@@ -1,6 +1,7 @@
 #include "arduino/samd.ceu"
 
 #define CEU_TIMER_IRQ_N     _TC4_IRQn
+#define CEU_PM_TIMER        CEU_PM_TC4
 #define CEU_TIMER_PRESCALER 1024
 
 #include "../timer.ceu"
@@ -46,9 +47,6 @@ native/pos do
     }
 
     void ceu_timer_request (s32 us) {
-##ifdef CEU_FEATURES_ISR_SLEEP
-        ceu_pm_set(CEU_PM_TC4, (us != CEU_WCLOCK_INACTIVE));
-##endif
         if (us == CEU_WCLOCK_INACTIVE) {
             REG_TC4_CTRLBSET |= TCC_CTRLBSET_CMD_STOP;
         } else {

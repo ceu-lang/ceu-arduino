@@ -39,6 +39,9 @@ native/pos do
         switch (cmd) {
             case CEU_CALLBACK_WCLOCK_MIN:
                 ceu_timer_is_active = (p1.num != CEU_WCLOCK_INACTIVE);
+##ifdef CEU_FEATURES_ISR_SLEEP
+                ceu_pm_set(CEU_PM_TIMER, ceu_timer_is_active);
+##endif
                 ceu_timer_request(p1.num);
                 return 1;
             case CEU_CALLBACK_WCLOCK_DT:

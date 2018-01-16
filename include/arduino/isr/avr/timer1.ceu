@@ -1,0 +1,53 @@
+#include "arduino/avr.ceu"
+
+#define CEU_WCLOCK_IRQ_N     _TIMER1_OVF_vect_num
+#define CEU_PM_WCLOCK        CEU_PM_TIMER1
+#define CEU_WCLOCK_PRESCALER 1024
+
+#include "../wclock.ceu"
+
+#ifndef CEU_WCLOCK_IMPL
+#define ceu_timer1_init     ceu_wclock_init
+#define ceu_timer1_request  ceu_wclock_request
+#define ceu_timer1_done     ceu_wclock_done
+#define ceu_timer1_dt       ceu_wclock_dt
+#endif
+
+native/pos do
+    static u16 ceu_timer1_old;
+
+    void ceu_timer1_init (void) {
+        ceu_timer1_old = TCNT1;
+        TCCR1A = 0;
+        TCCR1B = (1 << CS12) | (1 << CS10); // 1024 prescaler
+    }
+
+    void ceu_timer1_request (s32 us) {
+        if (us == CEU_WCLOCK_INACTIVE) {
+            bitClear(TIMSK1, TOIE1);
+        } else {
+            // if was inactive, no time elapsed since previous `ceu_timer1_dt`
+            u16 elapsed = (ceu_wclock_is_active) ? (TCNT1 - ceu_timer1_old) : 0;
+            s32 v = CEU_WCLOCK_US_TO_OVERFLOW(us) + elapsed;
+            if (v < 128) {  // since 16-bit counter can count ~4s, needs to overflow many times
+                v = 128;    // 128 >>> "overflow + incs-before-request"
+            }
+            ceu_assert(v<65536, "bug found");
+            TCNT1 = v;
+            ceu_timer1_old = (v - elapsed);
+            bitSet(TIMSK1, TOIE1);
+        }
+    }
+
+    void ceu_timer1_done (void) {
+        // ok
+    }
+
+    s32 ceu_timer1_dt (void) {
+        u16 now = TCNT1;
+        //ceu_assert(now<128, "bug found");     (not really, only if called due to CEU_WCLOCK)
+        s32 dt  = (u16)(now - ceu_timer1_old);
+        ceu_timer1_old = now;
+        return CEU_WCLOCK_INCS_TO_US(dt);
+    }
+end

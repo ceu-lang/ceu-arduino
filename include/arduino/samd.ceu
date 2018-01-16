@@ -29,10 +29,11 @@ extern "C" {
 
     void ceu_pm_sleep (void)
     {
-        LowPower.idle(IDLE_2);  // ADC:OK, TC4:OK
-        //LowPower.idle(IDLE_1);
-        //LowPower.idle(IDLE_0);  // ADC:OK, TC4:OK
-        //LowPower.standby();
+        if (CEU_PM_STATE(CEU_PM_TC4) || CEU_PM_STATE(CEU_PM_ADC)) {
+            LowPower.idle(IDLE_2);  // deepest, ADC:OK, TC4:OK
+        } else {
+            LowPower.standby();
+        }
     }
 ##endif
 

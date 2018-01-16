@@ -66,7 +66,6 @@ native/pre do
         }
         else if (CEU_PM_STATE(CEU_PM_ADC))
         {
-ceu_assert(0, "never entered this mode before");
             LowPower.adcNoiseReduction(SLEEP_FOREVER,
                                        CEU_PM_STATE(CEU_PM_ADC),
                                        TIMER2_OFF);

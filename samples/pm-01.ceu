@@ -1,0 +1,17 @@
+#include "pin-02.ceu"
+#include "timer.ceu"
+#include "adc.ceu"
+
+output on/off PIN_13;
+
+var on/off v = on;
+
+spawn Adc();
+loop do
+    emit PIN_13(v);
+    v = not v;
+
+    await Adc_Conversion(_A0);
+    await 1s;
+    await PIN_02;
+end

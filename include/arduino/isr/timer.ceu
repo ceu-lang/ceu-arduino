@@ -33,14 +33,23 @@ end
 #define CEU_TIMER_INCS_TO_US(incs)   ((s32)(((double)(incs))*1000000L*CEU_TIMER_PRESCALER/F_CPU)+1) // +1: add one more us to compensate math round
 
 native/pos do
+    static bool ceu_timer_is_active = 0;
     static int ceu_callback_timer (int cmd, tceu_callback_val p1, tceu_callback_val p2)
     {
         switch (cmd) {
             case CEU_CALLBACK_WCLOCK_MIN:
                 ceu_timer_request(p1.num);
+                ceu_timer_is_active = (p1.num != CEU_WCLOCK_INACTIVE);
+##ifdef CEU_FEATURES_ISR_SLEEP
+                ceu_pm_set(CEU_PM_TIMER, ceu_timer_is_active);
+##endif
                 return 1;
             case CEU_CALLBACK_WCLOCK_DT:
-                ceu_callback_ret.num = ceu_timer_dt();
+                if (ceu_timer_is_active) {
+                    ceu_callback_ret.num = ceu_timer_dt();
+                } else {
+                    ceu_callback_ret.num = CEU_WCLOCK_INACTIVE;
+                }
                 return 1;
             default:
                 return 0;

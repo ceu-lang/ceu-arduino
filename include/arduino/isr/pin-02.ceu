@@ -2,6 +2,14 @@
 
 input bool PIN_02;
 
-spawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do
+#ifdef CEU_PIN_02_PULL
+{ pinMode(2, CEU_PIN_02_PULL); }
+#endif
+
+#ifndef CEU_PIN_02_MODE
+#define CEU_PIN_02_MODE _CHANGE
+#endif
+
+spawn async/isr [_digitalPinToInterrupt(2),CEU_PIN_02_MODE] do
     emit PIN_02(_digitalRead(2) as bool);
 end

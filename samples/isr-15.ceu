@@ -1,0 +1,12 @@
+#include "pin-02.ceu"
+
+output bool PIN_13;
+
+emit PIN_13(off);
+
+var on/off v = off;
+loop do
+    await PIN_02;
+    v = not v;
+    emit PIN_13(v);
+end

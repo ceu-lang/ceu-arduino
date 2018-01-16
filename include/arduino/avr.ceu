@@ -56,6 +56,7 @@ native/pre do
 
     void ceu_pm_sleep (void)
     {
+#if 0
         if (CEU_PM_STATE(CEU_PM_TIMER1))
         {
             LowPower.idle(SLEEP_FOREVER,
@@ -74,6 +75,7 @@ native/pre do
         {
             LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
         }
+#endif
     }
 ##endif
 

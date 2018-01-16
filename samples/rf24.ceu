@@ -46,8 +46,8 @@ input byte RADIO_AVAILABLE;
 event none presence;
 event none no_presence;
 
-_pinMode(A0,INPUT);
-_pinMode(LED_PIN,OUTPUT);
+_pinMode(_A0,_INPUT);
+_pinMode(LED_PIN,_OUTPUT);
 
 // Generate the event detector
 spawn do
@@ -67,7 +67,7 @@ end
 // Keep checking the button
 spawn do
     loop do
-        var int value = await Analog(0);
+        var int value = await Adc_Conversion(0);
         if value > SENSOR_THRESHOLD then
             emit presence;
         else
@@ -91,7 +91,7 @@ loop do
                     _analogWrite(LED_PIN,HALF_POWER);
                 with
                     await (SEND_INTERVAL * 2)ms;
-                    _analogWrite(LED_PIN,LOW);
+                    _analogWrite(LED_PIN,off);
                 end
             end 
         end 
@@ -103,7 +103,7 @@ loop do
         _radio.stopListening();
         par/or do
             await no_presence;
-            _analogWrite(LED_PIN,LOW);
+            _analogWrite(LED_PIN,off);
         with
             loop do
                 var u8 radio_id = RADIO_ID;

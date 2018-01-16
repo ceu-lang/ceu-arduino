@@ -1,0 +1,77 @@
+#include "arduino/avr.ceu"
+
+#define CEU_WCLOCK_IRQ_N     _WDT_vect_num
+#define CEU_PM_WCLOCK        CEU_PM_TIMER1
+#define CEU_WCLOCK_PRESCALER 1024
+
+#ifndef CEU_WCLOCK_IMPL
+#define ceu_wdt_init     ceu_wclock_init
+#define ceu_wdt_request  ceu_wclock_request
+#define ceu_wdt_done     ceu_wclock_done
+#define ceu_wdt_dt       ceu_wclock_dt
+#endif
+
+#include "../wclock.ceu"
+
+native/pos do
+	##include <avr/wdt.h>
+
+    // Possible sleep timeouts:
+    // WDTO_15MS,  WDTO_30MS, WDTO_60MS, WDTO_120MS, WDTO_250MS,
+    // WDTO_500MS, WDTO_1S,   WDTO_2S,   WDTO_4S,    WDTO_8S,
+
+    static s32 ceu_wdt_us;
+
+    void ceu_wdt_init (void) {
+        // ok
+    }
+
+    void ceu_wdt_request (s32 us) {
+        if (us == CEU_WCLOCK_INACTIVE) {
+            wdt_disable();
+        } else {
+            int period;
+            if (us <= 15000) {
+                period = WDTO_15MS;
+                ceu_wdt_us = 15000;
+            } else if (us <= 30000) {
+                period = WDTO_30MS;
+                ceu_wdt_us = 30000;
+            } else if (us <= 60000) {
+                period = WDTO_60MS;
+                ceu_wdt_us = 60000;
+            } else if (us <= 120000) {
+                period = WDTO_120MS;
+                ceu_wdt_us = 120000;
+            } else if (us <= 250000) {
+                period = WDTO_250MS;
+                ceu_wdt_us = 250000;
+            } else if (us <= 500000) {
+                period = WDTO_500MS;
+                ceu_wdt_us = 500000;
+            } else if (us <= 1000000) {
+                period = WDTO_1S;
+                ceu_wdt_us = 1000000;
+            } else if (us <= 2000000) {
+                period = WDTO_2S;
+                ceu_wdt_us = 2000000;
+            } else if (us <= 4000000) {
+                period = WDTO_4S;
+                ceu_wdt_us = 4000000;
+            } else {
+                period = WDTO_8S;
+                ceu_wdt_us = 8000000;
+            }
+            wdt_enable(period);
+            bitSet(WDTCSR, WDIE);	
+        }
+    }
+
+    void ceu_wdt_done (void) {
+        // ok
+    }
+
+    s32 ceu_wdt_dt (void) {
+        return ceu_wdt_us;
+    }
+end

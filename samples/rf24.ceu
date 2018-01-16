@@ -1,5 +1,5 @@
-#include "arduino/isr/analog.ceu"
-#include "arduino/isr/timer.ceu"
+#include "adc.ceu"
+#include "timer.ceu"
 #include "arduino/arduino.ceu"
 
     #define RADIO_ID 0x66

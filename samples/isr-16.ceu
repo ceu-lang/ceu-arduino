@@ -1,0 +1,32 @@
+#include "pin-02.ceu"
+//#include "wclock-smart.ceu"
+#include "timer1.ceu"
+
+/*
+ *
+ * Test 1:
+ * - a pin interrupt should not affect the 1s blinking period
+ * Test 2:
+ * - a longer interval (1s -> 2s) should not affect..
+ * Test 3:
+ * - a smaller interval (1s -> 500ms) should start timer1
+ *   this time should be compensated from the WDT when it triggers
+ */
+
+output bool PIN_13;
+
+loop do
+    emit PIN_13(on);
+    par/or do
+        await 1s;
+    with
+        await 2s;
+    end
+    emit PIN_13(off);
+    par/and do
+        await 2s;
+    with
+        await PIN_02;
+        await 250ms;
+    end
+end

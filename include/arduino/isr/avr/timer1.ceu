@@ -1,17 +1,19 @@
 #include "arduino/avr.ceu"
 
-#define CEU_WCLOCK_IRQ_N     _TIMER1_OVF_vect_num
-#define CEU_PM_WCLOCK        CEU_PM_TIMER1
-#define CEU_WCLOCK_PRESCALER 1024
+#ifndef CEU_WCLOCK_IMPL
+
+#define CEU_WCLOCK_IRQ_N        _TIMER1_OVF_vect_num
+#define CEU_PM_WCLOCK           CEU_PM_TIMER1
+#define CEU_WCLOCK_PRESCALER    1024
+
+#define ceu_timer1_init         ceu_wclock_init
+#define ceu_timer1_request      ceu_wclock_request
+#define ceu_timer1_done         ceu_wclock_done
+#define ceu_timer1_dt           ceu_wclock_dt
+
+#endif
 
 #include "../wclock.ceu"
-
-#ifndef CEU_WCLOCK_IMPL
-#define ceu_timer1_init     ceu_wclock_init
-#define ceu_timer1_request  ceu_wclock_request
-#define ceu_timer1_done     ceu_wclock_done
-#define ceu_timer1_dt       ceu_wclock_dt
-#endif
 
 native/pos do
     static u16 ceu_timer1_old;

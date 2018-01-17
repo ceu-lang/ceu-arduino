@@ -7,7 +7,8 @@ native/const
     _TIMER1_OVF_vect_num,
     _SPI_STC_vect_num,
     _USART_RX_vect_num,
-    _USART_TX_vect_num
+    _USART_TX_vect_num,
+    _WDT_vect_num,
 ;
 
 native
@@ -47,6 +48,7 @@ native/pre do
     enum {
         CEU_PM_ADC = 0,
         CEU_PM_TIMER1,
+        CEU_PM_WDT,
         CEU_PM_N,
     };
 

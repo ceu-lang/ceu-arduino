@@ -11,9 +11,9 @@
 #define ceu_timer1_done         ceu_wclock_done
 #define ceu_timer1_dt           ceu_wclock_dt
 
-#endif
-
 #include "../wclock.ceu"
+
+#endif
 
 native/pos do
     static u16 ceu_timer1_old;
@@ -21,15 +21,21 @@ native/pos do
     void ceu_timer1_init (void) {
         ceu_timer1_old = TCNT1;
         TCCR1A = 0;
-        TCCR1B = (1 << CS12) | (1 << CS10); // 1024 prescaler
+
+#if   CEU_WCLOCK_PRESCALER ==    8
+        TCCR1B = 0b010;
+#elif CEU_WCLOCK_PRESCALER == 1024
+        TCCR1B = 0b101;
+#else
+#endif
     }
 
-    void ceu_timer1_request (s32 us) {
+    void ceu_timer1_request (s32 us, bool was_active) {
         if (us == CEU_WCLOCK_INACTIVE) {
             bitClear(TIMSK1, TOIE1);
         } else {
             // if was inactive, no time elapsed since previous `ceu_timer1_dt`
-            u16 elapsed = (ceu_wclock_is_active) ? (TCNT1 - ceu_timer1_old) : 0;
+            u16 elapsed = (was_active) ? (TCNT1 - ceu_timer1_old) : 0;
             s32 v = CEU_WCLOCK_US_TO_OVERFLOW(us) + elapsed;
             if (v < 128) {  // since 16-bit counter can count ~4s, needs to overflow many times
                 v = 128;    // 128 >>> "overflow + incs-before-request"

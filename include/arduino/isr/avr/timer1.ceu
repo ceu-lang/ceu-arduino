@@ -24,9 +24,13 @@ native/pos do
 
 #if   CEU_WCLOCK_PRESCALER ==    8
         TCCR1B = 0b010;
+        #error "Not working (isr-16.ceu)!"
+#elif CEU_WCLOCK_PRESCALER ==   64
+        TCCR1B = 0b011;
 #elif CEU_WCLOCK_PRESCALER == 1024
         TCCR1B = 0b101;
 #else
+        #error "Not implemented!"
 #endif
     }
 

@@ -1,4 +1,5 @@
 #include "arduino/isr/analog.ceu"
+#include "arduino/isr/spi.ceu"
 #include "timer.ceu"
 #include "arduino/arduino.ceu"
 
@@ -36,11 +37,20 @@ end
 
 native  _radio,
         _uint8_t,
+        __BV,
         _FALLING,
+        _W_REGISTER,
+        _R_REGISTER,
+        _W_TX_PAYLOAD,
+        _REGISTER_MASK,
+        _CONFIG,
+        _PRIM_RX,
+        _PWR_UP,
         _pipe;
 
 #define SENSOR_THRESHOLD 500
 #define SEND_INTERVAL 100
+#define MHZ 1000000
 
 input none RADIO;
 
@@ -51,6 +61,9 @@ spawn async/isr [_digitalPinToInterrupt(2),_FALLING] do
     emit RADIO;
 end
 
+#define csn(x) _digitalWrite(10,x);
+#define ce(x) _digitalWrite(9,x);
+
 code/await Radio_receive(none) -> byte do
     await RADIO;
     // Clear interrupt bit
@@ -58,6 +71,28 @@ code/await Radio_receive(none) -> byte do
     var byte signal_id = 0;
     {radio.read( &@signal_id, sizeof(uint8_t) );}
     escape signal_id;
+end
+
+code/await Write_register (var u8 reg, var u8 value) -> u8 do
+    var u8 status = _;
+    watching SPI_Transaction(4 * MHZ, SPI_MSBFIRST, SPI_MODE0) do
+        csn(off);
+        status = await SPI_Transfer(_W_REGISTER | ( _REGISTER_MASK & reg ) ); 
+        await SPI_Transfer(value);
+        csn(on);
+    end
+    escape status;
+end
+
+code/await Read_register (var u8 reg) -> u8 do
+    var u8 value = _;
+    watching SPI_Transaction(4 * MHZ, SPI_MSBFIRST, SPI_MODE0) do
+        csn(off);
+        await SPI_Transfer(_R_REGISTER | ( _REGISTER_MASK & reg ) ); 
+        value = await SPI_Transfer(_);
+        csn(on);
+    end
+    escape value;
 end
 
 _pinMode(_A0,_INPUT);
@@ -111,8 +146,14 @@ loop do
             _analogWrite(LED_PIN,off);
         with
             loop do
-                var u8 radio_id = RADIO_ID;
-                {radio.write( &@radio_id, sizeof(uint8_t) );}
+         //       {radio.write( &@radio_id, sizeof(uint8_t) );}
+                {radio.write_register(CONFIG, (radio.read_register(CONFIG) | _BV(PWR_UP) ) & ~_BV(PRIM_RX) );}
+                await 1500 us;
+                // write the payload
+                await Write_register(_W_TX_PAYLOAD, RADIO_ID);
+                ce(on);
+                await 15 us;
+                ce(off);
                 await SEND_INTERVAL ms;
             end
         end

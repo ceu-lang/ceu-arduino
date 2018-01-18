@@ -1,5 +1,5 @@
 #if ARDUINO_ARCH_AVR
-    #define CEU_STACK_MAX  1000
+    #define CEU_STACK_MAX  1300
 #elif ARDUINO_ARCH_SAMD
     #define CEU_STACK_MAX 1000
 #else

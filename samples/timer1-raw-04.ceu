@@ -1,9 +1,9 @@
 native/pre do
-    //##define CEU_FEATURES_ISR_SLEEP
+    ##define CEU_FEATURES_ISR_SLEEP_MIN
 end
 
-#include "arduino/avr.ceu"
 #include "arduino/arduino.ceu"
+#include "arduino/avr.ceu"
 
 /*
  * With 1024 prescaler: 16M/1024 incs/s : 15625 incs/s
@@ -21,11 +21,8 @@ end
 native _ceu_arduino_dt;
 native/pos do
     static u16 CEU_ARDUINO_old;
-    tceu_callback_ret ceu_callback_isr (int cmd, tceu_callback_arg p1,
-                                                 tceu_callback_arg p2,
-                                                 const char* file, u32 line)
+    static int ceu_callback_isr (int cmd, tceu_callback_val p1, tceu_callback_val p2)
     {
-        tceu_callback_ret ret = { .is_handled=1 };
         switch (cmd) {
             case CEU_CALLBACK_WCLOCK_MIN: {
                 s32 us = p1.num;
@@ -33,7 +30,7 @@ native/pos do
                     TIMSK1 = TIMSK1 & ~(1 << TOIE1);
                 } else {
                     s32 v = US_TO_OVERFLOW(us);
-                    ceu_dbg_assert(v > 0);
+                    ceu_assert(v > 0, "bug found");
                     TCNT1 = v;
                     CEU_ARDUINO_old = v;
                     TIMSK1 = TIMSK1 | (1 << TOIE1);
@@ -41,9 +38,9 @@ native/pos do
                 break;
             }
             default:
-                ret.is_handled = 0;
+                return 0;
         }
-        return ret;
+        return 1;
     }
     tceu_callback CEU_CALLBACK_ISR = { &ceu_callback_isr, NULL };
 

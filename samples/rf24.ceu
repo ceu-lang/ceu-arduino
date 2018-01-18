@@ -66,6 +66,7 @@ _pinMode(LED_PIN,_OUTPUT);
 _radio.begin();
 _radio.setPayloadSize(1);
 
+// Disable interrupts other than receive payload
 {radio.write_register(CONFIG, radio.read_register(CONFIG) | _BV(MASK_TX_DS) | _BV(MASK_MAX_RT));}
 
 // Keep checking the button

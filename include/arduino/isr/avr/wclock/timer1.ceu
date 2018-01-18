@@ -11,7 +11,7 @@
 #define ceu_timer1_done         ceu_wclock_done
 #define ceu_timer1_dt           ceu_wclock_dt
 
-#include "../wclock.ceu"
+#include "../../wclock.ceu"
 
 #endif
 

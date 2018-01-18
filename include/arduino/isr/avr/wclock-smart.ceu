@@ -75,6 +75,7 @@ native/pos do
                         //ceu_assert(ceu_wdt_us_pending >= 0, "bug found");
                     }
                 } else if (ceu_wclock_source == CEU_WCLOCK_WDT) {
+                    ceu_assert(!ceu_wclock_is_active[CEU_WCLOCK_TIMER1], "cannot mix timer1/wdt");
                     ceu_callback_ret.num = ceu_wdt_dt();
 //Serial.print("dt/wdt "); Serial.println(ceu_callback_ret.num); _DELAY(50);
                 } else {

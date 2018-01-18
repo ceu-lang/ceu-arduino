@@ -1,4 +1,4 @@
-#include "adc.ceu"
+#include "arduino/isr/analog.ceu"
 #include "timer.ceu"
 #include "arduino/arduino.ceu"
 
@@ -8,7 +8,7 @@
     #define LED_PIN 3
     
     #define FULL_POWER 1023
-    #define HALF_POWER 300
+    #define HALF_POWER 10
 
     #define SENSOR_THRESHOLD 500
     
@@ -18,7 +18,6 @@
      * This application consists of a node of a distributed smart lighting system.
      */
     
-    ##include <SPI.h>
     ##include <nRF24L01.h>
     ##include <RF24.h>
     
@@ -32,42 +31,47 @@
     RF24 radio(9,10);
     
     // Radio pipe addresses for the nodes to communicate.
-    const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xE8E8F0F0E1LL };
+    const uint64_t pipe = 0xF0F0F0F0E1LL;
 end
 
 native  _radio,
         _uint8_t,
-        _pipes;
+        _FALLING,
+        _pipe;
 
 #define SENSOR_THRESHOLD 500
 #define SEND_INTERVAL 100
 
-input byte RADIO_AVAILABLE;
+input none RADIO;
+
 event none presence;
 event none no_presence;
+
+spawn async/isr [_digitalPinToInterrupt(2),_FALLING] do
+    emit RADIO;
+end
+
+code/await Radio_receive(none) -> byte do
+    await RADIO;
+    // Clear interrupt bit
+    {radio.write_register(STATUS,_BV(RX_DR));}
+    var byte signal_id = 0;
+    {radio.read( &@signal_id, sizeof(uint8_t) );}
+    escape signal_id;
+end
 
 _pinMode(_A0,_INPUT);
 _pinMode(LED_PIN,_OUTPUT);
 
-// Generate the event detector
-spawn do
-    _radio.begin();
-    _radio.setPayloadSize(1);
-    loop do
-        await async do
-            if _radio.available() as bool then
-                var byte signal_id = 0;
-                {radio.read( &@signal_id, sizeof(uint8_t) );}
-                emit RADIO_AVAILABLE(signal_id);
-            end
-        end
-    end
-end
+_radio.begin();
+_radio.setPayloadSize(1);
+
+{radio.write_register(CONFIG, radio.read_register(CONFIG) | _BV(MASK_TX_DS) | _BV(MASK_MAX_RT));}
 
 // Keep checking the button
 spawn do
     loop do
-        var int value = await Adc_Conversion(0);
+        var int value = await Analog(0);
         if value > SENSOR_THRESHOLD then
             emit presence;
         else
@@ -83,11 +87,11 @@ loop do
             await presence;
         with
             // LISTEN TO NEIGHBOURS
-            _radio.openReadingPipe(1,_pipes[1]);
+            _radio.openReadingPipe(0,_pipe);
             _radio.startListening();
             loop do
                 par/or do
-                    await RADIO_AVAILABLE;
+                    await Radio_receive();
                     _analogWrite(LED_PIN,HALF_POWER);
                 with
                     await (SEND_INTERVAL * 2)ms;
@@ -99,7 +103,7 @@ loop do
         await presence;
         // SEND TO NEIGHBOURS
         _analogWrite(LED_PIN,FULL_POWER);
-        _radio.openWritingPipe(_pipes[1]);
+        _radio.openWritingPipe(_pipe);
         _radio.stopListening();
         par/or do
             await no_presence;

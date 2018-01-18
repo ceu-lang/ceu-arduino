@@ -34,6 +34,7 @@ native/pos do
             ceu_wdt_us_pending = CEU_WCLOCK_INACTIVE;
             wdt_disable();
         } else {
+            ceu_assert(ceu_wdt_us_pending == CEU_WCLOCK_INACTIVE, "cannot have multiple WDT awaits");
             int period;
             if (us < 15000) {
 #if 0

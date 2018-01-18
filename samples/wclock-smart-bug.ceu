@@ -1,0 +1,18 @@
+#include "pin-02.ceu"
+#include "wclock-smart.ceu"
+//#include "timer1.ceu"
+
+output bool PIN_13;
+
+emit PIN_13(on);
+
+par/and do
+    await 1s;
+with
+    await PIN_02;
+    await 900ms;
+end
+
+emit PIN_13(off);
+
+await FOREVER;

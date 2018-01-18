@@ -1,0 +1,17 @@
+#include "pin-02.ceu"
+#include "wclock/wdt.ceu"
+
+output bool PIN_13;
+
+emit PIN_13(on);
+
+par/and do
+    await 8s;       // start counting 8s
+with
+    await PIN_02;   // on 7s, press button
+    await 100ms;    // resets WDT to 100ms, restart counting 8s again
+end
+
+emit PIN_13(off);
+
+await FOREVER;

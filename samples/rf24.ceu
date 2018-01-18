@@ -84,16 +84,7 @@ code/await Write_register (var u8 reg, var u8 value) -> u8 do
     escape status;
 end
 
-//code/await Read_register (var u8 reg) -> u8 do
-//    var u8 value = _;
-//    watching SPI_Transaction(4 * MHZ, SPI_MSBFIRST, SPI_MODE0) do
-//        csn(off);
-//        await SPI_Transfer(_R_REGISTER | ( _REGISTER_MASK & reg ) ); 
-//        value = await SPI_Transfer(_);
-//        csn(on);
-//    end
-//    escape value;
-//end
+emit SPI_BEGIN;
 
 _pinMode(_A0,_INPUT);
 _pinMode(LED_PIN,_OUTPUT);
@@ -146,13 +137,8 @@ loop do
             _analogWrite(LED_PIN,off);
         with
             loop do
-                do finalize with
-                    csn(on);
-                    ce(off);
-                    {radio.powerDown(); radio.flush_tx();}
-                end
          //       {radio.write( &@radio_id, sizeof(uint8_t) );}
-                {radio.write_register(CONFIG, (radio.read_register(CONFIG) | _BV(PWR_UP) ) & ~_BV(PRIM_RX) );}
+                {radio.write_register(CONFIG, (radio.read_register(CONFIG) | _BV(PWR_UP) | _BV(MASK_RX_DR) ) & ~_BV(PRIM_RX) );}
                 //await 1500 us;
                 {delayMicroseconds(1500);}
                 // write the payload
@@ -162,6 +148,7 @@ loop do
                 {delayMicroseconds(15);}
                 ce(off);
                 {radio.write( NULL, sizeof(uint8_t) );}
+                {radio.write_register(CONFIG, radio.read_register(CONFIG) &~_BV(MASK_RX_DR) );}
                 await SEND_INTERVAL ms;
             end
         end

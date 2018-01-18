@@ -147,6 +147,8 @@ loop do
         with
             loop do
                 do finalize with
+                    csn(on);
+                    ce(off);
                     {radio.powerDown(); radio.flush_tx();}
                 end
          //       {radio.write( &@radio_id, sizeof(uint8_t) );}

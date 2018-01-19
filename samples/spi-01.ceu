@@ -1,7 +1,4 @@
 // WORKS
-native/pre do
-    ##define CEU_FEATURES_ISR_SLEEP
-end
 
 native _BIN;
 

@@ -1,8 +1,5 @@
+#include "wclock.ceu"
 #include "pin-02.ceu"
-
-//#include "wclock/timer1.ceu"
-//#include "wclock/wdt.ceu"
-#include "wclock/smart.ceu"
 
 output bool PIN_13;
 

@@ -1,17 +1,22 @@
 #include "arduino/samd.ceu"
 
-#define CEU_TIMER_IRQ_N     _TC4_IRQn
-#define CEU_PM_TIMER        CEU_PM_TC4
-#define CEU_TIMER_PRESCALER 1024
+#define CEU_WCLOCK_IRQ_N     _TC4_IRQn
+#define CEU_PM_WCLOCK        CEU_PM_TC4
+#define CEU_WCLOCK_PRESCALER 1024
 
-#include "../timer.ceu"
+#define ceu_tc4_init         ceu_wclock_init
+#define ceu_tc4_request      ceu_wclock_request
+#define ceu_tc4_done         ceu_wclock_done
+#define ceu_tc4_dt           ceu_wclock_dt
+
+#include "../../wclock.ceu"
 
 native/pos do
-    #define CEU_TIMER_TC ((TcCount16*) TC3)
+    #define CEU_WCLOCK_TC ((TcCount16*) TC3)
 
-    static u16 ceu_timer_old;
+    static u16 ceu_tc4_old;
 
-    void ceu_timer_init (void)
+    void ceu_tc4_init (void)
     {
         /* Based on <https://forum.arduino.cc/index.php?topic=425385.msg2931200#msg2931200> */
 
@@ -38,7 +43,7 @@ native/pos do
         REG_TC4_INTFLAG |= TC_INTFLAG_OVF;              // Clear the interrupt flags
         REG_TC4_INTENSET = TC_INTENSET_OVF;             // Enable TC4 interrupts
 
-        ceu_timer_old = REG_TC4_COUNT16_COUNT;
+        ceu_tc4_old = REG_TC4_COUNT16_COUNT;
 
         REG_TC4_CTRLA |= TC_CTRLA_PRESCALER_DIV1024 |   // Set prescaler to 1024, 48MHz/1024 = 46.875kHz
                          TC_CTRLA_WAVEGEN_NFRQ |        // Put the timer TC4 into match frequency (MFRQ) mode
@@ -46,32 +51,32 @@ native/pos do
         CEU_SAMD_WAIT(TC4->COUNT16);
     }
 
-    void ceu_timer_request (s32 us) {
+    void ceu_tc4_request (s32 us, bool was_active) {
         if (us == CEU_WCLOCK_INACTIVE) {
             REG_TC4_CTRLBSET |= TCC_CTRLBSET_CMD_STOP;
         } else {
             // if was inactive, no time elapsed since previous `ceu_timer_dt`
-            u16 elapsed = (ceu_timer_is_active) ? (REG_TC4_COUNT16_COUNT - ceu_timer_old) : 0;
-            s32 v = CEU_TIMER_US_TO_OVERFLOW(us) + elapsed;
+            u16 elapsed = (was_active) ? (REG_TC4_COUNT16_COUNT - ceu_tc4_old) : 0;
+            s32 v = CEU_WCLOCK_US_TO_OVERFLOW(us) + elapsed;
             if (v < 128) {  // since 16-bit counter can count ~1s, needs to overflow many times
                 v = 128;    // 128 >>> "overflow + incs-before-request"
             }
             ceu_assert(v<65536, "bug found");
             REG_TC4_COUNT16_COUNT = v;
-            ceu_timer_old = (v - elapsed);
+            ceu_tc4_old = (v - elapsed);
             REG_TC4_CTRLBSET |= TCC_CTRLBSET_CMD_RETRIGGER;
         }
     }
 
-    void ceu_timer_done (void) {
+    void ceu_tc4_done (void) {
         REG_TC4_INTFLAG = TC_INTFLAG_OVF;       // clears the ovf flag
     }
 
-    s32 ceu_timer_dt (void) {
+    s32 ceu_tc4_dt (void) {
         u16 now = REG_TC4_COUNT16_COUNT;
-        //ceu_assert(now<128, "bug found");     (not really, only if called due to CEU_TIMER)
-        s32 dt  = (u16)(now - ceu_timer_old);
-        ceu_timer_old = now;
-        return CEU_TIMER_INCS_TO_US(dt);
+        //ceu_assert(now<128, "bug found");     (not really, only if called due to CEU_WCLOCK)
+        s32 dt  = (u16)(now - ceu_tc4_old);
+        ceu_tc4_old = now;
+        return CEU_WCLOCK_INCS_TO_US(dt);
     }
 end

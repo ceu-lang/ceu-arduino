@@ -1,16 +1,12 @@
-// WORKS
-
-native _BIN;
-
-#include "arduino/isr/spi.ceu"
-#include "arduino/isr/timer.ceu"
+#include "spi.ceu"
+#include "wclock/timer1.ceu"
 
 output on/off PIN_09;
 
 _Serial.begin(9600);
 _Serial.println("=");
 
-watching SPI_Begin() do
+watching Spi() do
     loop do
         emit PIN_09(off);
         await (50)ms;
@@ -18,7 +14,7 @@ watching SPI_Begin() do
         await (50)ms;
         watching SPI_Transaction(1400000, SPI_MSBFIRST, SPI_MODE2) do
             var u8 received_data = await SPI_Transfer(_);
-            _Serial.println("Data is:");_Serial.println(received_data,_BIN);
+            _Serial.println("Data is:");_Serial.println(received_data,{BIN});
         end
     end
 end

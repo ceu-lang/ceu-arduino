@@ -47,8 +47,9 @@ native/pre do
 ##ifdef CEU_FEATURES_ISR_SLEEP
     enum {
         CEU_PM_ADC = 0,
-        CEU_PM_USART,
+        CEU_PM_SPI,
         CEU_PM_TIMER1,
+        CEU_PM_USART,
         CEU_PM_WDT,
         CEU_PM_N,
     };
@@ -83,7 +84,7 @@ native/pre do
 
 ##else
 
-        if (CEU_PM_STATE(CEU_PM_TIMER1) || CEU_PM_STATE(CEU_PM_USART))
+        if (CEU_PM_STATE(CEU_PM_TIMER1) || CEU_PM_STATE(CEU_PM_USART) || CEU_PM_STATE(CEU_PM_SPI))
         {
 ##ifdef CEU_PM_DEBUG
             digitalWrite(10, 1);
@@ -92,7 +93,8 @@ native/pre do
                           CEU_PM_STATE(CEU_PM_ADC),
                           TIMER2_OFF,
                           CEU_PM_STATE(CEU_PM_TIMER1),
-                          TIMER0_OFF, SPI_OFF,
+                          TIMER0_OFF,
+                          CEU_PM_STATE(CEU_PM_SPI),
                           CEU_PM_STATE(CEU_PM_USART),
                           TWI_OFF);
 ##ifdef CEU_PM_DEBUG

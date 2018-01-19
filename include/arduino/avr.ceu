@@ -108,6 +108,7 @@ native/pre do
                                        CEU_PM_STATE(CEU_PM_ADC),
                                        TIMER2_OFF);
 ##ifdef CEU_PM_DEBUG
+            _DELAY(50);
             digitalWrite(11, 0);
 ##endif
         }

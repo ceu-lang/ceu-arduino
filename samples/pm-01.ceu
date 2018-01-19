@@ -1,5 +1,5 @@
 #include "pin-02.ceu"
-#include "timer.ceu"
+#include "wclock/timer1.ceu"
 #include "adc.ceu"
 
 output on/off PIN_13;
@@ -7,6 +7,7 @@ output on/off PIN_13;
 var on/off v = on;
 
 spawn Adc();
+
 loop do
     emit PIN_13(v);
     v = not v;

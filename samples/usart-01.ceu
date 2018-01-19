@@ -1,18 +1,12 @@
 /* TODO: only working with original Arduino */
 
-native/pre do
-    //##define CEU_FEATURES_ISR_SLEEP
-end
-
-#include "arduino/isr/timer.ceu"
-#include "arduino/isr/usart.ceu"
-#include "arduino/isr/pin-02.ceu"
-
-var& IUsart usart;
-var[20] byte rx = [];
-var& Usart usart = spawn Usart(9600, &rx);
+#include "pin-02.ceu"
+#include "wclock/timer1.ceu"
+#include "usart.ceu"
 
 output bool PIN_13;
+
+spawn Usart(9600);
 
 // heavy loop to evaluate ISR responsiveness
 #if 0
@@ -32,11 +26,12 @@ end
 
 watching PIN_02 do
     loop do
+        //emit PIN_13({!digitalRead(13)} as bool);
         par/and do
             await 1s;
         with
             var[20] byte str = [].."Hello World!\n";
-            await Usart_TX(&usart.usart,&str);
+            await Usart_TX(&str);
         end
     end
 end
@@ -45,33 +40,27 @@ await 1s;
 
 watching PIN_02 do
     loop do
-        if $rx == 0 then
-            await usart.usart.ok_rx;
-        end
-        var[20] byte tx;
-        atomic do
-            tx = []..rx;
-            rx = [];
-        end
-        await Usart_TX(&usart.usart,&tx);
+        var[20] byte str = [];
+        await Usart_RX(&str, _);
+        await Usart_TX(&str);
     end
 end
 
 // should tx up to 1-5\n
 watching 8ms do
     var[20] byte str = [].."12345\n67890";
-    await Usart_TX(&usart.usart, &str);
+    await Usart_TX(&str);
 end
 
 // print both in sequence
 var[20] byte str = [].."Hello World!\n";
 par/and do
-    await Usart_TX(&usart.usart, &str);
+    await Usart_TX(&str);
 with
-    await Usart_TX(&usart.usart, &str);
+    await Usart_TX(&str);
 end
 
 var[20] byte str = [].."ok!\n";
-await Usart_TX(&usart.usart, &str);
+await Usart_TX(&str);
 
 await FOREVER;

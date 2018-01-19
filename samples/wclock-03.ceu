@@ -1,9 +1,5 @@
-native/pre do
-    //##define CEU_FEATURES_ISR_SLEEP
-end
-
-#include "arduino/isr/timer.ceu"
-#include "arduino/isr/pin-02.ceu"
+#include "wclock/timer1.ceu"
+#include "pin-02.ceu"
 
 output bool PIN_13;
 output bool PIN_12;

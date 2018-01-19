@@ -1,8 +1,13 @@
+input  on/off PIN_02;
+
 output on/off PIN_04;
 output on/off PIN_05;
 output on/off PIN_06;
 
-par do
+par/or do
+    await PIN_02;
+    //var on/off but = await PIN_02 until but==off;
+with
     loop do
         emit PIN_04(on);
         await 1s;
@@ -24,3 +29,9 @@ with
         await 250ms;
     end
 end
+
+emit PIN_04(off);
+emit PIN_05(off);
+emit PIN_06(off);
+
+await FOREVER;

@@ -1,10 +1,11 @@
 #if ARDUINO_ARCH_AVR
-    #define CEU_STACK_MAX  500
+    #define CEU_STACK_MAX  750
 #elif ARDUINO_ARCH_SAMD
     #define CEU_STACK_MAX 1000
 #else
     #error "Unsupported Platform!"
 #endif
+//#undef CEU_STACK_MAX
 
 #define _DELAY(ms)                      \
     {                                   \

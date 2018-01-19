@@ -7,6 +7,15 @@ ISR(ADC_vect)
 }
 #endif
 
+#ifdef CEU_ISR__WDT_vect_num
+ISR (WDT_vect)
+{
+    if (isrs[WDT_vect_num].fun != NULL) {
+        isrs[WDT_vect_num].fun(isrs[WDT_vect_num].mem);
+    }
+}
+#endif
+
 #ifdef CEU_ISR__SPI_STC_vect_num
 ISR(SPI_STC_vect)
 {

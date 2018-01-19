@@ -8,15 +8,15 @@
  * (http://letsmakerobots.com/node/28278)
  */
 
+native/pre do
+    ##define CEU_FEATURES_ISR_SLEEP_MIN
+end
+
 #include "arduino/avr.ceu"
 #include "arduino/arduino.ceu"
 
 input  bool PIN_02;
 output bool PIN_13;
-
-native/pre do
-    //##define CEU_FEATURES_ISR_SLEEP
-end
 
 // initialize timer1 
 do

@@ -5,22 +5,21 @@
  * Main program changes LED connected to PIN13 according to the button state.
  */
 
-native/pre do
-    //##define CEU_FEATURES_ISR_SLEEP
-end
-
 #include "arduino/arduino.ceu"
+#include "arduino/avr.ceu"
 
-input  bool PIN_02;
-output bool PIN_13;
+input  on/off PIN_02;
+output on/off PIN_13;
 
+var on/off v = _digitalRead(2) as on/off;
 spawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do
-    emit PIN_02(_digitalRead(2) as bool);
+    outer.v = not outer.v;
+    emit PIN_02(outer.v);
 end
 
-emit PIN_13(LOW);
+emit PIN_13(off);
 
 loop do
-    var bool v = await PIN_02;
+    var on/off v = await PIN_02;
     emit PIN_13(v);
 end

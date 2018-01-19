@@ -9,11 +9,11 @@
  */
 
 native/pre do
-    //##define CEU_FEATURES_ISR_SLEEP
+    ##define CEU_FEATURES_ISR_SLEEP_MIN
 end
 
-#include "arduino/avr.ceu"
 #include "arduino/arduino.ceu"
+#include "arduino/avr.ceu"
 
 input  bool PIN_02;
 output bool PIN_13;

@@ -1,15 +1,13 @@
-native/pre do
-    ##define CEU_FEATURES_ISR_SLEEP
-end
-
-#include "arduino/isr/timer.ceu"
+#include "wclock/timer1.ceu"
 #include "adc.ceu"
 
 output on/off PIN_13;
 
+spawn Adc();
+
 loop do
     await 1s;
-    var int value = await Adc(_A0);
+    var int value = await Adc_Conversion(_A0);
     if value > 1000 then
         emit PIN_13(on);
     else

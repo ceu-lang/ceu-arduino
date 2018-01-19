@@ -1,0 +1,37 @@
+/*
+ * BUTTON => LED (ISR)
+ * BUTTON => LED (ISR)
+ * Same as `pin-02-raw.ceu` with additional PIN_03/PIN_12.
+ */
+
+#include "arduino/arduino.ceu"
+#include "arduino/avr.ceu"
+
+input  on/off PIN_02;
+output on/off PIN_13;
+
+input  on/off PIN_03;
+output on/off PIN_12;
+
+emit PIN_13(off);
+emit PIN_12(off);
+
+spawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do
+    emit PIN_02(_digitalRead(2) as on/off);
+end
+
+spawn async/isr [_digitalPinToInterrupt(3),_CHANGE] do
+    emit PIN_03(_digitalRead(3) as on/off);
+end
+
+par do
+    var on/off v;
+    every v in PIN_02 do
+        emit PIN_13(v);
+    end
+with
+    var on/off v;
+    every v in PIN_03 do
+        emit PIN_12(v);
+    end
+end

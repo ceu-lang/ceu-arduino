@@ -1,12 +1,12 @@
 /* TODO: only working with original Arduino */
 
 native/pre do
-    //##define CEU_FEATURES_ISR_SLEEP
+    ##define CEU_FEATURES_ISR_SLEEP_MIN
 end
 
 #include "arduino/arduino.ceu"
 #include "arduino/avr.ceu"
-#include "arduino/isr/timer.ceu"
+#include "wclock/timer1.ceu"
 
 native/pure _BAUD_USART;
 native/pre do
@@ -18,7 +18,7 @@ native/pre do
 end
 
 input byte USART_RX;
-input void USART_TX;
+input none USART_TX;
 
 spawn async/isr [_USART_RX_vect_num,0] do
     var byte c = _UDR0;
@@ -40,6 +40,6 @@ end
 
 loop do
     var byte c = await USART_RX;
-    _ceu_dbg_assert(_UCSR0A & (1<<_UDRE0));
+    _ceu_assert(_UCSR0A & (1<<_UDRE0), "bug found");
     _UDR0 = c;
 end

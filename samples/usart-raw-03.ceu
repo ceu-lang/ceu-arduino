@@ -1,7 +1,5 @@
 /* TODO: only working with original Arduino */
 
-// Needs to remove "ISR(UART0_RXC_vect)" from "arduino/hardware/arduino/avr/cores/arduino/HardwareSerial0.cpp"
-
 native/pre do
     ##define CEU_FEATURES_ISR_SLEEP_MIN
 end

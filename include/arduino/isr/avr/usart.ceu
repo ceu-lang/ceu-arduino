@@ -97,6 +97,15 @@ end
 code/await Usart_TX (var&[] byte buf) -> none
 do
     lock outer.ceu_usart_lock do
+        outer.ceu_usart_rx_tx = outer.ceu_usart_rx_tx + 1;
+        {ceu_pm_set(CEU_PM_USART, 1);}
+        do finalize with
+            outer.ceu_usart_rx_tx = outer.ceu_usart_rx_tx - 1;
+            if outer.ceu_usart_rx_tx == 0 then
+                {ceu_pm_set(CEU_PM_USART, 0);}
+            end
+        end
+
         var usize i;
         loop i in [0->$buf[ do
             _ceu_assert(_UCSR0A & (1<<_UDRE0), "bug found");
@@ -115,9 +124,15 @@ end
 
 code/await Usart_RX (var&[] byte buf, var usize? n) -> none
 do
-#if 0
-    buf = [].."alo\n";
-#else
+    outer.ceu_usart_rx_tx = outer.ceu_usart_rx_tx + 1;
+    {ceu_pm_set(CEU_PM_USART, 1);}
+    do finalize with
+        outer.ceu_usart_rx_tx = outer.ceu_usart_rx_tx - 1;
+        if outer.ceu_usart_rx_tx == 0 then
+            {ceu_pm_set(CEU_PM_USART, 0);}
+        end
+    end
+
     loop do
         atomic do
             buf = buf..outer.ceu_usart_rx_buf;
@@ -129,5 +144,4 @@ do
 
         await USART_RX;
     end
-#endif
 end

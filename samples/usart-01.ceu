@@ -1,9 +1,5 @@
 /* TODO: only working with original Arduino */
 
-native/pre do
-    ##define CEU_FEATURES_ISR_SLEEP_MIN
-end
-
 #include "pin-02.ceu"
 #include "wclock/timer1.ceu"
 #include "usart.ceu"

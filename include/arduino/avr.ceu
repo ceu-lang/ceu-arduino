@@ -47,24 +47,52 @@ native/pre do
 ##ifdef CEU_FEATURES_ISR_SLEEP
     enum {
         CEU_PM_ADC = 0,
+        CEU_PM_USART,
         CEU_PM_TIMER1,
         CEU_PM_WDT,
         CEU_PM_N,
     };
 
+##define CEU_PM_DEBUG
+
     void ceu_pm_init (void) {
         // ok
+##ifdef CEU_PM_DEBUG
+        pinMode(11, OUTPUT);
+        pinMode(12, OUTPUT);
+##endif
     }
 
     void ceu_pm_sleep (void)
     {
-        if (CEU_PM_STATE(CEU_PM_TIMER1))
+##ifdef CEU_FEATURES_ISR_SLEEP_MIN
+
+##ifdef CEU_PM_DEBUG
+            digitalWrite(11, 1);
+##endif
+            LowPower.idle(SLEEP_FOREVER, ADC_ON, TIMER2_ON, TIMER1_ON,
+                          TIMER0_ON, SPI_ON, USART0_ON, TWI_ON);
+##ifdef CEU_PM_DEBUG
+            digitalWrite(11, 0);
+##endif
+
+##else
+
+        if (CEU_PM_STATE(CEU_PM_TIMER1) || CEU_PM_STATE(CEU_PM_USART))
         {
+##ifdef CEU_PM_DEBUG
+            digitalWrite(11, 1);
+##endif
             LowPower.idle(SLEEP_FOREVER,
                           CEU_PM_STATE(CEU_PM_ADC),
                           TIMER2_OFF,
                           CEU_PM_STATE(CEU_PM_TIMER1),
-                          TIMER0_OFF, SPI_OFF, USART0_OFF, TWI_OFF);
+                          TIMER0_OFF, SPI_OFF,
+                          CEU_PM_STATE(CEU_PM_USART),
+                          TWI_OFF);
+##ifdef CEU_PM_DEBUG
+            digitalWrite(11, 0);
+##endif
         }
         else if (CEU_PM_STATE(CEU_PM_ADC))
         {
@@ -74,8 +102,16 @@ native/pre do
         }
         else
         {
+##ifdef CEU_PM_DEBUG
+            digitalWrite(12, 1);
+##endif
             LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
+##ifdef CEU_PM_DEBUG
+            digitalWrite(12, 0);
+##endif
         }
+
+##endif
     }
 ##endif
 

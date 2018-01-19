@@ -1,12 +1,13 @@
 native/pre do
-    ##define CEU_FEATURES_ISR_SLEEP
+    ##define CEU_FEATURES_ISR_SLEEP_MIN
 end
 
-#include "arduino/isr/timer.ceu"
+#include "wclock/timer1.ceu"
 #include "adc.ceu"
 
 output on/off PIN_13;
 
+emit ADC(on);
 loop do
     await 1s;
     emit ADC_REQUEST(_A0);

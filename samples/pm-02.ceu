@@ -1,0 +1,16 @@
+#include "wclock/timer1.ceu"
+#include "adc.ceu"
+
+output on/off PIN_13;
+
+watching Adc() do
+    loop do
+        await 1s;
+        var int value = await Adc_Conversion(_A0);  // too fast, ISR before sleep
+        if value > 500 then
+            emit PIN_13(on);
+        else
+            emit PIN_13(off);
+        end
+    end
+end

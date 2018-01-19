@@ -1,63 +1,133 @@
+///////////////////////////////////////////////////////////////////////////////
+// EXTERNAL INTERFACE
+///////////////////////////////////////////////////////////////////////////////
+
+#ifndef CEU_USART_BUF_N
+#define CEU_USART_BUF_N 32
+#endif
+
+output (on/off,int?) USART;
+output byte          USART_TX_REQUEST;
+input  none          USART_TX_DONE;
+input  none          USART_RX;
+
+code/await Usart    (var int bps)                   -> NEVER;
+code/await Usart_TX (var&[] byte buf)               -> none;
+code/await Usart_RX (var&[] byte buf, var usize? n) -> none;
+
 /* TODO: only working with original Arduino */
+
+///////////////////////////////////////////////////////////////////////////////
+// INITIALIZATION
+///////////////////////////////////////////////////////////////////////////////
 
 #include "arduino/avr.ceu"
 
-native/pure _BAUD_USART;
 native/pre do
 #ifdef __AVR_ATmega644P__
-    ##define BAUD_USART(baud_human) (((F_CPU / (baud_human * 16UL))) - 1)
+    ##define CEU_USART_BAUD(bps) (((F_CPU / (bps*16UL))) - 1)
 #else
-    ##define BAUD_USART(baud_human) ((F_CPU / 4 / baud_human - 1) / 2)
+    ##define CEU_USART_BAUD(bps) ((F_CPU/4/bps - 1) / 2)
 #endif
 end
 
-input void USART_RX;
-input void USART_TX;
+var Lock ceu_usart_lock;
+var int  ceu_usart_bps   = _;
+var u8   ceu_usart_rx_tx = 0;
 
-data IUsart with
-    var   Lock l;
-    event void ok_rx;
-end
+var[CEU_USART_BUF_N*] byte ceu_usart_rx_buf;
+var[CEU_USART_BUF_N*] byte ceu_usart_tx_buf;
 
-code/await Usart (var int speed, var&[] byte rx)
-                    -> (var IUsart usart)
-                        -> FOREVER
-do
-    usart = _;
-    spawn async/isr [_USART_RX_vect_num,0] do
-        var byte c = _UDR0;
-        outer.rx = outer.rx..[c];
-        emit USART_RX;
-    end
+///////////////////////////////////////////////////////////////////////////////
+// INPUT / OUTPUT
+///////////////////////////////////////////////////////////////////////////////
 
-    spawn async/isr [_USART_TX_vect_num,0] do
-        emit USART_TX;
-    end
+output (on/off v, int? bps) USART do
+    if v then
+        outer.ceu_usart_bps = bps!;
+        {
+            UBRR0H = (CEU_USART_BAUD(@bps!)>>8);  // set baud rate
+            UBRR0L = (CEU_USART_BAUD(@bps!));
+            UCSR0C = (1<<USBS0) | (3<<UCSZ00);      // 8data, 2stop-bit
 
-    _UBRR0H = (_BAUD_USART(speed)>>8) as byte;  // set baud rate
-    _UBRR0L = (_BAUD_USART(speed)) as byte;
-    _UCSR0C = (1<<_USBS0)|(3<<_UCSZ00);         // 8data, 2stop-bit
-    _UCSR0B = (1<<_RXEN0)  | (1<<_TXEN0)        // enable RX/TX
-            | (1<<_RXCIE0) | (1<<_TXCIE0);      // enable interrupts
-    do finalize with
-        _UCSR0B = 0;                            // disable TX/RX & interrups
-    end
-
-    every USART_RX do
-        emit usart.ok_rx;
+            UCSR0B = (1<<RXEN0)  | (1<<TXEN0)       // enable RX/TX
+                   | (1<<RXCIE0) | (1<<TXCIE0);     // enable interrupts
+        }
+    else
+        {
+            UCSR0B = 0;                             // disable TX/RX & interrups
+        }
     end
 end
 
-// TODO: move to inside Usart
-
-code/await Usart_TX (var& IUsart usart, var&[] byte buf) -> void
-do
-    lock usart.l do
-        var usize i;
-        loop i in [0->$buf[ do
-            _ceu_dbg_assert(_UCSR0A & (1<<_UDRE0));
-            _UDR0 = buf[i];
-            await USART_TX;
+output (byte v) USART_TX_REQUEST do
+    atomic do
+        outer.ceu_usart_tx_buf = outer.ceu_usart_tx_buf .. [v];
+        if $outer.ceu_usart_tx_buf == 1 then
+            _UDR0 = v;
         end
     end
+end
+
+spawn async/isr [_USART_RX_vect_num,0] do
+    outer.ceu_usart_rx_buf = outer.ceu_usart_rx_buf .. [_UDR0];
+    emit USART_RX;
+end
+
+spawn async/isr [_USART_TX_vect_num,0] do
+    $outer.ceu_usart_tx_buf = $outer.ceu_usart_tx_buf - 1;
+    if $outer.ceu_usart_tx_buf > 0 then
+        _UDR0 = outer.ceu_usart_tx_buf[0];
+    end
+    emit USART_TX_DONE;
+end
+
+///////////////////////////////////////////////////////////////////////////////
+// ABSTRACTIONS
+///////////////////////////////////////////////////////////////////////////////
+
+code/await Usart (var int bps) -> NEVER do
+    emit USART(on, bps);
+    do finalize with
+        emit USART(off, _);
+    end
+    await FOREVER;
+end
+
+code/await Usart_TX (var&[] byte buf) -> none
+do
+    lock outer.ceu_usart_lock do
+        var usize i;
+        loop i in [0->$buf[ do
+            _ceu_assert(_UCSR0A & (1<<_UDRE0), "bug found");
+            emit USART_TX_REQUEST(buf[i]);
+            await USART_TX_DONE;
+        end
+        loop do
+            if $outer.ceu_usart_tx_buf == 0 then
+                break;
+            end
+            await USART_TX_DONE;
+            {digitalWrite(13, !digitalRead(13));}
+        end
+    end
+end
+
+code/await Usart_RX (var&[] byte buf, var usize? n) -> none
+do
+#if 0
+    buf = [].."alo\n";
+#else
+    loop do
+        atomic do
+            buf = buf..outer.ceu_usart_rx_buf;
+            outer.ceu_usart_rx_buf = [];
+        end
+        if (n? and $buf>=n!) or ((not n?) and $buf>0) then
+            break;
+        end
+
+        await USART_RX;
+    end
+#endif
 end

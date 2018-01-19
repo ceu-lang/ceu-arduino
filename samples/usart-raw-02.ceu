@@ -6,7 +6,7 @@ end
 
 #include "arduino/arduino.ceu"
 #include "arduino/avr.ceu"
-#include "wclock/timer1.ceu"
+#include "wclock.ceu"
 
 native/pure _BAUD_USART;
 native/pre do

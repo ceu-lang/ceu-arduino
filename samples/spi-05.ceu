@@ -2,7 +2,7 @@ native/pre do
     ##define CEU_FEATURES_ISR_SLEEP_MIN
 end
 
-#include "wclock/timer1.ceu"
+#include "wclock.ceu"
 #include "spi.ceu"
 
 output on/off PIN_09;

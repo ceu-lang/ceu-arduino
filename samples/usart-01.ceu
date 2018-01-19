@@ -1,7 +1,7 @@
 /* TODO: only working with original Arduino */
 
 #include "pin-02.ceu"
-#include "wclock/timer1.ceu"
+#include "wclock.ceu"
 #include "usart.ceu"
 
 output bool PIN_13;

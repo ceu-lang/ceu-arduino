@@ -1,4 +1,4 @@
-#include "wclock/timer1.ceu"
+#include "wclock.ceu"
 #include "spi.ceu"
 
 output on/off PIN_09;

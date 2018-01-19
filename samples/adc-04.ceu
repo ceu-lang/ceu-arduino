@@ -1,4 +1,4 @@
-#include "wclock/timer1.ceu"
+#include "wclock.ceu"
 #include "adc.ceu"
 
 _Serial.begin(9600);

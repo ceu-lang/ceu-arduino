@@ -1,3 +1,5 @@
+//#define CEU_PIN_02_MODE _LOW
+
 #include "pin-02.ceu"
 
 output bool PIN_13;

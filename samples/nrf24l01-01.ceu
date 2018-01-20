@@ -1,0 +1,20 @@
+#include "arduino/arduino.ceu"
+#include "wclock.ceu"
+#include "usart.ceu"
+#include "spi.ceu"
+#include "nrf24l01.ceu"
+
+spawn Usart(9600);
+spawn Spi();
+spawn Nrf24l01(9, 10);
+
+var int i;
+loop i do
+    await Nrf24l01_TX(i);
+    watching 1s do
+        var byte v = await Nrf24l01_RX();
+        var[20] byte str = [v];
+        await Usart_TX(&str);
+        await FOREVER;
+    end
+end

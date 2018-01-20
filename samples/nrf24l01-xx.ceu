@@ -1,0 +1,57 @@
+#include "arduino/arduino.ceu"
+#include "arduino/avr.ceu"
+#include "usart.ceu"
+#include "wclock.ceu"
+
+native _radio;
+native/pos do
+    ##include <SPI.h>
+    ##include <nRF24L01.h>
+    ##include <RF24.h>
+
+    const uint64_t pipe =  0xAABBCCDDEELL;
+    RF24 radio(8,7);
+end
+
+spawn Usart(9600);
+{ 
+    radio.begin();
+    //radio.disableCRC();
+    radio.setPayloadSize(1);
+    radio.setAutoAck(false);              // true by default
+    radio.setDataRate(RF24_2MBPS);
+    radio.openReadingPipe(1,pipe);
+    radio.startListening();
+    radio.openWritingPipe(pipe);
+}
+
+par do
+    loop do
+        var byte v = _;
+        await async (v) do
+            loop do
+                if {radio.available()} as bool then
+                    { radio.read(&@v, 1); }
+                    break;
+                end
+            end
+        end
+        var[10] byte str = [{'>'},{' '},{'0'}+v%10,{'\n'},{'\r'}];
+        await Usart_TX(&str);
+    end
+with
+    var int i;
+    loop i do
+        par/and do
+            await 1s;
+        with
+            var[10] byte str = [{'0'}+i%10,{' '},{'>'},{'\n'},{'\r'}];
+            await Usart_TX(&str);
+            {
+                radio.stopListening();
+                radio.write(&@i, 1);
+                radio.startListening();
+            }
+        end
+    end
+end

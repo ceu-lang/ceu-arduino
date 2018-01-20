@@ -74,8 +74,16 @@ native/pre do
             digitalWrite(11, 1);
             digitalWrite(12, 1);
 ##endif
-            LowPower.idle(SLEEP_FOREVER, ADC_ON, TIMER2_ON, TIMER1_ON,
-                          TIMER0_ON, SPI_ON, USART0_ON, TWI_ON);
+            LowPower.idle(SLEEP_FOREVER, ADC_ON,
+##if defined (__AVR_ATmega2560__) || defined (__AVR_ATmega1280__)
+                          TIMER5_ON, TIMER4_ON, TIMER3_ON,
+##endif
+                          TIMER2_ON, TIMER1_ON,
+                          TIMER0_ON, SPI_ON,
+##if defined (__AVR_ATmega2560__) || defined (__AVR_ATmega1280__)
+                          USART3_ON, USART2_ON, USART1_ON,
+##endif
+                          USART0_ON, TWI_ON);
 ##ifdef CEU_PM_DEBUG
             digitalWrite(10, 0);
             digitalWrite(11, 0);
@@ -91,10 +99,16 @@ native/pre do
 ##endif
             LowPower.idle(SLEEP_FOREVER,
                           CEU_PM_STATE(CEU_PM_ADC),
+##if defined (__AVR_ATmega2560__) || defined (__AVR_ATmega1280__)
+                          TIMER5_OFF, TIMER4_OFF, TIMER3_OFF,
+##endif
                           TIMER2_OFF,
                           CEU_PM_STATE(CEU_PM_TIMER1),
                           TIMER0_OFF,
                           CEU_PM_STATE(CEU_PM_SPI),
+##if defined (__AVR_ATmega2560__) || defined (__AVR_ATmega1280__)
+                          USART3_OFF, USART2_OFF, USART1_OFF,
+##endif
                           CEU_PM_STATE(CEU_PM_USART),
                           TWI_OFF);
 ##ifdef CEU_PM_DEBUG

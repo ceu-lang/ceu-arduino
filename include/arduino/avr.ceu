@@ -56,7 +56,7 @@ native/pre do
         CEU_PM_N,
     };
 
-##define CEU_PM_DEBUG
+//##define CEU_PM_DEBUG
 
     void ceu_pm_init (void) {
         // ok

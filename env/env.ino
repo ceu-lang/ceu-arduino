@@ -47,9 +47,6 @@
 
     static tceu_isr isrs[_VECTOR_SIZE];
     #include "isrs.c.h"
-    #ifdef CEU_FEATURES_ISR_SLEEP
-        //#include "pm.c.h"
-    #endif
 #else
     #ifdef CEU_FEATURES_ISR_SLEEP
         #error "Invalid option!"

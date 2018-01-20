@@ -5,6 +5,7 @@ native/const
     _A0, _A1, _A2, _A3, _A4, _A5, _A6, _A7,
     _CHANGE,
     _DEFAULT,
+    _FALLING,
     _HIGH,
     _LOW,
     _INPUT,

@@ -36,8 +36,8 @@
     #include "wiring_private.h"
 
     #ifndef _VECTOR_SIZE
-        #ifdef ARDUINO_ARCH_AVR
-            #define _VECTOR_SIZE 26     /* defined as _VECTORS_SIZE for ATmega328p in "iom328p.h" */
+        #ifdef _VECTORS_SIZE
+            #define _VECTOR_SIZE (_VECTORS_SIZE/4)
         #elif ARDUINO_ARCH_SAMD
             #define _VECTOR_SIZE PERIPH_COUNT_IRQn
         #else

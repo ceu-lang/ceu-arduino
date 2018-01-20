@@ -52,11 +52,29 @@ ISR(USART_RX_vect)
 }
 #endif
 
+#ifdef CEU_ISR__USART0_RX_vect_num
+ISR(USART0_RX_vect)
+{
+    if (isrs[USART0_RX_vect_num].fun != NULL) {
+        isrs[USART0_RX_vect_num].fun(isrs[USART0_RX_vect_num].mem);
+    }
+}
+#endif
+
 #ifdef CEU_ISR__USART_TX_vect_num
 ISR(USART_TX_vect)
 {
     if (isrs[USART_TX_vect_num].fun != NULL) {
         isrs[USART_TX_vect_num].fun(isrs[USART_TX_vect_num].mem);
+    }
+}
+#endif
+
+#ifdef CEU_ISR__USART0_TX_vect_num
+ISR(USART0_TX_vect)
+{
+    if (isrs[USART0_TX_vect_num].fun != NULL) {
+        isrs[USART0_TX_vect_num].fun(isrs[USART0_TX_vect_num].mem);
     }
 }
 #endif

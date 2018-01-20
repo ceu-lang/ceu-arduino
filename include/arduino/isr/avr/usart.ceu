@@ -46,6 +46,8 @@ output (on/off v, int? bps) USART do
     if v then
         outer.ceu_usart_bps = bps!;
         {
+            UCSR0A = 1 << U2X0;
+
             UBRR0H = (CEU_USART_BAUD(@bps!)>>8);  // set baud rate
             UBRR0L = (CEU_USART_BAUD(@bps!));
             UCSR0C = (1<<USBS0) | (3<<UCSZ00);      // 8data, 2stop-bit
@@ -69,12 +71,22 @@ output (byte v) USART_TX_REQUEST do
     end
 end
 
-spawn async/isr [_USART_RX_vect_num,0] do
+#ifdef ARDUINO_BOARD_MEGA
+spawn async/isr [_USART0_RX_vect_num,0]
+#else
+spawn async/isr [_USART_RX_vect_num,0]
+#endif
+do
     outer.ceu_usart_rx_buf = outer.ceu_usart_rx_buf .. [_UDR0];
     emit USART_RX;
 end
 
-spawn async/isr [_USART_TX_vect_num,0] do
+#ifdef ARDUINO_BOARD_MEGA
+spawn async/isr [_USART0_TX_vect_num,0]
+#else
+spawn async/isr [_USART_TX_vect_num,0]
+#endif
+do
     $outer.ceu_usart_tx_buf = $outer.ceu_usart_tx_buf - 1;
     if $outer.ceu_usart_tx_buf > 0 then
         _UDR0 = outer.ceu_usart_tx_buf[0];

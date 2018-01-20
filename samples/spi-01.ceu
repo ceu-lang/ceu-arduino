@@ -15,6 +15,7 @@ watching Spi() do
         watching SPI_Transaction(1400000, SPI_MSBFIRST, SPI_MODE2) do
             var u8 received_data = await SPI_Transfer(_);
             _Serial.println("Data is:");_Serial.println(received_data,{BIN});
+            {_DELAY(100);}
         end
     end
 end

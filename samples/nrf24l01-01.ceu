@@ -6,15 +6,22 @@
 
 spawn Usart(9600);
 spawn Spi();
-spawn Nrf24l01(9, 10);
+spawn Nrf24l01(8,7);
+
+output on/off PIN_13;
 
 var int i;
 loop i do
+    emit PIN_13((i % 2) as on/off);
     await Nrf24l01_TX(i);
+#if 0
     watching 1s do
         var byte v = await Nrf24l01_RX();
-        var[20] byte str = [v];
+        var[20] byte str = [{'0'}+v, {'\n'}, {'\r'}];
         await Usart_TX(&str);
         await FOREVER;
     end
+#else
+    await 1s;
+#endif
 end

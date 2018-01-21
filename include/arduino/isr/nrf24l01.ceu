@@ -146,34 +146,39 @@ code/await Nrf24l01 (var int ce, var int csn) -> NEVER do
         ceu_nrf24l01.setDataRate(RF24_2MBPS);
         ceu_nrf24l01.openReadingPipe(1, ceu_nrf24l01_pipe);
         ceu_nrf24l01.openWritingPipe(ceu_nrf24l01_pipe);
-        ceu_nrf24l01.write_register(CONFIG, ceu_nrf24l01.read_register(CONFIG) | _BV(MASK_TX_DS) | _BV(MASK_MAX_RT)); // disables interrupts other than receive payload
+        //ceu_nrf24l01.write_register(CONFIG, ceu_nrf24l01.read_register(CONFIG) | _BV(MASK_TX_DS) | _BV(MASK_MAX_RT)); // disables interrupts other than receive payload
     }
     await FOREVER;
 end
 
 code/await Nrf24l01_RX (none) -> byte do
-    {
-        ceu_nrf24l01.startListening();
-    }
+    watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0) do
+        var byte cfg = await Nrf24l01_Read(CONFIG);
+        await Nrf24l01_Write(CONFIG, {(@cfg) | _BV(PRIM_RX)});
+        await Nrf24l01_Write(STATUS, {_BV(RX_DR) | _BV(TX_DS) | _BV(MAX_RT)});
+    end
+
+    _digitalWrite(outer.ceu_nrf24l01_ce, 1);
     do finalize with
-        { ceu_nrf24l01.stopListening(); }
+        _digitalWrite(outer.ceu_nrf24l01_ce, 0);
     end
 
     await NRF24L01_RX;
+    //await Nrf24l01_Write(STATUS, {_BV(RX_DR)});     // clears interrupt bit
 
-    await Nrf24l01_Write(STATUS, {_BV(RX_DR)});     // clears interrupt bit
-    var byte v = _;
-    { ceu_nrf24l01.read(&@v, 1); }
-    escape v;
+    watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0) do
+        _digitalWrite(outer.ceu_nrf24l01_csn, 0);
+        await SPI_Transfer(R_RX_PAYLOAD);
+        var byte v = await SPI_Transfer(0xFF);
+        _digitalWrite(outer.ceu_nrf24l01_csn, 1);
+        escape v;
+    end
 end
 
 code/await Nrf24l01_TX (var byte v) -> none do
     watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0) do
-#if 1   // only needed if possibly power down?
         var byte cfg = await Nrf24l01_Read(CONFIG);
-        await Nrf24l01_Write(CONFIG, {(@(cfg) | _BV(PWR_UP)) & ~_BV(PRIM_RX)});
-        _delayMicroseconds(150);
-#endif
+        await Nrf24l01_Write(CONFIG, {@(cfg) & ~_BV(PRIM_RX)});
 
         _digitalWrite(outer.ceu_nrf24l01_csn, 0);
         await SPI_Transfer(W_TX_PAYLOAD);
@@ -183,5 +188,7 @@ code/await Nrf24l01_TX (var byte v) -> none do
         _digitalWrite(outer.ceu_nrf24l01_ce, 1);
         _delayMicroseconds(15);
         _digitalWrite(outer.ceu_nrf24l01_ce, 0);
+
+        await Nrf24l01_Write(CONFIG, cfg);
     end
 end

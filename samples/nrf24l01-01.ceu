@@ -14,14 +14,10 @@ var int i;
 loop i do
     emit PIN_13((i % 2) as on/off);
     await Nrf24l01_TX(i);
-#if 0
     watching 1s do
         var byte v = await Nrf24l01_RX();
-        var[20] byte str = [{'0'}+v, {'\n'}, {'\r'}];
+        var[20] byte str = [{'0'}+(v%10), {'\n'}, {'\r'}];
         await Usart_TX(&str);
         await FOREVER;
     end
-#else
-    await 1s;
-#endif
 end

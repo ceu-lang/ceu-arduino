@@ -118,14 +118,18 @@ var int ceu_nrf24l01_ce  = _;
 var int ceu_nrf24l01_csn = _;
 
 code/await Nrf24l01_Write (var byte reg, var byte value) -> byte do
+    _digitalWrite(outer.ceu_nrf24l01_csn, 0);
     var byte status = await SPI_Transfer(W_REGISTER | (REGISTER_MASK & reg));
     await SPI_Transfer(value);
+    _digitalWrite(outer.ceu_nrf24l01_csn, 1);
     escape status;
 end
 
 code/await Nrf24l01_Read (var byte reg) -> byte do
+    _digitalWrite(outer.ceu_nrf24l01_csn, 0);
     await SPI_Transfer(R_REGISTER | (REGISTER_MASK & reg));
     var byte v = await SPI_Transfer(0xFF);
+    _digitalWrite(outer.ceu_nrf24l01_csn, 1);
     escape v;
 end
 
@@ -165,19 +169,16 @@ end
 
 code/await Nrf24l01_TX (var byte v) -> none do
     watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0) do
-        //var byte cfg = await Nrf24l01_Read(CONFIG);
-        //await Nrf24l01_Write(CONFIG, {(@(cfg) | _BV(PWR_UP)) & ~_BV(PRIM_RX)});
+#if 1   // only needed if possibly power down?
+        var byte cfg = await Nrf24l01_Read(CONFIG);
+        await Nrf24l01_Write(CONFIG, {(@(cfg) | _BV(PWR_UP)) & ~_BV(PRIM_RX)});
+        _delayMicroseconds(150);
+#endif
 
-        //_delayMicroseconds(150);
-
-#if 1
         _digitalWrite(outer.ceu_nrf24l01_csn, 0);
         await SPI_Transfer(W_TX_PAYLOAD);
         await SPI_Transfer(v);
         _digitalWrite(outer.ceu_nrf24l01_csn, 1);
-#else
-        {ceu_nrf24l01.write_payload(&@(v), 1);}
-#endif
 
         _digitalWrite(outer.ceu_nrf24l01_ce, 1);
         _delayMicroseconds(15);

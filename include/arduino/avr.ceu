@@ -46,7 +46,7 @@ native/pre do
     ##include <avr/io.h>
     ##include "LowPower.h"
 
-##ifdef CEU_FEATURES_ISR_SLEEP
+#ifdef CEU_FEATURES_ISR_SLEEP
     enum {
         CEU_PM_ADC = 0,
         CEU_PM_SPI,
@@ -56,26 +56,26 @@ native/pre do
         CEU_PM_N,
     };
 
-//##define CEU_PM_DEBUG
+//#define CEU_PM_DEBUG
 
     void ceu_pm_init (void) {
         // ok
-##ifdef CEU_PM_DEBUG
+#ifdef CEU_PM_DEBUG
         pinMode(10, OUTPUT);
         pinMode(11, OUTPUT);
         pinMode(12, OUTPUT);
-##endif
+#endif
     }
 
     void ceu_pm_sleep (void)
     {
-##ifdef CEU_FEATURES_ISR_SLEEP_MIN
+#ifdef CEU_FEATURES_ISR_SLEEP_MIN
 
-##ifdef CEU_PM_DEBUG
+#ifdef CEU_PM_DEBUG
             digitalWrite(10, 1);
             digitalWrite(11, 1);
             digitalWrite(12, 1);
-##endif
+#endif
             LowPower.idle(SLEEP_FOREVER, ADC_ON,
 ##if defined (__AVR_ATmega2560__) || defined (__AVR_ATmega1280__)
                           TIMER5_ON, TIMER4_ON, TIMER3_ON,
@@ -86,19 +86,19 @@ native/pre do
                           USART3_ON, USART2_ON, USART1_ON,
 ##endif
                           USART0_ON, TWI_ON);
-##ifdef CEU_PM_DEBUG
+#ifdef CEU_PM_DEBUG
             digitalWrite(10, 0);
             digitalWrite(11, 0);
             digitalWrite(12, 0);
-##endif
+#endif
 
-##else
+#else
 
         if (CEU_PM_STATE(CEU_PM_TIMER1) || CEU_PM_STATE(CEU_PM_USART) || CEU_PM_STATE(CEU_PM_SPI))
         {
-##ifdef CEU_PM_DEBUG
+#ifdef CEU_PM_DEBUG
             digitalWrite(10, 1);
-##endif
+#endif
             LowPower.idle(SLEEP_FOREVER,
                           CEU_PM_STATE(CEU_PM_ADC),
 ##if defined (__AVR_ATmega2560__) || defined (__AVR_ATmega1280__)
@@ -113,37 +113,37 @@ native/pre do
 ##endif
                           CEU_PM_STATE(CEU_PM_USART),
                           TWI_OFF);
-##ifdef CEU_PM_DEBUG
+#ifdef CEU_PM_DEBUG
             digitalWrite(10, 0);
-##endif
+#endif
         }
         else if (CEU_PM_STATE(CEU_PM_ADC))
         {
-##ifdef CEU_PM_DEBUG
+#ifdef CEU_PM_DEBUG
             digitalWrite(11, 1);
-##endif
+#endif
             LowPower.adcNoiseReduction(SLEEP_FOREVER,
                                        CEU_PM_STATE(CEU_PM_ADC),
                                        TIMER2_OFF);
-##ifdef CEU_PM_DEBUG
+#ifdef CEU_PM_DEBUG
             _DELAY(50);
             digitalWrite(11, 0);
-##endif
+#endif
         }
         else
         {
-##ifdef CEU_PM_DEBUG
+#ifdef CEU_PM_DEBUG
             digitalWrite(12, 1);
-##endif
+#endif
             LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
-##ifdef CEU_PM_DEBUG
+#ifdef CEU_PM_DEBUG
             digitalWrite(12, 0);
-##endif
+#endif
         }
 
-##endif
+#endif
     }
-##endif
+#endif
 
 end
 

@@ -28,15 +28,15 @@ native/pos do
                     if (ceu_wclock_source == CEU_WCLOCK_TIMER1) {
                         ceu_timer1_request(CEU_WCLOCK_INACTIVE, 0);
                         ceu_wclock_is_active[CEU_WCLOCK_TIMER1] = 0;
-##ifdef CEU_FEATURES_ISR_SLEEP
+#ifdef CEU_FEATURES_ISR_SLEEP
                         ceu_pm_set(CEU_PM_TIMER1, 0);
-##endif
+#endif
                     } else if (ceu_wclock_source == CEU_WCLOCK_WDT) {
                         ceu_wdt_request(CEU_WCLOCK_INACTIVE, 0);
                         ceu_wclock_is_active[CEU_WCLOCK_WDT] = 0;
-##ifdef CEU_FEATURES_ISR_SLEEP
+#ifdef CEU_FEATURES_ISR_SLEEP
                         ceu_pm_set(CEU_PM_WDT, 0);
-##endif
+#endif
                     }
                     ceu_wclock_source = CEU_WCLOCK_NONE;
                 }
@@ -48,16 +48,16 @@ native/pos do
 //Serial.print("min/timer1 "); Serial.println(us); _DELAY(50);
                         ceu_timer1_request(us, ceu_wclock_is_active[CEU_WCLOCK_TIMER1]);
                         ceu_wclock_is_active[CEU_WCLOCK_TIMER1] = 1;
-##ifdef CEU_FEATURES_ISR_SLEEP
+#ifdef CEU_FEATURES_ISR_SLEEP
                         ceu_pm_set(CEU_PM_TIMER1, 1);
-##endif
+#endif
                     } else if (!ceu_wclock_is_active[CEU_WCLOCK_WDT]) {
 //Serial.print("min/wdt "); Serial.println(us); _DELAY(50);
                         ceu_wdt_request(us, ceu_wclock_is_active[CEU_WCLOCK_WDT]);
                         ceu_wclock_is_active[CEU_WCLOCK_WDT] = 1;
-##ifdef CEU_FEATURES_ISR_SLEEP
+#ifdef CEU_FEATURES_ISR_SLEEP
                         ceu_pm_set(CEU_PM_WDT, 1);
-##endif
+#endif
                     }
                 }
                 return 1;

@@ -40,9 +40,9 @@ native/pos do
             case CEU_CALLBACK_WCLOCK_MIN:
                 ceu_wclock_request(p1.num, ceu_wclock_is_active);
                 ceu_wclock_is_active = (p1.num != CEU_WCLOCK_INACTIVE);
-##ifdef CEU_FEATURES_ISR_SLEEP
+#ifdef CEU_FEATURES_ISR_SLEEP
                 ceu_pm_set(CEU_PM_WCLOCK, ceu_wclock_is_active);
-##endif
+#endif
                 return 1;
             case CEU_CALLBACK_WCLOCK_DT:
                 if (ceu_wclock_is_active) {

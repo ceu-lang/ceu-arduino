@@ -32,8 +32,8 @@ native/pre do
 end
 
 var Lock ceu_usart_lock;
-var int  ceu_usart_bps   = _;
-var u8   ceu_usart_rx_tx = 0;
+var int  ceu_usart_bps     = _;
+var u8   ceu_usart_pm_refs = 0;
 
 var[CEU_USART_BUF_N*] byte ceu_usart_rx_buf;
 var[CEU_USART_BUF_N*] byte ceu_usart_tx_buf;
@@ -109,14 +109,16 @@ end
 code/await Usart_TX (var&[] byte buf) -> none
 do
     lock outer.ceu_usart_lock do
-        outer.ceu_usart_rx_tx = outer.ceu_usart_rx_tx + 1;
+#ifdef CEU_FEATURES_ISR_SLEEP
+        outer.ceu_usart_pm_refs = outer.ceu_usart_pm_refs + 1;
         {ceu_pm_set(CEU_PM_USART, 1);}
         do finalize with
-            outer.ceu_usart_rx_tx = outer.ceu_usart_rx_tx - 1;
-            if outer.ceu_usart_rx_tx == 0 then
+            outer.ceu_usart_pm_refs = outer.ceu_usart_pm_refs - 1;
+            if outer.ceu_usart_pm_refs == 0 then
                 {ceu_pm_set(CEU_PM_USART, 0);}
             end
         end
+#endif
 
         var usize i;
         loop i in [0->$buf[ do
@@ -136,14 +138,16 @@ end
 
 code/await Usart_RX (var&[] byte buf, var usize? n) -> none
 do
-    outer.ceu_usart_rx_tx = outer.ceu_usart_rx_tx + 1;
+#ifdef CEU_FEATURES_ISR_SLEEP
+    outer.ceu_usart_pm_refs = outer.ceu_usart_pm_refs + 1;
     {ceu_pm_set(CEU_PM_USART, 1);}
     do finalize with
-        outer.ceu_usart_rx_tx = outer.ceu_usart_rx_tx - 1;
-        if outer.ceu_usart_rx_tx == 0 then
+        outer.ceu_usart_pm_refs = outer.ceu_usart_pm_refs - 1;
+        if outer.ceu_usart_pm_refs == 0 then
             {ceu_pm_set(CEU_PM_USART, 0);}
         end
     end
+#endif
 
     loop do
         atomic do

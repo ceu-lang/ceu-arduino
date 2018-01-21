@@ -1,6 +1,4 @@
-native/pre do
-    ##define CEU_FEATURES_ISR_SLEEP_MIN
-end
+#define CEU_FEATURES_ISR_SLEEP_MIN
 
 #include "arduino/arduino.ceu"
 #include "arduino/avr.ceu"

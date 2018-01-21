@@ -7,12 +7,12 @@ output on/off SPI;
 output (u32 clock, u8 bit_order, u8 data_mode) SPI_TRANSACTION_BEGIN;
 output none                                    SPI_TRANSACTION_END;
 
-output (u8? value) SPI_TRANSFER_REQUEST;
-input  u8          SPI_TRANSFER_DONE;
+output (byte? value) SPI_TRANSFER_REQUEST;
+input  byte          SPI_TRANSFER_DONE;
 
 code/await Spi             (none)                                         -> NEVER;
 code/await SPI_Transaction (var u32 freq, var u8 byte_order, var u8 mode) -> NEVER;
-code/await SPI_Transfer    (var u8? value)                                -> u8;
+code/await SPI_Transfer    (var byte? value)                              -> byte;
 
 ///////////////////////////////////////////////////////////////////////////////
 // INITIALIZATION
@@ -116,7 +116,7 @@ output none SPI_TRANSACTION_END do
     { SREG = @outer.ceu_spi_sreg; }
 end
 
-output (u8? value) SPI_TRANSFER_REQUEST do
+output (byte? value) SPI_TRANSFER_REQUEST do
     {SPCR |= _BV(SPIE);}
     if value? then
         {SPDR = @(value!);}
@@ -144,17 +144,21 @@ end
 
 code/await SPI_Transaction (var u32 freq, var u8 byte_order, var u8 mode) -> NEVER do
     emit SPI_TRANSACTION_BEGIN(freq,byte_order,mode);
-    {ceu_pm_set(CEU_PM_SPI, 1);}
+#ifdef CEU_FEATURES_ISR_SLEEP
+    { ceu_pm_set(CEU_PM_SPI, 1); }
+#endif
 
     do finalize with
         emit SPI_TRANSACTION_END;
+#ifdef CEU_FEATURES_ISR_SLEEP
         {ceu_pm_set(CEU_PM_SPI, 0);}
+#endif
     end
     await FOREVER;
 end
 
-code/await SPI_Transfer (var u8? value) -> u8 do
+code/await SPI_Transfer (var byte? value) -> byte do
     emit SPI_TRANSFER_REQUEST(value);
-    var u8 recv = await SPI_TRANSFER_DONE;
+    var byte recv = await SPI_TRANSFER_DONE;
     escape recv;
 end

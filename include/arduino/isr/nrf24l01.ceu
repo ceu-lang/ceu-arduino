@@ -118,11 +118,15 @@ var int ceu_nrf24l01_ce  = _;
 var int ceu_nrf24l01_csn = _;
 
 code/await Nrf24l01_Write (var byte reg, var byte value) -> byte do
-    _digitalWrite(outer.ceu_nrf24l01_csn, 0);
-    var byte status = await SPI_Transfer(W_REGISTER | (REGISTER_MASK & reg));
-    await SPI_Transfer(value);
-    _digitalWrite(outer.ceu_nrf24l01_csn, 1);
-    escape status;
+    lock outer.ceu_spi_lock do
+        watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0) do
+            _digitalWrite(outer.ceu_nrf24l01_csn, 0);
+            var byte status = await SPI_Transfer(W_REGISTER | (REGISTER_MASK & reg));
+            await SPI_Transfer(value);
+            _digitalWrite(outer.ceu_nrf24l01_csn, 1);
+            escape status;
+        end
+    end
 end
 
 code/await Nrf24l01_Read (var byte reg) -> byte do
@@ -230,12 +234,8 @@ code/await Nrf24l01_RX (none) -> byte do
     _ceu_assert(_bitRead(fifo, RX_EMPTY) == 1, "PRIM_RX set outside?");
 
     watching NRF24L01_RX do
-        lock outer.ceu_spi_lock do
-            watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0) do
-                await Nrf24l01_Write(CONFIG, {CONFIG_DEFAULT|_BV(PWR_UP)|_BV(PRIM_RX)});
-                await Nrf24l01_Write(STATUS, {_BV(RX_DR) | _BV(TX_DS) | _BV(MAX_RT)});
-            end
-        end
+        await Nrf24l01_Write(CONFIG, {CONFIG_DEFAULT|_BV(PWR_UP)|_BV(PRIM_RX)});
+        await Nrf24l01_Write(STATUS, {_BV(RX_DR) | _BV(TX_DS) | _BV(MAX_RT)});
 
         _digitalWrite(outer.ceu_nrf24l01_ce, 1);
         do finalize with
@@ -260,10 +260,9 @@ code/await Nrf24l01_RX (none) -> byte do
 end
 
 code/await Nrf24l01_TX (var byte v) -> none do
+    await Nrf24l01_Write(CONFIG, {CONFIG_DEFAULT|_BV(PWR_UP)});
     lock outer.ceu_spi_lock do
         watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0) do
-            await Nrf24l01_Write(CONFIG, {CONFIG_DEFAULT|_BV(PWR_UP)});
-
             _digitalWrite(outer.ceu_nrf24l01_csn, 0);
             await SPI_Transfer(W_TX_PAYLOAD);
             await SPI_Transfer(v);

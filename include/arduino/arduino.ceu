@@ -16,6 +16,7 @@ native/const
 
 native
     _bitClear,
+    _bitRead,
     _analogRead,
     _delay,
     _delayMicroseconds,

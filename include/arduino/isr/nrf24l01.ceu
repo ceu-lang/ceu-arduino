@@ -162,20 +162,27 @@ code/await Nrf24l01_RX (none) -> byte do
     { ceu_nrf24l01.read(&@(v), 1); }
     escape v;
 #else
-    lock outer.ceu_spi_lock do
-        watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0) do
-            var byte cfg = await Nrf24l01_Read(CONFIG);
-            await Nrf24l01_Write(CONFIG, {(@cfg) | _BV(PRIM_RX)});
-            await Nrf24l01_Write(STATUS, {_BV(RX_DR) | _BV(TX_DS) | _BV(MAX_RT)});
+
+    var byte fifo = await Nrf24l01_Read(FIFO_STATUS);
+    _ceu_assert(_bitRead(fifo, RX_EMPTY) == 1, "PRIM_RX set outside?");
+
+    watching NRF24L01_RX do
+        lock outer.ceu_spi_lock do
+            watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0) do
+                var byte cfg = await Nrf24l01_Read(CONFIG);
+                await Nrf24l01_Write(CONFIG, {(@cfg) | _BV(PRIM_RX)});
+                await Nrf24l01_Write(STATUS, {_BV(RX_DR) | _BV(TX_DS) | _BV(MAX_RT)});
+            end
         end
+
+        _digitalWrite(outer.ceu_nrf24l01_ce, 1);
+        do finalize with
+            _digitalWrite(outer.ceu_nrf24l01_ce, 0);
+        end
+
+        await FOREVER;
     end
 
-    _digitalWrite(outer.ceu_nrf24l01_ce, 1);
-    do finalize with
-        _digitalWrite(outer.ceu_nrf24l01_ce, 0);
-    end
-
-    await NRF24L01_RX;
     //await Nrf24l01_Write(STATUS, {_BV(RX_DR)});     // clears interrupt bit
 
     lock outer.ceu_spi_lock do

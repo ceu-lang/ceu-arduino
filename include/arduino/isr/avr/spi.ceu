@@ -10,9 +10,9 @@ output none                                    SPI_TRANSACTION_END;
 output (byte? value) SPI_TRANSFER_REQUEST;
 input  byte          SPI_TRANSFER_DONE;
 
-code/await Spi             (none)                                         -> NEVER;
-code/await SPI_Transaction (var u32 freq, var u8 byte_order, var u8 mode) -> NEVER;
-code/await SPI_Transfer    (var byte? value)                              -> byte;
+code/await Spi             (none)            -> NEVER;
+code/await SPI_Transaction (var int csn, var u32 freq, var u8 byte_order, var u8 mode) -> NEVER;
+code/await SPI_Transfer    (var byte? value) -> byte;
 
 ///////////////////////////////////////////////////////////////////////////////
 // INITIALIZATION
@@ -142,13 +142,15 @@ code/await Spi (none) -> NEVER do
     await FOREVER;
 end
 
-code/await SPI_Transaction (var u32 freq, var u8 byte_order, var u8 mode) -> NEVER do
+code/await SPI_Transaction (var int csn, var u32 freq, var u8 byte_order, var u8 mode) -> NEVER do
     emit SPI_TRANSACTION_BEGIN(freq,byte_order,mode);
+    _digitalWrite(csn, _LOW);
 #ifdef CEU_FEATURES_ISR_SLEEP
     { ceu_pm_set(CEU_PM_SPI, 1); }
 #endif
 
     do finalize with
+        _digitalWrite(csn, _HIGH);
         emit SPI_TRANSACTION_END;
 #ifdef CEU_FEATURES_ISR_SLEEP
         {ceu_pm_set(CEU_PM_SPI, 0);}

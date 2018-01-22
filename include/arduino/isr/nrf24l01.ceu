@@ -130,11 +130,15 @@ code/await Nrf24l01_Write (var byte reg, var byte value) -> byte do
 end
 
 code/await Nrf24l01_Read (var byte reg) -> byte do
-    _digitalWrite(outer.ceu_nrf24l01_csn, 0);
-    await SPI_Transfer(R_REGISTER | (REGISTER_MASK & reg));
-    var byte v = await SPI_Transfer(0xFF);
-    _digitalWrite(outer.ceu_nrf24l01_csn, 1);
-    escape v;
+    lock outer.ceu_spi_lock do
+        watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0) do
+            _digitalWrite(outer.ceu_nrf24l01_csn, 0);
+            await SPI_Transfer(R_REGISTER | (REGISTER_MASK & reg));
+            var byte v = await SPI_Transfer(0xFF);
+            _digitalWrite(outer.ceu_nrf24l01_csn, 1);
+            escape v;
+        end
+    end
 end
 
 #if 0

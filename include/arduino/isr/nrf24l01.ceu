@@ -133,6 +133,49 @@ code/await Nrf24l01_Read (var byte reg) -> byte do
     escape v;
 end
 
+#if 0
+Tutorial 0: Everything You Need to Know about the nRF24L01 and MiRF-v2.
+Written by Brennen Ball, 2007
+
+The SPI interface uses four pins, CSN, SCK, MISO, and MOSI for data
+transmission and reception.
+The CSN (chip select not) pin is active-low, and is normally kept high.
+When this pin goes low, the 24L01 begins listening on its SPI port for data
+and processes it accordingly.
+The remaining two pins are CE and IRQ.
+CE is used to control data transmission and reception when in TX and RX modes,
+respectively.
+IRQ is the interrupt pin, and is active-low.
+There are three internal interrupts that can cause this pin to go low when they
+are active.
+Each of these bits can be masked out such that when the bit’s respective
+interrupt becomes active, the status of the IRQ pin is not changed.
+
+The second pin down is the CE pin.
+This pin is always an input with respect to the 24L01.
+This pin has different meanings depending on what mode the 24L01 is in at a
+given time.
+First we assume that the device is powered-up internally (by setting the PWR_UP
+bit in the CONFIG register).
+If the device is a receiver, having CE high allows the 24L01 to monitor the air
+and receive packets.
+CE being low puts the chip in standby and it no longer monitors the air.
+If the device is a transmitter, CE is always held low except when the user
+wants to transmit a packet.
+This is done by loading the TX FIFO and then toggling the CE pin (low-to-high
+transition, leave high for at least 10 uS, then back to low).
+
+The third pin is CSN, which stands for chip select not.
+This is the enable pin for the SPI bus, and it is active low.
+You always want to keep this pin high except when you are sending the device an
+SPI command or getting data on the SPI bus from the chip
+
+You can set interrupts for any combination of the following events: data
+received, data transmitted, and maximum number of transmit retries reached.
+NOTE: the IRQ pin is ACTIVE-LOW. It is normally high, but when an interrupt is
+asserted, the pin will go low.
+#endif
+
 code/await Nrf24l01 (var int ce, var int csn) -> NEVER do
     outer.ceu_nrf24l01_ce  = ce;
     outer.ceu_nrf24l01_csn = csn;

@@ -174,6 +174,24 @@ You can set interrupts for any combination of the following events: data
 received, data transmitted, and maximum number of transmit retries reached.
 NOTE: the IRQ pin is ACTIVE-LOW. It is normally high, but when an interrupt is
 asserted, the pin will go low.
+
+In order to send data to or receive data from the SPI port on the 24L01, you
+have to do a few things.
+The CSN pin on the 24L01 must be high to start out with.
+Then, you bring the CSN pin low to alert the 24L01 that it is about to receive
+SPI data.
+(Note: this pin will stay low throughout the entire transaction.)
+Then, you will transmit the command byte of the instruction you wish to send.
+If you are receiving data bytes for this instruction, you must then send one
+byte to the 24L01 for every one byte that you wish to get out of the 24L01.
+If you are just sending the 24L01 data, you simply send your data bytes and
+generally don’t worry about what it sends back to you.
+When receiving data from the 24L01, it makes absolutely no difference what is
+contained in the data bytes you send after the command byte, just so long as
+you send the correct number of them.
+Once you have transmitted and/or read all of the bytes that you need, you bring
+CSN back high.
+Finally, you can process this data in your micro at will.
 #endif
 
 code/await Nrf24l01 (var int ce, var int csn) -> NEVER do

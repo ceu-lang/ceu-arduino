@@ -111,6 +111,7 @@ end
 input none NRF24L01_RX;
 
 spawn async/isr [_digitalPinToInterrupt(2),_FALLING] do
+    // TODO: check status, generate corresponding input
     emit NRF24L01_RX;
 end
 
@@ -119,7 +120,7 @@ var int ceu_nrf24l01_csn = _;
 
 code/await Nrf24l01_Write (var byte reg, var byte value) -> byte do
     lock outer.ceu_spi_lock do
-        watching SPI_Transaction(outer.ceu_nrf24l01_csn, 4000000, SPI_MSBFIRST, SPI_MODE0) do
+        watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, outer.ceu_nrf24l01_csn) do
             var byte status = await SPI_Transfer(W_REGISTER | (REGISTER_MASK & reg));
             await SPI_Transfer(value);
             escape status;
@@ -129,7 +130,7 @@ end
 
 code/await Nrf24l01_Read (var byte reg) -> byte do
     lock outer.ceu_spi_lock do
-        watching SPI_Transaction(outer.ceu_nrf24l01_csn, 4000000, SPI_MSBFIRST, SPI_MODE0) do
+        watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, outer.ceu_nrf24l01_csn) do
             await SPI_Transfer(R_REGISTER | (REGISTER_MASK & reg));
             var byte v = await SPI_Transfer(0xFF);
             escape v;
@@ -196,16 +197,53 @@ you send the correct number of them.
 Once you have transmitted and/or read all of the bytes that you need, you bring
 CSN back high.
 Finally, you can process this data in your micro at will.
+
+The first of the "big-money" operation is R_RX_PAYLOAD.
+When you are receiving packets, CE is held high.
+Once you have received a packet you MUST bring CE low to disable the receiver,
+and then you execute the R_RX_PAYLOAD operation.
+You send the command byte (0x61), and then send the same amount of dummy bytes
+as your payload width is for the pipe you received data on.
+The 24L01 will automatically delete the payload that you read out from the top
+of the FIFO.
+If there are more payloads in the FIFO (the device can hold 3 payloads in the
+RX FIFO), then you should continue reading them out until they are all read.
+At this point, you would clear the RX_DR interrupt, bring CE high again to
+monitor for packets, and then process the data you received.
+
+The second of the "big-money" operation is W_TX_PAYLOAD.
+This guy is used when you are in TX mode and wish to send a packet.
+In normal TX operation, the CE pin is held low.
+You first send the command byte (0xA0), and then the payload.
+The number of payload bytes you send MUST match the payload length of the
+receiver you are sending the payload to.
+Once you load the packet, you toggle the CE pin to send the packet on its way
+(keeping it high for at least 10 us).
+If the packet was sent, the TX_DS interrupt will occur.
+This is to signal to you that the 24L01 has successfully sent your packet.
+If you had auto-ack enabled on this pipe, the TX_DS flag will only be set if
+the packet actually gets through.
+If the maximum amount of retries is hit, then the MAX_RT interrupt will become
+active.
+At this point, you should clear the interrupts and continue based on
+which interrupt was asserted.
+Also remember that, like the RX FIFO, the TX FIFO is three levels deep.
+This means that you can load up to three packets into the 24L01’s TX
+FIFO before you do the CE toggle to send them on their way.
 #endif
 
+// TODO: use var
 #define CONFIG_DEFAULT (0b00001100) // EN_CRC=enable, CRC0=2bytes
 
+// TODO: receive cfgs
 code/await Nrf24l01 (var int ce, var int csn) -> NEVER do
     outer.ceu_nrf24l01_ce  = ce;
     outer.ceu_nrf24l01_csn = csn;
     {
         pinMode(@ce,  OUTPUT);
         pinMode(@csn, OUTPUT);
+
+// TODO: move out
 
         ceu_nrf24l01.begin();
         ceu_nrf24l01.setPayloadSize(1);
@@ -220,16 +258,6 @@ code/await Nrf24l01 (var int ce, var int csn) -> NEVER do
 end
 
 code/await Nrf24l01_RX (none) -> byte do
-#if 0
-    {ceu_nrf24l01.write_register(CONFIG, _BV(PWR_UP) | _BV(MASK_TX_DS) | _BV(MASK_MAX_RT));}
-    { ceu_nrf24l01.write_register(STATUS, ceu_nrf24l01.read_register(STATUS), _BV(RX_DR) | _BV(TX_DS) | _BV(MAX_RT)); };
-    { ceu_nrf24l01.startListening(); }
-    await NRF24L01_RX;
-    var byte v = _;
-    { ceu_nrf24l01.read(&@(v), 1); }
-    escape v;
-#else
-
     var byte fifo = await Nrf24l01_Read(FIFO_STATUS);
     _ceu_assert(_bitRead(fifo, RX_EMPTY) == 1, "PRIM_RX set outside?");
 
@@ -245,28 +273,37 @@ code/await Nrf24l01_RX (none) -> byte do
         await FOREVER;
     end
 
-    //await Nrf24l01_Write(STATUS, {_BV(RX_DR)});     // clears interrupt bit
-
     lock outer.ceu_spi_lock do
-        watching SPI_Transaction(outer.ceu_nrf24l01_csn, 4000000, SPI_MSBFIRST, SPI_MODE0) do
+        watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, outer.ceu_nrf24l01_csn) do
             await SPI_Transfer(R_RX_PAYLOAD);
             var byte v = await SPI_Transfer(0xFF);
             escape v;
         end
     end
-#endif
 end
 
 code/await Nrf24l01_TX (var byte v) -> none do
     await Nrf24l01_Write(CONFIG, {CONFIG_DEFAULT|_BV(PWR_UP)});
     lock outer.ceu_spi_lock do
-        watching SPI_Transaction(outer.ceu_nrf24l01_csn, 4000000, SPI_MSBFIRST, SPI_MODE0) do
+        watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, outer.ceu_nrf24l01_csn) do
             await SPI_Transfer(W_TX_PAYLOAD);
             await SPI_Transfer(v);
         end
     end
 
     _digitalWrite(outer.ceu_nrf24l01_ce, 1);
-    _delayMicroseconds(15);
+    _delayMicroseconds(10);
     _digitalWrite(outer.ceu_nrf24l01_ce, 0);
+
+#if 0
+    par do
+        await NRF24L01_TX;
+        await Nrf24l01_Write(STATUS, {_BV(TX_DS)});     // clears interrupt bit
+        escape true;
+    with
+        await NRF24L01_MAX;
+        await Nrf24l01_Write(STATUS, {_BV(MAX_RT)});    // clears interrupt bit
+        escape false;
+    end
+#endif
 end

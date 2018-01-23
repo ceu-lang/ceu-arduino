@@ -5,17 +5,20 @@
 #include "nrf24l01.ceu"
 
 spawn Usart(9600);
+
 spawn Spi();
-spawn Nrf24l01(8,7);
+
+var Nrf24l01_ nrf = val Nrf24l01_(8,7,_,_,_);
+spawn Nrf24l01(&nrf);
 
 output on/off PIN_13;
 
 var int i;
 loop i do
     emit PIN_13((i % 2) as on/off);
-    await Nrf24l01_TX(i);
+    await Nrf24l01_TX(&nrf, i);
     watching 1s do
-        var byte v = await Nrf24l01_RX();
+        var byte v = await Nrf24l01_RX(&nrf);
         var[20] byte str = [{'0'}+(v%10), {'\n'}, {'\r'}];
         await Usart_TX(&str);
         await FOREVER;

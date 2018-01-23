@@ -275,7 +275,6 @@ code/await Nrf24l01 (var int ce, var int csn) -> NEVER do
         ceu_nrf24l01.openReadingPipe(1, ceu_nrf24l01_pipe);
         ceu_nrf24l01.openWritingPipe(ceu_nrf24l01_pipe);
         ceu_nrf24l01.write_register(CONFIG, CONFIG_DEFAULT|_BV(PWR_UP));
-        //ceu_nrf24l01.write_register(CONFIG, ceu_nrf24l01.read_register(CONFIG) | _BV(MASK_TX_DS) | _BV(MASK_MAX_RT)); // disables interrupts other than receive payload
     }
     await FOREVER;
 end
@@ -317,9 +316,6 @@ code/await Nrf24l01_TX (var byte v) -> bool do
     _delayMicroseconds(10);
     _digitalWrite(outer.ceu_nrf24l01_ce, 0);
 
-#if 1
-    escape true;
-#else
     par do
         await outer.nrf24l01_tx;
         escape true;
@@ -327,5 +323,4 @@ code/await Nrf24l01_TX (var byte v) -> bool do
         await outer.nrf24l01_max;
         escape false;
     end
-#endif
 end

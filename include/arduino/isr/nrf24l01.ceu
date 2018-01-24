@@ -115,9 +115,9 @@ spawn async/isr [_digitalPinToInterrupt(2),_FALLING] do
 end
 
 data Nrf24l01_ with
-    //var& Spi spi;
-    var  int ce;
-    var  int csn;
+    var& Lock spi;
+    var  int  ce;
+    var  int  csn;
 
     event none rx;
     event none tx;
@@ -125,7 +125,7 @@ data Nrf24l01_ with
 end
 
 code/await Nrf24l01_Write (var& Nrf24l01_ nrf, var byte reg, var byte value) -> byte do
-    lock outer.ceu_spi_lock do
+    lock nrf.spi do
         watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, nrf.csn) do
             var byte status = await SPI_Transfer(W_REGISTER | (REGISTER_MASK & reg));
             await SPI_Transfer(value);
@@ -135,7 +135,7 @@ code/await Nrf24l01_Write (var& Nrf24l01_ nrf, var byte reg, var byte value) -> 
 end
 
 code/await Nrf24l01_Read (var& Nrf24l01_ nrf, var byte reg) -> byte do
-    lock outer.ceu_spi_lock do
+    lock nrf.spi do
         watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, nrf.csn) do
             await SPI_Transfer(R_REGISTER | (REGISTER_MASK & reg));
             var byte v = await SPI_Transfer(0xFF);
@@ -291,7 +291,7 @@ code/await Nrf24l01_RX (var& Nrf24l01_ nrf) -> byte do
         await FOREVER;
     end
 
-    lock outer.ceu_spi_lock do
+    lock nrf.spi do
         watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, nrf.csn) do
             await SPI_Transfer(R_RX_PAYLOAD);
             var byte v = await SPI_Transfer(0xFF);
@@ -302,7 +302,7 @@ end
 
 code/await Nrf24l01_TX (var& Nrf24l01_ nrf, var byte v) -> bool do
     await Nrf24l01_Write(&nrf, CONFIG, {CONFIG_DEFAULT|_BV(PWR_UP)});
-    lock outer.ceu_spi_lock do
+    lock nrf.spi do
         watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, nrf.csn) do
             await SPI_Transfer(W_TX_PAYLOAD);
             await SPI_Transfer(v);

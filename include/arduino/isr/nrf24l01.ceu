@@ -141,26 +141,6 @@ code/await Nrf24l01_Read (var byte reg) -> byte do
     end
 end
 
-#if 1
-spawn do
-    loop do
-        var byte status = await Nrf24l01_Read(STATUS);
-        if _bitRead(status, {RX_DR}) as bool then
-            emit nrf24l01_rx;
-            await Nrf24l01_Write(STATUS, {_BV(RX_DR)});
-        else/if _bitRead(status, {TX_DS}) as bool then
-            emit nrf24l01_tx;
-            await Nrf24l01_Write(STATUS, {_BV(TX_DS)});
-        else/if _bitRead(status, {MAX_RT}) as bool then
-            emit nrf24l01_max;
-            await Nrf24l01_Write(STATUS, {_BV(MAX_RT)});
-        else
-            await NRF24L01;
-        end
-    end
-end
-#endif
-
 #if 0
 Tutorial 0: Everything You Need to Know about the nRF24L01 and MiRF-v2.
 Written by Brennen Ball, 2007
@@ -276,7 +256,22 @@ code/await Nrf24l01 (var int ce, var int csn) -> NEVER do
         ceu_nrf24l01.openWritingPipe(ceu_nrf24l01_pipe);
         ceu_nrf24l01.write_register(CONFIG, CONFIG_DEFAULT|_BV(PWR_UP));
     }
-    await FOREVER;
+
+    loop do
+        var byte status = await Nrf24l01_Read(STATUS);
+        if _bitRead(status, {RX_DR}) as bool then
+            emit outer.nrf24l01_rx;
+            await Nrf24l01_Write(STATUS, {_BV(RX_DR)});
+        else/if _bitRead(status, {TX_DS}) as bool then
+            emit outer.nrf24l01_tx;
+            await Nrf24l01_Write(STATUS, {_BV(TX_DS)});
+        else/if _bitRead(status, {MAX_RT}) as bool then
+            emit outer.nrf24l01_max;
+            await Nrf24l01_Write(STATUS, {_BV(MAX_RT)});
+        else
+            await NRF24L01;
+        end
+    end
 end
 
 code/await Nrf24l01_RX (none) -> byte do

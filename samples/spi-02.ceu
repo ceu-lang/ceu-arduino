@@ -1,29 +1,17 @@
 #include "wclock.ceu"
 #include "spi.ceu"
 
-output on/off PIN_09;
 output on/off PIN_08;
 
 _Serial.begin(9600);
+_Serial.println("=");
 
-watching Spi() do
-    loop do
-        emit PIN_09(off);
-        emit PIN_08(off);
-        await (50)ms;
-        emit PIN_09(on);
-        var u8 received_data = _;
+spawn Spi();
 
-        emit SPI_TRANSACTION_BEGIN(1400000, SPI_MSBFIRST, SPI_MODE0);
-            received_data = await SPI_Transfer(_);
-            _Serial.println("Data is:");_Serial.println(received_data,{BIN});
-        emit SPI_TRANSACTION_END;
-
-        emit SPI_TRANSACTION_BEGIN(1400000, SPI_MSBFIRST, SPI_MODE0);
-            await SPI_Transfer(~received_data);
-        emit SPI_TRANSACTION_END;
-
-        emit PIN_08(on);
-        await (50)ms;
+var byte i;
+loop i do
+    watching SPI_Transaction(1400000, SPI_MSBFIRST, SPI_MODE0, _, 8) do
+        await SPI_Transfer(~i);
     end
+    await 100ms;
 end

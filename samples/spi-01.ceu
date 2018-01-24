@@ -6,16 +6,14 @@ output on/off PIN_09;
 _Serial.begin(9600);
 _Serial.println("=");
 
-watching Spi() do
-    loop do
-        emit PIN_09(off);
-        await (50)ms;
-        emit PIN_09(on);
-        await (50)ms;
-        watching SPI_Transaction(1400000, SPI_MSBFIRST, SPI_MODE2, _) do
-            var byte v = await SPI_Transfer(_);
-            _Serial.println("Data is:");_Serial.println(v,{BIN});
-            {_DELAY(100);}
-        end
+emit PIN_09(off);
+
+spawn Spi();
+
+loop do
+    watching SPI_Transaction(1400000, SPI_MSBFIRST, SPI_MODE2, 9, _) do
+        var byte v = await SPI_Transfer(_);
+        _Serial.println("Data is:");_Serial.println(v,{BIN});
+        {_DELAY(100);}
     end
 end

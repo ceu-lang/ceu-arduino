@@ -4,28 +4,33 @@
 output on/off PIN_09;
 output on/off PIN_08;
 
+emit PIN_08(off);
+emit PIN_09(off);
+
 _Serial.begin(9600);
 _Serial.println("=");
 
+var Lock spi = _;
+spawn Spi();
+
 watching Spi() do
-    loop do
-        var u8 b = _;
-        do
-            emit PIN_08(off);
-            emit PIN_09(off);
-            await(50)ms;
-            emit PIN_09(on);
-            watching SPI_Transaction(1400000, SPI_MSBFIRST, SPI_MODE0) do
-                b = await SPI_Transfer(_);
+    var byte b = _;
+    par do
+        loop do
+            lock spi do
+                watching SPI_Transaction(1400000, SPI_MSBFIRST, SPI_MODE0, 9, _) do
+                    b = await SPI_Transfer(_);
+                    _Serial.println("Data is:");_Serial.println(b,{BIN});
+                end
             end
         end
-        do
-            emit SPI_TRANSACTION_BEGIN(1400000, SPI_MSBFIRST, SPI_MODE0);
-            emit SPI_TRANSFER_REQUEST(~b);
-            await SPI_TRANSFER_DONE;
-            emit SPI_TRANSACTION_END;
-            emit PIN_08(on);
-            await(50)ms;
+    with
+        loop do
+            lock spi do
+                watching SPI_Transaction(1400000, SPI_MSBFIRST, SPI_MODE0, _, 8) do
+                    await SPI_Transfer(~b);
+                end
+            end
         end
     end
 end

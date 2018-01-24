@@ -12,9 +12,9 @@ watching Spi() do
         await (50)ms;
         emit PIN_09(on);
         await (50)ms;
-        watching SPI_Transaction(1400000, SPI_MSBFIRST, SPI_MODE2) do
-            var u8 received_data = await SPI_Transfer(_);
-            _Serial.println("Data is:");_Serial.println(received_data,{BIN});
+        watching SPI_Transaction(1400000, SPI_MSBFIRST, SPI_MODE2, _) do
+            var byte v = await SPI_Transfer(_);
+            _Serial.println("Data is:");_Serial.println(v,{BIN});
             {_DELAY(100);}
         end
     end

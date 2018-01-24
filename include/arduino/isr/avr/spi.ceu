@@ -5,7 +5,6 @@
 output on/off SPI;
 
 output (u32 clock, u8 bit_order, u8 data_mode) SPI_TRANSACTION_BEGIN;
-output none                                    SPI_TRANSACTION_END;
 
 output (byte? value) SPI_TRANSFER_REQUEST;
 input  byte          SPI_TRANSFER_DONE;
@@ -48,20 +47,12 @@ native/pos do
 end
 { ceu_callback_register(&CEU_CALLBACK_SPI); }
 
-var bool ceu_spi_busy_spi = false;
-var bool ceu_spi_busy_transaction = false;
-var byte ceu_spi_sreg = _;   // TODO: is this required?
-var Lock ceu_spi_lock;
-
 ///////////////////////////////////////////////////////////////////////////////
 // INPUT / OUTPUT
 ///////////////////////////////////////////////////////////////////////////////
 
 output (on/off v) SPI do
     if v then
-        _ceu_assert(not outer.ceu_spi_busy_spi, "bug found");
-        outer.ceu_spi_busy_spi = true;
-
         var u8   port = {digitalPinToPort(SS)};
         var u8   bit  = {digitalPinToBitMask(SS)};
         var u8&& reg  = {portModeRegister(@port)};
@@ -80,15 +71,11 @@ output (on/off v) SPI do
             pinMode(MOSI, 1);
         }
     else
-        outer.ceu_spi_busy_spi = false;
         { SPCR &= ~_BV(SPE); }      // disables the SPI Module
     end
 end
 
-output (u32 clock, u8 bit_order, u8 data_mode) SPI_TRANSACTION_BEGIN do
-    _ceu_assert(not outer.ceu_spi_busy_transaction, "bug found");
-    outer.ceu_spi_busy_transaction = true;
-    outer.ceu_spi_sreg = {SREG};
+output (u32 clock, u8 bit_order, u8 data_mode) SPI_TRANSACTION do
     {
         u32 clockSetting = F_CPU / 2;
         u8  clock_div    = 0;
@@ -109,11 +96,6 @@ output (u32 clock, u8 bit_order, u8 data_mode) SPI_TRANSACTION_BEGIN do
           (@data_mode & SPI_MODE_MASK) | ((clock_div >> 1) & SPI_CLOCK_MASK);
         SPSR = clock_div & SPI_2XCLOCK_MASK;
     }
-end
-
-output none SPI_TRANSACTION_END do
-    outer.ceu_spi_busy_transaction = false;
-    { SREG = @outer.ceu_spi_sreg; }
 end
 
 output (byte? value) SPI_TRANSFER_REQUEST do
@@ -143,19 +125,18 @@ code/await Spi (none) -> NEVER do
 end
 
 code/await SPI_Transaction (var u32 freq, var u8 byte_order, var u8 mode, var int? csn) -> NEVER do
-    emit SPI_TRANSACTION_BEGIN(freq,byte_order,mode);
-    if csn? then
-        _digitalWrite(csn!, _LOW);
-    end
 #ifdef CEU_FEATURES_ISR_SLEEP
     { ceu_pm_set(CEU_PM_SPI, 1); }
 #endif
+    emit SPI_TRANSACTION(freq,byte_order,mode);
+    if csn? then
+        _digitalWrite(csn!, _LOW);
+    end
 
     do finalize with
         if csn? then
             _digitalWrite(csn!, _HIGH);
         end
-        emit SPI_TRANSACTION_END;
 #ifdef CEU_FEATURES_ISR_SLEEP
         {ceu_pm_set(CEU_PM_SPI, 0);}
 #endif

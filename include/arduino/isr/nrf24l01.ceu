@@ -8,6 +8,7 @@ data Nrf24l01_ with
     var  int  csn;
     var  byte config;
 
+    event none ok;
     event none rx;
     event none tx;
     event none max;
@@ -257,8 +258,6 @@ code/await Nrf24l01_Read (var& Nrf24l01_ nrf, var byte reg) -> byte do
     end
 end
 
-// TODO: receive cfgs
-
 code/await Nrf24l01 (var& Nrf24l01_ nrf) -> NEVER
 do
     _pinMode(nrf.ce,  _OUTPUT);
@@ -295,7 +294,7 @@ do
     await Nrf24l01_Write(&nrf, CONFIG, nrf.config);
     spawn do
         await 150ms;    // power up
-        //emit ok;
+        emit nrf.ok;
     end
 
     //const uint64_t ceu_nrf24l01_pipe = 0xAABBCCDDEELL;

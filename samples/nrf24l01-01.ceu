@@ -9,8 +9,9 @@ spawn Usart(9600);
 var Lock spi = _;
 spawn Spi();
 
-var Nrf24l01_ nrf = val Nrf24l01_(&spi, 8,7, _,_,_);
+var Nrf24l01_ nrf = val Nrf24l01_(&spi, 8,7, _,_,_,_,_);
 spawn Nrf24l01(&nrf);
+await nrf.ok;
 
 output on/off PIN_13;
 

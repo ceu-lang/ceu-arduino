@@ -216,17 +216,11 @@ FIFO before you do the CE toggle to send them on their way.
 /* P model bit Mnemonics */
 #define RF_DR_LOW   5
 #define RF_DR_HIGH  3
+#define RF_PWR_HIGH 2
 #define RF_PWR_LOW  1
 
 #define CEU_PIN_02_MODE _FALLING
 #include "pin-02.ceu"
-
-native/pre do
-    ##include <nRF24L01.h>
-    ##include <RF24.h>
-    RF24 ceu_nrf24l01(8,7);
-    const uint64_t ceu_nrf24l01_pipe = 0xAABBCCDDEELL;
-end
 
 ///////////////////////////////////////////////////////////////////////////////
 // INPUT / OUTPUT
@@ -263,26 +257,52 @@ code/await Nrf24l01_Read (var& Nrf24l01_ nrf, var byte reg) -> byte do
 end
 
 // TODO: use var
-#define CONFIG_DEFAULT (0b00001100) // EN_CRC=enable, CRC0=2bytes
+#define CONFIG_DEFAULT (0b00001100) // EN_CRC=enable, CRCO=2bytes
 
 // TODO: receive cfgs
 code/await Nrf24l01 (var& Nrf24l01_ nrf) -> NEVER
 do
-    {
-        pinMode(@nrf.ce,  OUTPUT);
-        pinMode(@nrf.csn, OUTPUT);
+    _pinMode(nrf.ce,  _OUTPUT);
+    _pinMode(nrf.csn, _OUTPUT);
+    _digitalWrite(nrf.ce,  _LOW);
+    _digitalWrite(nrf.csn, _HIGH);
 
-// TODO: move out
+    await 5ms;  // see RF24 library
 
-        ceu_nrf24l01.begin();
-        ceu_nrf24l01.setPayloadSize(1);
-        ceu_nrf24l01.setAutoAck(false);              // true by default
-        ceu_nrf24l01.setDataRate(RF24_2MBPS);
-        ceu_nrf24l01.openReadingPipe(1, ceu_nrf24l01_pipe);
-        ceu_nrf24l01.openWritingPipe(ceu_nrf24l01_pipe);
-        ceu_nrf24l01.write_register(CONFIG, CONFIG_DEFAULT|_BV(PWR_UP));
-    }
+    // clears ISRs
+    await Nrf24l01_Write(&nrf, STATUS, {_BV(RX_DR)|_BV(TX_DS)|_BV(MAX_RT)});
 
+    // flush buffers
+    lock nrf.spi do
+        watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, nrf.csn) do
+            await SPI_Transfer(FLUSH_RX);
+        end
+        watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, nrf.csn) do
+            await SPI_Transfer(FLUSH_TX);
+        end
+    end
+
+    // set RF channel (76???)
+    await Nrf24l01_Write(&nrf, RF_CH, 76);
+
+    // RF24_2MBPS, 0dBm
+    await Nrf24l01_Write(&nrf, RF_SETUP, {_BV(RF_DR_HIGH)|_BV(RF_PWR_LOW)|_BV(RF_PWR_HIGH)});
+
+    // ACK=no
+    await Nrf24l01_Write(&nrf, EN_AA, 0);
+
+    // CRC = 2 bytes
+    await Nrf24l01_Write(&nrf, CONFIG, {_BV(PWR_UP)|_BV(EN_CRC)|_BV(CRCO)});
+    spawn do
+        await 150ms;    // power up
+        //emit ok;
+    end
+
+    //const uint64_t ceu_nrf24l01_pipe = 0xAABBCCDDEELL;
+    //radio.openReadingPipe(1,pipe);
+    //radio.openWritingPipe(pipe);
+
+    // ISR -> event
     loop do
         var byte status = await Nrf24l01_Read(&nrf, STATUS);
         if _bitRead(status, {RX_DR}) as bool then

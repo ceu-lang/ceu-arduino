@@ -1,3 +1,123 @@
+///////////////////////////////////////////////////////////////////////////////
+// EXTERNAL INTERFACE
+///////////////////////////////////////////////////////////////////////////////
+
+data Nrf24l01_ with
+    var& Lock spi;
+    var  int  ce;
+    var  int  csn;
+
+    event none rx;
+    event none tx;
+    event none max;
+end
+
+code/await Nrf24l01    (var& Nrf24l01_ nrf)             -> NEVER;
+code/await Nrf24l01_RX (var& Nrf24l01_ nrf)             -> byte;
+code/await Nrf24l01_TX (var& Nrf24l01_ nrf, var byte v) -> bool;
+
+///////////////////////////////////////////////////////////////////////////////
+// DOCUMENTATION
+///////////////////////////////////////////////////////////////////////////////
+
+#if 0
+Tutorial 0: Everything You Need to Know about the nRF24L01 and MiRF-v2.
+Written by Brennen Ball, 2007
+
+The SPI interface uses four pins, CSN, SCK, MISO, and MOSI for data
+transmission and reception.
+The CSN (chip select not) pin is active-low, and is normally kept high.
+When this pin goes low, the 24L01 begins listening on its SPI port for data
+and processes it accordingly.
+The remaining two pins are CE and IRQ.
+CE is used to control data transmission and reception when in TX and RX modes,
+respectively.
+IRQ is the interrupt pin, and is active-low.
+There are three internal interrupts that can cause this pin to go low when they
+are active.
+Each of these bits can be masked out such that when the bit’s respective
+interrupt becomes active, the status of the IRQ pin is not changed.
+
+The second pin down is the CE pin.
+This pin is always an input with respect to the 24L01.
+This pin has different meanings depending on what mode the 24L01 is in at a
+given time.
+First we assume that the device is powered-up internally (by setting the PWR_UP
+bit in the CONFIG register).
+If the device is a receiver, having CE high allows the 24L01 to monitor the air
+and receive packets.
+CE being low puts the chip in standby and it no longer monitors the air.
+If the device is a transmitter, CE is always held low except when the user
+wants to transmit a packet.
+This is done by loading the TX FIFO and then toggling the CE pin (low-to-high
+transition, leave high for at least 10 uS, then back to low).
+
+The third pin is CSN, which stands for chip select not.
+This is the enable pin for the SPI bus, and it is active low.
+You always want to keep this pin high except when you are sending the device an
+SPI command or getting data on the SPI bus from the chip
+
+You can set interrupts for any combination of the following events: data
+received, data transmitted, and maximum number of transmit retries reached.
+NOTE: the IRQ pin is ACTIVE-LOW. It is normally high, but when an interrupt is
+asserted, the pin will go low.
+
+In order to send data to or receive data from the SPI port on the 24L01, you
+have to do a few things.
+The CSN pin on the 24L01 must be high to start out with.
+Then, you bring the CSN pin low to alert the 24L01 that it is about to receive
+SPI data.
+(Note: this pin will stay low throughout the entire transaction.)
+Then, you will transmit the command byte of the instruction you wish to send.
+If you are receiving data bytes for this instruction, you must then send one
+byte to the 24L01 for every one byte that you wish to get out of the 24L01.
+If you are just sending the 24L01 data, you simply send your data bytes and
+generally don’t worry about what it sends back to you.
+When receiving data from the 24L01, it makes absolutely no difference what is
+contained in the data bytes you send after the command byte, just so long as
+you send the correct number of them.
+Once you have transmitted and/or read all of the bytes that you need, you bring
+CSN back high.
+Finally, you can process this data in your micro at will.
+
+The first of the "big-money" operation is R_RX_PAYLOAD.
+When you are receiving packets, CE is held high.
+Once you have received a packet you MUST bring CE low to disable the receiver,
+and then you execute the R_RX_PAYLOAD operation.
+You send the command byte (0x61), and then send the same amount of dummy bytes
+as your payload width is for the pipe you received data on.
+The 24L01 will automatically delete the payload that you read out from the top
+of the FIFO.
+If there are more payloads in the FIFO (the device can hold 3 payloads in the
+RX FIFO), then you should continue reading them out until they are all read.
+At this point, you would clear the RX_DR interrupt, bring CE high again to
+monitor for packets, and then process the data you received.
+
+The second of the "big-money" operation is W_TX_PAYLOAD.
+This guy is used when you are in TX mode and wish to send a packet.
+In normal TX operation, the CE pin is held low.
+You first send the command byte (0xA0), and then the payload.
+The number of payload bytes you send MUST match the payload length of the
+receiver you are sending the payload to.
+Once you load the packet, you toggle the CE pin to send the packet on its way
+(keeping it high for at least 10 us).
+If the packet was sent, the TX_DS interrupt will occur.
+This is to signal to you that the 24L01 has successfully sent your packet.
+If you had auto-ack enabled on this pipe, the TX_DS flag will only be set if
+the packet actually gets through.
+If the maximum amount of retries is hit, then the MAX_RT interrupt will become
+active.
+At this point, you should clear the interrupts and continue based on
+which interrupt was asserted.
+Also remember that, like the RX FIFO, the TX FIFO is three levels deep.
+This means that you can load up to three packets into the 24L01’s TX
+FIFO before you do the CE toggle to send them on their way.
+#endif
+
+///////////////////////////////////////////////////////////////////////////////
+// DECLARATIONS
+///////////////////////////////////////////////////////////////////////////////
+
 #define CONFIG      0x00
 #define EN_AA       0x01
 #define EN_RXADDR   0x02
@@ -108,21 +228,19 @@ native/pre do
     const uint64_t ceu_nrf24l01_pipe = 0xAABBCCDDEELL;
 end
 
+///////////////////////////////////////////////////////////////////////////////
+// INPUT / OUTPUT
+///////////////////////////////////////////////////////////////////////////////
+
 input none NRF24L01;
 
 spawn async/isr [_digitalPinToInterrupt(2),_FALLING] do
     emit NRF24L01;
 end
 
-data Nrf24l01_ with
-    var& Lock spi;
-    var  int  ce;
-    var  int  csn;
-
-    event none rx;
-    event none tx;
-    event none max;
-end
+///////////////////////////////////////////////////////////////////////////////
+// ABSTRACTIONS
+///////////////////////////////////////////////////////////////////////////////
 
 code/await Nrf24l01_Write (var& Nrf24l01_ nrf, var byte reg, var byte value) -> byte do
     lock nrf.spi do
@@ -143,100 +261,6 @@ code/await Nrf24l01_Read (var& Nrf24l01_ nrf, var byte reg) -> byte do
         end
     end
 end
-
-#if 0
-Tutorial 0: Everything You Need to Know about the nRF24L01 and MiRF-v2.
-Written by Brennen Ball, 2007
-
-The SPI interface uses four pins, CSN, SCK, MISO, and MOSI for data
-transmission and reception.
-The CSN (chip select not) pin is active-low, and is normally kept high.
-When this pin goes low, the 24L01 begins listening on its SPI port for data
-and processes it accordingly.
-The remaining two pins are CE and IRQ.
-CE is used to control data transmission and reception when in TX and RX modes,
-respectively.
-IRQ is the interrupt pin, and is active-low.
-There are three internal interrupts that can cause this pin to go low when they
-are active.
-Each of these bits can be masked out such that when the bit’s respective
-interrupt becomes active, the status of the IRQ pin is not changed.
-
-The second pin down is the CE pin.
-This pin is always an input with respect to the 24L01.
-This pin has different meanings depending on what mode the 24L01 is in at a
-given time.
-First we assume that the device is powered-up internally (by setting the PWR_UP
-bit in the CONFIG register).
-If the device is a receiver, having CE high allows the 24L01 to monitor the air
-and receive packets.
-CE being low puts the chip in standby and it no longer monitors the air.
-If the device is a transmitter, CE is always held low except when the user
-wants to transmit a packet.
-This is done by loading the TX FIFO and then toggling the CE pin (low-to-high
-transition, leave high for at least 10 uS, then back to low).
-
-The third pin is CSN, which stands for chip select not.
-This is the enable pin for the SPI bus, and it is active low.
-You always want to keep this pin high except when you are sending the device an
-SPI command or getting data on the SPI bus from the chip
-
-You can set interrupts for any combination of the following events: data
-received, data transmitted, and maximum number of transmit retries reached.
-NOTE: the IRQ pin is ACTIVE-LOW. It is normally high, but when an interrupt is
-asserted, the pin will go low.
-
-In order to send data to or receive data from the SPI port on the 24L01, you
-have to do a few things.
-The CSN pin on the 24L01 must be high to start out with.
-Then, you bring the CSN pin low to alert the 24L01 that it is about to receive
-SPI data.
-(Note: this pin will stay low throughout the entire transaction.)
-Then, you will transmit the command byte of the instruction you wish to send.
-If you are receiving data bytes for this instruction, you must then send one
-byte to the 24L01 for every one byte that you wish to get out of the 24L01.
-If you are just sending the 24L01 data, you simply send your data bytes and
-generally don’t worry about what it sends back to you.
-When receiving data from the 24L01, it makes absolutely no difference what is
-contained in the data bytes you send after the command byte, just so long as
-you send the correct number of them.
-Once you have transmitted and/or read all of the bytes that you need, you bring
-CSN back high.
-Finally, you can process this data in your micro at will.
-
-The first of the "big-money" operation is R_RX_PAYLOAD.
-When you are receiving packets, CE is held high.
-Once you have received a packet you MUST bring CE low to disable the receiver,
-and then you execute the R_RX_PAYLOAD operation.
-You send the command byte (0x61), and then send the same amount of dummy bytes
-as your payload width is for the pipe you received data on.
-The 24L01 will automatically delete the payload that you read out from the top
-of the FIFO.
-If there are more payloads in the FIFO (the device can hold 3 payloads in the
-RX FIFO), then you should continue reading them out until they are all read.
-At this point, you would clear the RX_DR interrupt, bring CE high again to
-monitor for packets, and then process the data you received.
-
-The second of the "big-money" operation is W_TX_PAYLOAD.
-This guy is used when you are in TX mode and wish to send a packet.
-In normal TX operation, the CE pin is held low.
-You first send the command byte (0xA0), and then the payload.
-The number of payload bytes you send MUST match the payload length of the
-receiver you are sending the payload to.
-Once you load the packet, you toggle the CE pin to send the packet on its way
-(keeping it high for at least 10 us).
-If the packet was sent, the TX_DS interrupt will occur.
-This is to signal to you that the 24L01 has successfully sent your packet.
-If you had auto-ack enabled on this pipe, the TX_DS flag will only be set if
-the packet actually gets through.
-If the maximum amount of retries is hit, then the MAX_RT interrupt will become
-active.
-At this point, you should clear the interrupts and continue based on
-which interrupt was asserted.
-Also remember that, like the RX FIFO, the TX FIFO is three levels deep.
-This means that you can load up to three packets into the 24L01’s TX
-FIFO before you do the CE toggle to send them on their way.
-#endif
 
 // TODO: use var
 #define CONFIG_DEFAULT (0b00001100) // EN_CRC=enable, CRC0=2bytes

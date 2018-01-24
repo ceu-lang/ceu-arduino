@@ -1,5 +1,3 @@
-//#define CEU_FEATURES_ISR_SLEEP_MIN
-
 #include "arduino/arduino.ceu"
 #include "wclock.ceu"
 #include "usart.ceu"

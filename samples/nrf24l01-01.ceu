@@ -1,3 +1,5 @@
+//#define CEU_FEATURES_ISR_SLEEP_MIN
+
 #include "arduino/arduino.ceu"
 #include "wclock.ceu"
 #include "usart.ceu"
@@ -19,7 +21,7 @@ loop i do
     await Nrf24l01_TX(&nrf, i);
     watching 1s do
         var byte v = await Nrf24l01_RX(&nrf);
-        var[20] byte str = [{'0'}+(v%10), {'\n'}, {'\r'}];
+        var[20] byte str = [{'0'}+(v%10)] .. "\n\r";
         await Usart_TX(&str);
         await FOREVER;
     end

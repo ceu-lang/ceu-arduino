@@ -309,15 +309,16 @@ code/await Nrf24l01_TX (var& Nrf24l01_ nrf, var byte v) -> bool do
         end
     end
 
-    _digitalWrite(nrf.ce, 1);
-    _delayMicroseconds(10);
-    _digitalWrite(nrf.ce, 0);
-
     par do
         await nrf.tx;
         escape true;
     with
         await nrf.max;
         escape false;
+    with
+        _digitalWrite(nrf.ce, 1);
+        await 10us;
+        _digitalWrite(nrf.ce, 0);
+        await FOREVER;
     end
 end

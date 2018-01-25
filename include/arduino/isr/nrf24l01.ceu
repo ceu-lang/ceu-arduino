@@ -240,7 +240,7 @@ end
 
 code/await Nrf24l01_Write (var& Nrf24l01_ nrf, var byte reg, var byte value) -> byte do
     lock nrf.spi do
-        watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, nrf.csn) do
+        watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, _, nrf.csn) do
             var byte status = await SPI_Transfer(W_REGISTER | (REGISTER_MASK & reg));
             await SPI_Transfer(value);
             escape status;
@@ -250,7 +250,7 @@ end
 
 code/await Nrf24l01_Read (var& Nrf24l01_ nrf, var byte reg) -> byte do
     lock nrf.spi do
-        watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, nrf.csn) do
+        watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, _, nrf.csn) do
             await SPI_Transfer(R_REGISTER | (REGISTER_MASK & reg));
             var byte v = await SPI_Transfer(0xFF);
             escape v;
@@ -272,10 +272,10 @@ do
 
     // flush buffers
     lock nrf.spi do
-        watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, nrf.csn) do
+        watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, _, nrf.csn) do
             await SPI_Transfer(FLUSH_RX);
         end
-        watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, nrf.csn) do
+        watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, _, nrf.csn) do
             await SPI_Transfer(FLUSH_TX);
         end
     end
@@ -302,6 +302,7 @@ do
     //radio.openWritingPipe(pipe);
 
 // TODO: finalize power down
+// TODO: payload, addr, pipe, R/W
 
     // ISR -> event
     loop do
@@ -322,8 +323,8 @@ do
 end
 
 code/await Nrf24l01_RX (var& Nrf24l01_ nrf) -> byte do
-    var byte fifo = await Nrf24l01_Read(&nrf, FIFO_STATUS);
-    _ceu_assert(_bitRead(fifo, RX_EMPTY) == 1, "PRIM_RX set outside?");
+    //var byte fifo = await Nrf24l01_Read(&nrf, FIFO_STATUS);
+    //_ceu_assert(_bitRead(fifo, RX_EMPTY) == 1, "PRIM_RX set outside?");
 
     watching nrf.rx do
         await Nrf24l01_Write(&nrf, CONFIG, nrf.config|_bit(PRIM_RX));
@@ -337,7 +338,7 @@ code/await Nrf24l01_RX (var& Nrf24l01_ nrf) -> byte do
     end
 
     lock nrf.spi do
-        watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, nrf.csn) do
+        watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, _, nrf.csn) do
             await SPI_Transfer(R_RX_PAYLOAD);
             var byte v = await SPI_Transfer(0xFF);
             escape v;
@@ -348,7 +349,7 @@ end
 code/await Nrf24l01_TX (var& Nrf24l01_ nrf, var byte v) -> bool do
     await Nrf24l01_Write(&nrf, CONFIG, nrf.config);
     lock nrf.spi do
-        watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, nrf.csn) do
+        watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, _, nrf.csn) do
             await SPI_Transfer(W_TX_PAYLOAD);
             await SPI_Transfer(v);
         end

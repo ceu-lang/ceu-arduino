@@ -19,7 +19,7 @@ var int i;
 loop i do
     emit PIN_13((i % 2) as on/off);
     do
-#if 1
+#if 0
         var[2] byte buf = [i,i];
 #else
         var[1] byte buf = [i];
@@ -27,15 +27,13 @@ loop i do
         await Nrf24l01_TX(&nrf, &buf);
     end
     watching 1s do
-#if 1
+#if 0
         var[2] byte buf = [];
-#else
-        var[1] byte buf = [];
-#endif
         await Nrf24l01_RX(&nrf, &buf);
-#if 1
         var[20] byte str = [{'0'}+((buf[0]+buf[1])%10)] .. "\n\r";
 #else
+        var[1] byte buf = [];
+        await Nrf24l01_RX(&nrf, &buf);
         var[20] byte str = [{'0'}+(buf[0]%10)] .. "\n\r";
 #endif
         await Usart_TX(&str);

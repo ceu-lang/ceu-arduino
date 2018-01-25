@@ -248,6 +248,19 @@ code/await Nrf24l01_Write (var& Nrf24l01_ nrf, var byte reg, var byte value) -> 
     end
 end
 
+code/await Nrf24l01_Writes (var& Nrf24l01_ nrf, var byte reg, var&[] byte values) -> byte do
+    lock nrf.spi do
+        watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, _, nrf.csn) do
+            var byte status = await SPI_Transfer(W_REGISTER | (REGISTER_MASK & reg));
+            var usize i;
+            loop i in [0 -> $values[ do
+                await SPI_Transfer(values[i]);
+            end
+            escape status;
+        end
+    end
+end
+
 code/await Nrf24l01_Read (var& Nrf24l01_ nrf, var byte reg) -> byte do
     lock nrf.spi do
         watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, _, nrf.csn) do
@@ -297,12 +310,14 @@ do
         emit nrf.ok;
     end
 
-    //const uint64_t ceu_nrf24l01_pipe = 0xAABBCCDDEELL;
-    //radio.openReadingPipe(1,pipe);
-    //radio.openWritingPipe(pipe);
+    // set pipe addresses, lengths
+    var[5] byte addr = [0xEE, 0xDD, 0xCC, 0xBB, 0xAA];
+    await Nrf24l01_Write (&nrf, EN_RXADDR,  _bit(ERX_P0));  // enables RX0 pipe
+    await Nrf24l01_Writes(&nrf, RX_ADDR_P0, &addr);         // RX0 address
+    await Nrf24l01_Write (&nrf, RX_PW_P0,   1);             // RX0 payload length
+    await Nrf24l01_Writes(&nrf, TX_ADDR,    &addr);         // TX address
 
 // TODO: finalize power down
-// TODO: payload, addr, pipe, R/W
 
     // ISR -> event
     loop do

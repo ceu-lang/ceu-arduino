@@ -280,6 +280,22 @@ do
 
     await 5ms;  // see RF24 library
 
+    // set RF channel (76???)
+    await Nrf24l01_Write(&nrf, RF_CH, 76);
+
+    // RF24_2MBPS, 0dBm
+    await Nrf24l01_Write(&nrf, RF_SETUP, _bit(RF_DR_HIGH)|_bit(RF_PWR_LOW)|_bit(RF_PWR_HIGH));
+
+    // set pipe addresses, lengths
+    var[5] byte addr = [0xEE, 0xDD, 0xCC, 0xBB, 0xAA];
+    await Nrf24l01_Write (&nrf, EN_RXADDR,  _bit(ERX_P0));  // enables RX0 pipe
+    await Nrf24l01_Writes(&nrf, RX_ADDR_P0, &addr);         // RX0 address
+    await Nrf24l01_Write (&nrf, RX_PW_P0,   1);             // RX0 payload length
+    await Nrf24l01_Writes(&nrf, TX_ADDR,    &addr);         // TX address
+
+    // ACK=no
+    await Nrf24l01_Write(&nrf, EN_AA, 0);
+
     // clears ISRs
     await Nrf24l01_Write(&nrf, STATUS, _bit(RX_DR)|_bit(TX_DS)|_bit(MAX_RT));
 
@@ -293,31 +309,14 @@ do
         end
     end
 
-    // set RF channel (76???)
-    await Nrf24l01_Write(&nrf, RF_CH, 76);
-
-    // RF24_2MBPS, 0dBm
-    await Nrf24l01_Write(&nrf, RF_SETUP, _bit(RF_DR_HIGH)|_bit(RF_PWR_LOW)|_bit(RF_PWR_HIGH));
-
-    // ACK=no
-    await Nrf24l01_Write(&nrf, EN_AA, 0);
-
     // CRC = 2 bytes
+    // POWER UP (TODO: finalize power down)
     nrf.config = (_bit(PWR_UP) | _bit(EN_CRC) | _bit(CRCO));
     await Nrf24l01_Write(&nrf, CONFIG, nrf.config);
     spawn do
         await 150ms;    // power up
         emit nrf.ok;
     end
-
-    // set pipe addresses, lengths
-    var[5] byte addr = [0xEE, 0xDD, 0xCC, 0xBB, 0xAA];
-    await Nrf24l01_Write (&nrf, EN_RXADDR,  _bit(ERX_P0));  // enables RX0 pipe
-    await Nrf24l01_Writes(&nrf, RX_ADDR_P0, &addr);         // RX0 address
-    await Nrf24l01_Write (&nrf, RX_PW_P0,   1);             // RX0 payload length
-    await Nrf24l01_Writes(&nrf, TX_ADDR,    &addr);         // TX address
-
-// TODO: finalize power down
 
     // ISR -> event
     loop do

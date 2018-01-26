@@ -3,9 +3,10 @@
 
 native/const
     _ADC_vect_num,
+    _PCINT9_vect_num,
+    _SPI_STC_vect_num,
     _TIMER1_COMPA_vect_num,
     _TIMER1_OVF_vect_num,
-    _SPI_STC_vect_num,
     _USART0_RX_vect_num,
     _USART0_TX_vect_num,
     _USART_RX_vect_num,
@@ -56,12 +57,13 @@ native/pre do
         CEU_PM_N,
     };
 
-//#define CEU_PM_DEBUG
+#define CEU_PM_DEBUG
+//#define CEU_FEATURES_ISR_SLEEP_MIN
 
     void ceu_pm_init (void) {
         // ok
 #ifdef CEU_PM_DEBUG
-        pinMode(10, OUTPUT);
+        pinMode(11, OUTPUT);
         pinMode(11, OUTPUT);
         pinMode(12, OUTPUT);
 #endif
@@ -72,7 +74,7 @@ native/pre do
 #ifdef CEU_FEATURES_ISR_SLEEP_MIN
 
 #ifdef CEU_PM_DEBUG
-            digitalWrite(10, 1);
+            digitalWrite(11, 1);
             digitalWrite(11, 1);
             digitalWrite(12, 1);
 #endif
@@ -87,7 +89,7 @@ native/pre do
 ##endif
                           USART0_ON, TWI_ON);
 #ifdef CEU_PM_DEBUG
-            digitalWrite(10, 0);
+            digitalWrite(11, 0);
             digitalWrite(11, 0);
             digitalWrite(12, 0);
 #endif
@@ -97,7 +99,7 @@ native/pre do
         if (CEU_PM_STATE(CEU_PM_TIMER1) || CEU_PM_STATE(CEU_PM_USART) || CEU_PM_STATE(CEU_PM_SPI))
         {
 #ifdef CEU_PM_DEBUG
-            digitalWrite(10, 1);
+            digitalWrite(11, 1);
 #endif
             LowPower.idle(SLEEP_FOREVER,
                           CEU_PM_STATE(CEU_PM_ADC),
@@ -114,7 +116,7 @@ native/pre do
                           CEU_PM_STATE(CEU_PM_USART),
                           TWI_OFF);
 #ifdef CEU_PM_DEBUG
-            digitalWrite(10, 0);
+            digitalWrite(11, 0);
 #endif
         }
         else if (CEU_PM_STATE(CEU_PM_ADC))
@@ -136,6 +138,9 @@ native/pre do
             digitalWrite(12, 1);
 #endif
             LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
+            //LowPower.powerSave(SLEEP_FOREVER, ADC_OFF, BOD_OFF, TIMER2_OFF);
+            //LowPower.powerStandby(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
+            //LowPower.powerExtStandby(SLEEP_FOREVER, ADC_OFF, BOD_OFF, TIMER2_OFF);
 #ifdef CEU_PM_DEBUG
             digitalWrite(12, 0);
 #endif

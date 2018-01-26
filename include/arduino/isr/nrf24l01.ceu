@@ -221,18 +221,27 @@ FIFO before you do the CE toggle to send them on their way.
 #define RF_PWR_HIGH 2
 #define RF_PWR_LOW  1
 
-#define CEU_PIN_02_MODE _FALLING
-#include "pin-02.ceu"
-
-///////////////////////////////////////////////////////////////////////////////
-// INPUT / OUTPUT
-///////////////////////////////////////////////////////////////////////////////
-
-input none NRF24L01;
-
-spawn async/isr [_digitalPinToInterrupt(2),_FALLING] do
-    emit NRF24L01;
+#if 1
+native/pos do
+    ##include "EnableInterrupt.h"
+    void interruptFunction (void) {
+        tceu_input_PIN_02 __ceu_ps;
+        __ceu_ps._1 = (((bool)(digitalRead(2)))? 1 : 0);
+digitalWrite(13, 0);
+        {
+            tceu_evt_id_params __ceu_evt = { ((tceu_evt){CEU_INPUT_PIN_02,{NULL}}).id, &__ceu_ps };
+            ceu_callback_num_ptr(CEU_CALLBACK_ISR_EMIT, digitalPinToInterrupt(2), (void*)&__ceu_evt, CEU_TRACE(0));
+        }
+    }
 end
+
+{
+    enableInterrupt(10, interruptFunction, CHANGE);
+}
+#endif
+
+//#define CEU_PIN_02_MODE _LOW
+#include "pin-02.ceu"
 
 ///////////////////////////////////////////////////////////////////////////////
 // ABSTRACTIONS
@@ -312,6 +321,7 @@ do
     // CRC = 2 bytes
     // POWER UP (TODO: finalize power down)
     nrf.config = (_bit(PWR_UP) | _bit(EN_CRC) | _bit(CRCO));
+    //nrf.config = (nrf.config | _bit(MASK_RX_DR) | _bit(MASK_MAX_RT));
     await Nrf24l01_Write(&nrf, CONFIG, nrf.config);
     spawn do
         await 150ms;    // power up
@@ -331,7 +341,11 @@ do
             emit nrf.max;
             await Nrf24l01_Write(&nrf, STATUS, _bit(MAX_RT));
         else
-            await NRF24L01;
+//atomic do
+    //{ attachInterrupt(digitalPinToInterrupt(2), CEU_ISR_779, LOW); }
+//end
+            await PIN_02;
+_digitalWrite(13,1);
         end
     end
 end
@@ -340,16 +354,14 @@ code/await Nrf24l01_RX (var& Nrf24l01_ nrf, var&[] byte buf) -> none do
     //var byte fifo = await Nrf24l01_Read(&nrf, FIFO_STATUS);
     //_ceu_assert(_bitRead(fifo, RX_EMPTY) == 1, "PRIM_RX set outside?");
 
-    watching nrf.rx do
-        await Nrf24l01_Write(&nrf, CONFIG, nrf.config|_bit(PRIM_RX));
+    await Nrf24l01_Write(&nrf, CONFIG, nrf.config|_bit(PRIM_RX));
 
-        _digitalWrite(nrf.ce, 1);
-        do finalize with
-            _digitalWrite(nrf.ce, 0);
-        end
-
-        await FOREVER;
+    _digitalWrite(nrf.ce, 1);
+    do finalize with
+        _digitalWrite(nrf.ce, 0);
     end
+
+    await nrf.rx;
 
     lock nrf.spi do
         watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, _, nrf.csn) do
@@ -375,16 +387,16 @@ code/await Nrf24l01_TX (var& Nrf24l01_ nrf, var&[] byte buf) -> bool do
         end
     end
 
+    _digitalWrite(nrf.ce, 1);
+    do finalize with
+        _digitalWrite(nrf.ce, 0);
+    end
+
     par do
         await nrf.tx;
         escape true;
     with
         await nrf.max;
         escape false;
-    with
-        _digitalWrite(nrf.ce, 1);
-        await 10us;
-        _digitalWrite(nrf.ce, 0);
-        await FOREVER;
     end
 end

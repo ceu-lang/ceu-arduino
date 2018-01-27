@@ -1,0 +1,16 @@
+#include "pcint0.ceu"
+
+output on/off PIN_13;
+
+_pinMode(10, _INPUT);
+var int v = _digitalRead(10);
+
+loop do
+    emit PIN_13(on);
+    await PCINT0 until v != _digitalRead(10);
+    v = 1 - v;
+
+    emit PIN_13(off);
+    await PCINT0 until v != _digitalRead(10);
+    v = 1 - v;
+end

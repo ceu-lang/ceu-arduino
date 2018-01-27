@@ -1,0 +1,21 @@
+#include "arduino/arduino.ceu"
+#include "arduino/avr.ceu"
+
+input none PCINT0;
+
+spawn async/isr [_PCINT0_vect_num, 0] do
+    emit PCINT0;
+end
+
+{
+    bitSet(PCMSK0, PCINT2);
+    bitSet(PCIFR,  PCIF0);
+    bitSet(PCICR,  PCIE0);
+}
+
+code/await PCInt (var int pin) -> bool do
+    _pinMode(pin, _INPUT);
+    var bool v = _digitalRead(pin) as bool;
+    await PCINT0 until v != (_digitalRead(pin) as bool);
+    escape not v;
+end

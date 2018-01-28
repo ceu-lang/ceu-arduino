@@ -7,11 +7,11 @@ ISR(ADC_vect)
 }
 #endif
 
-#ifdef CEU_ISR__WDT_vect_num
-ISR (WDT_vect)
+#ifdef CEU_ISR__PCINT0_vect_num
+ISR(PCINT0_vect)
 {
-    if (isrs[WDT_vect_num].fun != NULL) {
-        isrs[WDT_vect_num].fun(isrs[WDT_vect_num].mem);
+    if (isrs[PCINT0_vect_num].fun != NULL) {
+        isrs[PCINT0_vect_num].fun(isrs[PCINT0_vect_num].mem);
     }
 }
 #endif
@@ -78,6 +78,20 @@ ISR(USART0_TX_vect)
     }
 }
 #endif
+
+#ifdef CEU_ISR__WDT_vect_num
+ISR (WDT_vect)
+{
+    if (isrs[WDT_vect_num].fun != NULL) {
+        isrs[WDT_vect_num].fun(isrs[WDT_vect_num].mem);
+    }
+}
+#endif
+
+
+
+
+
 
 #ifdef CEU_ISR__TC3_IRQn
 void TC3_Handler()

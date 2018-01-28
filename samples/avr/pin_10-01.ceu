@@ -2,7 +2,10 @@
 
 output on/off PIN_13;
 
-_pinMode(10, _INPUT);
+{
+    pinMode(10, INPUT);
+    bitSet(PCMSK0, PCINT4);
+}
 var int v = _digitalRead(10);
 
 loop do

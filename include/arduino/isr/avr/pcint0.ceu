@@ -8,14 +8,34 @@ spawn async/isr [_PCINT0_vect_num, 0] do
 end
 
 {
-    bitSet(PCMSK0, PCINT2);
     bitSet(PCIFR,  PCIF0);
     bitSet(PCICR,  PCIE0);
 }
 
-code/await PCInt (var int pin) -> bool do
-    _pinMode(pin, _INPUT);
-    var bool v = _digitalRead(pin) as bool;
-    await PCINT0 until v != (_digitalRead(pin) as bool);
-    escape not v;
+code/await PCInt (var int pin, var bool? value) -> bool do
+    {
+        pinMode(@pin, INPUT);
+        if (@(pin) == 10) {
+            bitSet(PCMSK0, PCINT4);
+        }
+    }
+    var bool value_ = _;
+    loop do
+        await PCINT0;
+        value_ = _digitalRead(pin) as bool;
+#if 0
+        // TODO: for some reason, this code compiles but doesn't upload to MEGA
+            // - maybe some bootloader issue?
+        if (not value?) or (value! == value_) then
+            break;
+        end
+#else
+        if (not value?) then
+            break;
+        else/if (value! == value_) then
+            break;
+        end
+#endif
+    end
+    escape value_;
 end

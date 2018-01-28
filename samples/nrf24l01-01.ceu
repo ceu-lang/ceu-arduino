@@ -108,18 +108,23 @@
 var Lock spi = _;
 spawn Spi();
 
-data Nrf24l01_ with
-    var& Lock spi;
-    var  int  ce;
-    var  int  csn;
-    var  byte config;
+event bool irq;
+spawn PCInt_to_Event(10, false, &irq);
 
-    event none ok;
-    event none rx;
-    event none tx;
-    event none max;
+data Nrf24l01_ with
+    var&   Lock spi;
+    event& bool irq;
+    var    int  ce;
+    var    int  csn;
+
+    var    byte config;
+    event  none ok;
+    event  none rx;
+    event  none tx;
+    event  none max;
 end
-var Nrf24l01_ nrf = val Nrf24l01_(&spi, 8,7, _,_,_,_,_);
+
+var Nrf24l01_ nrf = val Nrf24l01_(&spi, &irq, 8,7, _,_,_,_,_);
 
 code/await Nrf24l01_Write (var& Nrf24l01_ nrf, var byte reg, var byte value) -> byte do
     lock nrf.spi do
@@ -209,7 +214,7 @@ loop i do
 
     var[1] byte buf = [i];
 
-    watching PCInt(10,false) do
+    watching nrf.irq do
         await Nrf24l01_Write(&nrf, CONFIG, nrf.config);
         lock nrf.spi do
             watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, _, nrf.csn) do

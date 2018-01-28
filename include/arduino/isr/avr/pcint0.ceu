@@ -23,19 +23,16 @@ code/await PCInt (var int pin, var bool? value) -> bool do
     loop do
         await PCINT0;
         value_ = _digitalRead(pin) as bool;
-#if 0
-        // TODO: for some reason, this code compiles but doesn't upload to MEGA
-            // - maybe some bootloader issue?
         if (not value?) or (value! == value_) then
             break;
         end
-#else
-        if (not value?) then
-            break;
-        else/if (value! == value_) then
-            break;
-        end
-#endif
     end
     escape value_;
+end
+
+code/await PCInt_to_Event (var int pin, var bool? value, event& bool evt) -> NEVER do
+    loop do
+        var bool v = await PCInt(10,false);
+        emit evt(v);
+    end
 end

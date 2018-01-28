@@ -3,13 +3,17 @@
 #include "usart.ceu"
 #include "spi.ceu"
 #include "nrf24l01.ceu"
+#include "pcint0.ceu"
 
 spawn Usart(9600);
 
 var Lock spi = _;
 spawn Spi();
 
-var Nrf24l01_ nrf = val Nrf24l01_(&spi, 8,7, _,_,_,_,_,_);
+event bool irq;
+spawn PCInt_to_Event(10, false, &irq);
+
+var Nrf24l01_ nrf = val Nrf24l01_(&spi, &irq, 8,7, _,_,_,_,_);
 spawn Nrf24l01(&nrf);
 await nrf.ok;
 
@@ -17,7 +21,7 @@ output on/off PIN_13;
 
 var int i;
 loop i do
-    //await 500ms;
+    await 500ms;
     emit PIN_13((i % 2) as on/off);
     do
 #if 0

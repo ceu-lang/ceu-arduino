@@ -1,7 +1,3 @@
-#include "arduino/arduino.ceu"
-#include "wclock.ceu"
-#include "spi.ceu"
-
 #define CONFIG      0x00
 #define EN_AA       0x01
 #define EN_RXADDR   0x02
@@ -103,7 +99,13 @@
 #define RF_PWR_HIGH 2
 #define RF_PWR_LOW  1
 
+#include "arduino/arduino.ceu"
+#include "wclock.ceu"
+#include "spi.ceu"
 #include "pcint0.ceu"
+#include "usart.ceu"
+
+spawn Usart(9600);
 
 var Lock spi = _;
 spawn Spi();
@@ -199,7 +201,7 @@ do
     // CRC = 2 bytes
     // POWER UP (TODO: finalize power down)
     nrf.config = (_bit(PWR_UP) | _bit(EN_CRC) | _bit(CRCO));
-    nrf.config = (nrf.config | _bit(MASK_RX_DR) | _bit(MASK_MAX_RT));
+    //nrf.config = (nrf.config | _bit(MASK_RX_DR) | _bit(MASK_MAX_RT));
     await Nrf24l01_Write(&nrf, CONFIG, nrf.config);
     await 150ms;    // power up
 end
@@ -209,28 +211,56 @@ await 1s;
 
 var int i;
 loop i do
-    await 500ms;
     emit PIN_13((i % 2) as on/off);
 
-    var[1] byte buf = [i];
+    // TX
+    do
+        watching nrf.irq do
+            await Nrf24l01_Write(&nrf, CONFIG, nrf.config | _bit(MASK_RX_DR));
+            lock nrf.spi do
+                watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, _, nrf.csn) do
+                    await SPI_Transfer(W_TX_PAYLOAD);
+                    await SPI_Transfer(i);
+                end
+            end
 
-    watching nrf.irq do
-        await Nrf24l01_Write(&nrf, CONFIG, nrf.config);
+            _digitalWrite(nrf.ce, 1);
+            _delayMicroseconds(10);
+            _digitalWrite(nrf.ce, 0);
+            await FOREVER;
+        end
+        await Nrf24l01_Write(&nrf, STATUS, _bit(TX_DS) | _bit(MAX_RT));
+    end
+
+#if 0
+    await (_random(500))ms;
+#else
+    // RX
+    do
+        await Nrf24l01_Write(&nrf, CONFIG, nrf.config | _bit(PRIM_RX) | _bit(MASK_TX_DS) | _bit(MASK_MAX_RT));
+
+        _digitalWrite(nrf.ce, 1);
+        do finalize with
+            _digitalWrite(nrf.ce, 0);
+        end
+
+        await nrf.irq;
+
+        var byte v = _;
         lock nrf.spi do
             watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, _, nrf.csn) do
-                await SPI_Transfer(W_TX_PAYLOAD);
+                await SPI_Transfer(R_RX_PAYLOAD);
                 var usize i;
-                loop i in [0 -> $$buf[ do
-                    await SPI_Transfer(buf[i]);
-                end
+                v = await SPI_Transfer(0xFF);
             end
         end
 
-        _digitalWrite(nrf.ce, 1);
-        _delayMicroseconds(10);
-        _digitalWrite(nrf.ce, 0);
-        await FOREVER;
-    end
+        await Nrf24l01_Write(&nrf, STATUS, _bit(RX_DR));
 
-    await Nrf24l01_Write(&nrf, STATUS, _bit(TX_DS));
+#if 1
+        var[20] byte str = [{'0'}+(v%10)] .. "\n\r";
+        await Usart_TX(&str);
+#endif
+    end
+#endif
 end

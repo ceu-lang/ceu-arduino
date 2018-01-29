@@ -340,8 +340,8 @@ do
     await Nrf24l01_Write(&nrf, STATUS, _bit(RX_DR) | _bit(TX_DS) | _bit(MAX_RT));
 
     watching nrf.irq do
+        await Nrf24l01_Write(&nrf, CONFIG, nrf.config | _bit(MASK_RX_DR));
         lock nrf.spi do
-            await Nrf24l01_Write(&nrf, CONFIG, nrf.config | _bit(MASK_RX_DR));
             watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, _, nrf.csn) do
                 await SPI_Transfer(W_TX_PAYLOAD);
                 var usize i;

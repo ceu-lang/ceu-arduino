@@ -21,7 +21,7 @@ output on/off PIN_13;
 
 var int i;
 loop i do
-    await 500ms;
+    //await 500ms;
     emit PIN_13((i % 2) as on/off);
     do
 #if 0

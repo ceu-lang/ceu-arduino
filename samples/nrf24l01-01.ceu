@@ -201,7 +201,6 @@ do
     // CRC = 2 bytes
     // POWER UP (TODO: finalize power down)
     nrf.config = (_bit(PWR_UP) | _bit(EN_CRC) | _bit(CRCO));
-    //nrf.config = (nrf.config | _bit(MASK_RX_DR) | _bit(MASK_MAX_RT));
     await Nrf24l01_Write(&nrf, CONFIG, nrf.config);
     await 150ms;    // power up
 end
@@ -215,6 +214,7 @@ loop i do
 
     // TX
     do
+        await Nrf24l01_Write(&nrf, STATUS, _bit(RX_DR) | _bit(TX_DS) | _bit(MAX_RT));
         watching nrf.irq do
             await Nrf24l01_Write(&nrf, CONFIG, nrf.config | _bit(MASK_RX_DR));
             lock nrf.spi do
@@ -237,6 +237,7 @@ loop i do
 #else
     // RX
     do
+        await Nrf24l01_Write(&nrf, STATUS, _bit(RX_DR) | _bit(TX_DS) | _bit(MAX_RT));
         await Nrf24l01_Write(&nrf, CONFIG, nrf.config | _bit(PRIM_RX) | _bit(MASK_TX_DS) | _bit(MASK_MAX_RT));
 
         _digitalWrite(nrf.ce, 1);

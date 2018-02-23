@@ -1,10 +1,10 @@
 #include "arduino/arduino.ceu"
 
-output bool PIN_13;
+output on/off PIN_13;
 
 loop do
-    emit PIN_13(HIGH);
+    emit PIN_13(on);
     await 1s;
-    emit PIN_13(LOW);
+    emit PIN_13(off);
     await 1s;
 end

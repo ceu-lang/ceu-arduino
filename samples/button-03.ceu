@@ -1,7 +1,7 @@
 #include "arduino/arduino.ceu"
 
-input  bool PIN_02;
-output bool PIN_13;
+input  on/off PIN_02;
+output on/off PIN_13;
 
 event void pin02_low;
 
@@ -9,9 +9,9 @@ var int t = 1000;
 
 par do
     loop do
-        emit PIN_13(HIGH);
+        emit PIN_13(on);
         await (t)ms;
-        emit PIN_13(LOW);
+        emit PIN_13(off);
         await (t)ms;
     end
 with
@@ -30,7 +30,7 @@ with
     end
 with
     loop do
-        var bool v = await PIN_02 until v==LOW;
+        var on/off v = await PIN_02 until v==off;
         emit pin02_low;
     end
 end

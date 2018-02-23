@@ -1,15 +1,15 @@
 #include "arduino/arduino.ceu"
 
-input  bool PIN_02;
-output bool PIN_13;
+input  on/off PIN_02;
+output on/off PIN_13;
 
 loop do
     watching PIN_02 do
         var int t = 1000;
         loop do
-            emit PIN_13(LOW);
+            emit PIN_13(off);
             await (t)ms;
-            emit PIN_13(HIGH);
+            emit PIN_13(on);
             await (t)ms;
             if t >= 200 then
                 t = t - 100;

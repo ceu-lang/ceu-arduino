@@ -1,11 +1,11 @@
 #include "arduino/arduino.ceu"
 
-input  bool PIN_02;
-output bool PIN_13;
+input  on/off PIN_02;
+output on/off PIN_13;
 
-emit PIN_13(LOW);
+emit PIN_13(off);
 
 loop do
-    var bool v = await PIN_02;
+    var on/off v = await PIN_02;
     emit PIN_13(v);
 end

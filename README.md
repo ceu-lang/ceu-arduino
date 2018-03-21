@@ -46,6 +46,7 @@ https://github.com/fsantanna/ceu/
 ```
 $ git clone https://github.com/fsantanna/ceu-arduino
 $ cd ceu-arduino/
+$ git checkout v0.30
 ```
 
 ## Compile and Upload

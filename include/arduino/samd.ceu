@@ -16,7 +16,7 @@ native/pre do
 extern "C" {
 ##endif
 
-##ifdef CEU_FEATURES_ISR_SLEEP
+#ifdef CEU_FEATURES_ISR_SLEEP
     enum {
         CEU_PM_ADC = 0,
         CEU_PM_TC4,
@@ -35,7 +35,7 @@ extern "C" {
             LowPower.standby();
         }
     }
-##endif
+#endif
 
 // Wait for synchronization of registers between the clock domains
 static __inline__ void syncADC() __attribute__((always_inline, unused));

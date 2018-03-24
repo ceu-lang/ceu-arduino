@@ -1,7 +1,7 @@
-#define ceu_assert_ex(a,b,c)
+//#define ceu_assert_ex(a,b,c)
 
 #if ARDUINO_ARCH_AVR
-    #define CEU_STACK_MAX  750
+    #define CEU_STACK_MAX  200
 #elif ARDUINO_ARCH_SAMD
     #define CEU_STACK_MAX 1000
 #else
@@ -17,19 +17,17 @@
         }                               \
     }
 
-// Set SLEEP always.
-// Currently, if ISR is set, but not ISR_SLEEP, the timer will not work well
-// because `ceu_timer_request` is called every tick and intermediary ticks are
-// lost due to prescaling.
-//#ifdef CEU_FEATURES_ISR
-//#define CEU_FEATURES_ISR_SLEEP
-//#endif
-
-// TODO: w/ this comment, all programs will allocate `ceu_pm_state`
-// how to pass to arduino command line an additional definition?
-#ifdef CEU_FEATURES_ISR_SLEEP
-#include "types.h"
-#include "pm.c.h"
+#ifdef CEU_FEATURES_ISR
+    #ifdef CEU_FEATURES_ISR_SLEEP
+        #include "types.h"
+        #include "pm.c.h"
+    #else
+        // Set SLEEP always.
+        // Currently, if ISR is set, but not ISR_SLEEP, the timer will not work well
+        // because `ceu_timer_request` is called every tick and intermediary ticks are
+        // lost due to prescaling.
+        #error "Invalid option!"
+    #endif
 #endif
 
 #include "_ceu_app.c.h"

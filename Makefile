@@ -20,7 +20,7 @@ ifeq ($(CEU_ISR), true)
 	CEU_ISR_DEFS = -DCEU_FEATURES_ISR -DCEU_FEATURES_ISR_SLEEP
 endif
 
-ARD_PREFS = --pref build.extra_flags="$(CEU_ISR_DEFS)"
+ARD_PREFS = --pref compiler.cpp.extra_flags="$(CEU_ISR_DEFS)"
 
 all: ceu c
 

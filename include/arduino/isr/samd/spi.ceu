@@ -1,0 +1,120 @@
+///////////////////////////////////////////////////////////////////////////////
+// EXTERNAL INTERFACE
+///////////////////////////////////////////////////////////////////////////////
+
+output on/off SPI;
+
+output (u32 clock, u8 bit_order, u8 data_mode) SPI_TRANSACTION_BEGIN;
+
+output (byte? value) SPI_TRANSFER_REQUEST;
+input  byte          SPI_TRANSFER_DONE;
+
+code/await Spi             (none)            -> NEVER;
+code/await SPI_Transaction (var u32 freq, var int byte_order, var u8 mode, var int? cs, var int? csn) -> NEVER;
+code/await SPI_Transfer    (var byte? value) -> byte;
+
+///////////////////////////////////////////////////////////////////////////////
+// DECLARATIONS
+///////////////////////////////////////////////////////////////////////////////
+
+#include "c.ceu"
+#include "arduino/samd.ceu"
+#include "arduino/arduino.ceu"
+
+// Constants copied from "<arduino>/hardware/samd/cores/arduino/SERCOM.h"
+// Constants copied from "<arduino>/hardware/samd/libraries/SPI/SPI.h"
+
+#define SPI_LSBFIRST {LSB_FIRST}
+#define SPI_MSBFIRST {MSB_FIRST}
+
+#define SPI_MODE0 {SERCOM_SPI_MODE_0}
+#define SPI_MODE1 {SERCOM_SPI_MODE_1}
+#define SPI_MODE2 {SERCOM_SPI_MODE_2}
+#define SPI_MODE3 {SERCOM_SPI_MODE_3}
+
+///////////////////////////////////////////////////////////////////////////////
+// INPUT / OUTPUT
+///////////////////////////////////////////////////////////////////////////////
+
+output (on/off v) SPI do
+    if v then
+        {
+            // PIO init
+            ceu_samd_pinPeripheral(PIN_SPI_MISO, g_APinDescription[PIN_SPI_MISO].ulPinType);
+            ceu_samd_pinPeripheral(PIN_SPI_SCK, g_APinDescription[PIN_SPI_SCK].ulPinType);
+            ceu_samd_pinPeripheral(PIN_SPI_MOSI, g_APinDescription[PIN_SPI_MOSI].ulPinType);
+        }
+    else
+        {
+            sercom4.resetSPI();
+        }
+    end
+end
+
+output (u32 clock, u8 bit_order, u8 data_mode) SPI_TRANSACTION_BEGIN do
+    {
+        sercom4.disableSPI();
+        sercom4.initSPI(PAD_SPI_TX, PAD_SPI_RX, SPI_CHAR_SIZE_8_BITS, (SercomDataOrder)@bit_order);
+        sercom4.initSPIClock((SercomSpiClockMode)@data_mode, @clock);
+        NVIC_SetPriority(SERCOM4_IRQn, (1 << __NVIC_PRIO_BITS) - 1);
+        SERCOM4->SPI.INTENSET.reg = SERCOM_SPI_INTFLAG_RXC;
+        NVIC_EnableIRQ(SERCOM4_IRQn);
+        sercom4.enableSPI();
+    }
+end
+
+output (byte? value) SPI_TRANSFER_REQUEST do
+    {
+        SERCOM4->SPI.DATA.bit.DATA = @(value!);
+    }
+end
+
+spawn async/isr [_SERCOM4_IRQn,0] do
+    { ceu_assert(SERCOM4->SPI.INTFLAG.bit.RXC, "spi error"); }
+    var byte v = {(byte)SERCOM4->SPI.DATA.reg};
+    { SERCOM4->SPI.INTFLAG.bit.RXC = 1; }
+    emit SPI_TRANSFER_DONE(v);
+end
+
+///////////////////////////////////////////////////////////////////////////////
+// ABSTRACTIONS
+///////////////////////////////////////////////////////////////////////////////
+
+code/await Spi (none) -> NEVER do
+    emit SPI(on);
+    do finalize with
+        emit SPI(off);
+    end
+    await FOREVER;
+end
+
+code/await SPI_Transaction (var u32 freq, var int byte_order, var u8 mode, var int? cs, var int? csn) -> NEVER do
+#ifdef CEU_FEATURES_ISR_SLEEP
+    { ceu_pm_set(CEU_PM_SERCOM4, 1); }
+#endif
+    emit SPI_TRANSACTION_BEGIN(freq,byte_order,mode);
+    if cs? then
+        _digitalWrite(cs!, _HIGH);
+    else/if csn? then
+        _digitalWrite(csn!, _LOW);
+    end
+
+    do finalize with
+        if cs? then
+            _digitalWrite(cs!, _LOW);
+        else/if csn? then
+            _digitalWrite(csn!, _HIGH);
+        end
+#ifdef CEU_FEATURES_ISR_SLEEP
+        {ceu_pm_set(CEU_PM_SERCOM4, 0);}
+#endif
+    end
+
+    await FOREVER;
+end
+
+code/await SPI_Transfer (var byte? value) -> byte do
+    emit SPI_TRANSFER_REQUEST(value);
+    var byte recv = await SPI_TRANSFER_DONE;
+    escape recv;
+end

@@ -88,11 +88,6 @@ ISR (WDT_vect)
 }
 #endif
 
-
-
-
-
-
 #ifdef CEU_ISR__TC3_IRQn
 void TC3_Handler()
 {
@@ -116,6 +111,15 @@ void ADC_Handler (void)
 {
     if (isrs[ADC_IRQn].fun != NULL) {
         isrs[ADC_IRQn].fun(isrs[ADC_IRQn].mem);
+    }
+}
+#endif
+
+#ifdef CEU_ISR__SERCOM4_IRQn
+void SERCOM4_Handler()
+{
+    if (isrs[SERCOM4_IRQn].fun != NULL) {
+        isrs[SERCOM4_IRQn].fun(isrs[SERCOM4_IRQn].mem);
     }
 }
 #endif

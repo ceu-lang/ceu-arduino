@@ -5,6 +5,7 @@
 output on/off SPI;
 
 output (u32 clock, u8 bit_order, u8 data_mode) SPI_TRANSACTION_BEGIN;
+output none                                    SPI_TRANSACTION_END;
 
 output (byte? value) SPI_TRANSFER_REQUEST;
 input  byte          SPI_TRANSFER_DONE;
@@ -75,7 +76,7 @@ output (on/off v) SPI do
     end
 end
 
-output (u32 clock, u8 bit_order, u8 data_mode) SPI_TRANSACTION do
+output (u32 clock, u8 bit_order, u8 data_mode) SPI_TRANSACTION_BEGIN do
     {
         u32 clockSetting = F_CPU / 2;
         u8  clock_div    = 0;
@@ -128,7 +129,7 @@ code/await SPI_Transaction (var u32 freq, var u8 byte_order, var u8 mode, var in
 #ifdef CEU_FEATURES_ISR_SLEEP
     { ceu_pm_set(CEU_PM_SPI, 1); }
 #endif
-    emit SPI_TRANSACTION(freq,byte_order,mode);
+    emit SPI_TRANSACTION_BEGIN(freq,byte_order,mode);
     if cs? then
         _digitalWrite(cs!, _HIGH);
     else/if csn? then
@@ -141,6 +142,7 @@ code/await SPI_Transaction (var u32 freq, var u8 byte_order, var u8 mode, var in
         else/if csn? then
             _digitalWrite(csn!, _HIGH);
         end
+        emit SPI_TRANSACTION_END;
 #ifdef CEU_FEATURES_ISR_SLEEP
         {ceu_pm_set(CEU_PM_SPI, 0);}
 #endif

@@ -3,6 +3,7 @@
 
 native/const
     _ADC_IRQn,
+    _SERCOM4_IRQn,
     _TC3_IRQn,
     _TC4_IRQn,
 ;
@@ -19,21 +20,30 @@ extern "C" {
 #ifdef CEU_FEATURES_ISR_SLEEP
     enum {
         CEU_PM_ADC = 0,
+        CEU_PM_SERCOM4,
         CEU_PM_TC4,
         CEU_PM_N,
     };
 
     void ceu_pm_init (void) {
         // ok
+pinMode(11,OUTPUT);
+pinMode(12,OUTPUT);
     }
 
     void ceu_pm_sleep (void)
     {
+#if 0
         if (CEU_PM_STATE(CEU_PM_TC4) || CEU_PM_STATE(CEU_PM_ADC)) {
+            digitalWrite(12, !digitalRead(12));
             LowPower.idle(IDLE_2);  // deepest, ADC:OK, TC4:OK
         } else {
+            digitalWrite(11, !digitalRead(11));
             LowPower.standby();
         }
+#else
+        LowPower.idle(IDLE_0);
+#endif
     }
 #endif
 

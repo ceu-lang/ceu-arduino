@@ -1,0 +1,17 @@
+native _SerialUSB;
+
+#include "wclock.ceu"
+#include "spi.ceu"
+
+_SerialUSB.begin(9600);
+
+spawn Spi();
+
+var int i;
+loop i do
+    watching SPI_Transaction(1400000, SPI_MSBFIRST, SPI_MODE2, _, _) do
+        var byte v = await SPI_Transfer(i);
+        _SerialUSB.print("> "); _SerialUSB.println(v);
+    end
+    await 1s;
+end

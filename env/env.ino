@@ -1,4 +1,5 @@
-//#define ceu_assert_ex(a,b,c)
+#define CEU_ARDUINO_ASSERT          // numeric assert
+//#define ceu_assert_ex(a,b,c)      // no assert
 
 #if ARDUINO_ARCH_AVR
     #define CEU_STACK_MAX  200
@@ -17,6 +18,11 @@
         }                               \
     }
 
+#ifdef CEU_ARDUINO_ASSERT
+#define ceu_assert_ex(a,b,c) if (a == 0) { ceu_arduino_halt((int)b); }
+void ceu_arduino_halt (int v);
+#endif
+
 #ifdef CEU_FEATURES_ISR
     #ifdef CEU_FEATURES_ISR_SLEEP
         #include "types.h"
@@ -31,6 +37,25 @@
 #endif
 
 #include "_ceu_app.c.h"
+
+#ifdef CEU_ARDUINO_ASSERT
+void ceu_arduino_halt (int v) {
+    if (v<1 || v>10) { v=1; }
+    noInterrupts();
+    pinMode(13, OUTPUT);
+    digitalWrite(13, 1);
+    for (;;) {
+        for (int j=0; j<v; j++) {
+            _DELAY(150);
+            digitalWrite(13, 0);
+            _DELAY(150);
+            digitalWrite(13, 1);
+        }
+        _DELAY(1000);
+    }
+    interrupts();
+}
+#endif
 
 #ifdef CEU_FEATURES_ISR
     #include "wiring_private.h"
@@ -118,9 +143,10 @@ static int ceu_callback_arduino (int cmd, tceu_callback_val p1, tceu_callback_va
         case CEU_CALLBACK_ISR_ATTACH: {
             tceu_isr* isr = (tceu_isr*) p1.ptr;
             int* args = (int*) p2.ptr;
-            if (args[0] < EXTERNAL_NUM_INTERRUPTS) {
-                attachInterrupt(args[0], (void(*)())(isr->fun), args[1]);    /* TODO: no mem */
-            } else {
+            //if (args[0] < EXTERNAL_NUM_INTERRUPTS) {
+                //attachInterrupt(args[0], (void(*)())(isr->fun), args[1]);    /* TODO: no mem */
+            //} else
+            {
                 isrs[args[0]] = *isr;
             }
             break;
@@ -232,7 +258,7 @@ _CEU_ARDUINO_AWAKE_:;
 #endif
     }
     ceu_stop();
-    ceu_assert_ex(0, "bug found", CEU_TRACE_null);
+    ceu_assert_ex(0, 10, CEU_TRACE_null);
     while (1);
 }
 

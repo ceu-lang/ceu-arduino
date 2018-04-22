@@ -1,0 +1,11 @@
+#include "arduino/arduino.ceu"
+#include "wdt.ceu"
+
+output on/off PIN_13;
+
+loop do
+    emit PIN_13(on);
+    await Wdt(5000);
+    emit PIN_13(off);
+    await Wdt(200);
+end

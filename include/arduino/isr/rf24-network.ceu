@@ -15,7 +15,7 @@ native/pre do
             if (pipe != 0 || !node)
 #endif
             {
-                out[count]=address_translation[(dec % 8)];		// Convert our decimal values to octal, translate them to address bytes, and set our address
+                out[count]=address_translation[(dec % 8)];      // Convert our decimal values to octal, translate them to address bytes, and set our address
             }
             dec /= 8;
             count++;
@@ -58,7 +58,7 @@ code/tight RF24Network_is_valid_address (var u16 address) -> bool do
 #if !defined (RF24NetworkMulticast)
             if (digit < 1 || digit > 5)
 #else
-	        if (digit < 0 || digit > 5)	//Allow our out of range multicast address
+            if (digit < 0 || digit > 5) //Allow our out of range multicast address
 #endif
             {
                 @ret = false;
@@ -156,8 +156,8 @@ code/await RF24Network (var& RF24Network_ net, var u8? channel) -> NEVER do
         var[32] byte buf;
         var u8 pipe = await Nrf24l01_RX(&net.nrf, &buf);
         var _RF24NetworkHeader&& header = &&buf[0] as _RF24NetworkHeader&&;
-		{ Serial.println(@(header:to_node)); }
-		{
+        { Serial.println(@(header:to_node)); }
+        {
             network.frame_size = 32;
             memcpy(network.frame_buffer, @(&&buf[0]), 32);
             //network.write(@(header:to_node),1); //Send it on, indicate it is a routed payload
@@ -174,19 +174,20 @@ code/await RF24Network (var& RF24Network_ net, var u8? channel) -> NEVER do
         var bool ok = await RF24Network_Write_To_Pipe(&net, conversion.send_node, conversion.send_pipe, conversion.multicast as bool, &buf);
         _ceu_assert(ok, "bug found");
 
-	    if direct_to=={TX_ROUTED} and conversion.send_node==to_node and is_ack then
+        if direct_to=={TX_ROUTED} and conversion.send_node==to_node and is_ack then
+_ceu_arduino_assert(0,5); // nunca entrei aqui
             var _RF24NetworkHeader&& header = &&buf[0] as _RF24NetworkHeader&&;
-			header:type    = {NETWORK_ACK};     // Set the payload type to NETWORK_ACK
-			header:to_node = header:from_node;  // Change the 'to' address to the 'from' address
+            header:type    = {NETWORK_ACK};     // Set the payload type to NETWORK_ACK
+            header:to_node = header:from_node;  // Change the 'to' address to the 'from' address
 
-			conversion.send_node = header:from_node;
-			conversion.send_pipe = {TX_ROUTED};
-			conversion.multicast = 0;
-			{network.logicalToPhysicalAddress(&@conversion);}
+            conversion.send_node = header:from_node;
+            conversion.send_pipe = {TX_ROUTED};
+            conversion.multicast = 0;
+            {network.logicalToPhysicalAddress(&@conversion);}
 
-			//Write the data using the resulting physical address
-			{network.frame_size = sizeof(RF24NetworkHeader);}
-			{network.write_to_pipe(@conversion.send_node, @conversion.send_pipe, @conversion.multicast);}
-	    end
+            //Write the data using the resulting physical address
+            {network.frame_size = sizeof(RF24NetworkHeader);}
+            await RF24Network_Write_To_Pipe(&net, conversion.send_node, conversion.send_pipe, conversion.multicast as bool, &buf);
+        end
     end
 end

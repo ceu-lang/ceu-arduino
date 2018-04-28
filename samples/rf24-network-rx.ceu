@@ -1,0 +1,134 @@
+#include "arduino/arduino.ceu"
+#include "wclock.ceu"
+#include "spi.ceu"
+#include "nrf24l01.ceu"
+#include "rf24-network.ceu"
+#include "pcint0.ceu"
+
+{
+    Serial.begin(9600);
+    delay(1000);
+    Serial.println("RF24Network/examples/helloworld_rx/");
+}
+
+native/plain _payload_t;
+native/pre do
+    ##include <RF24Network.h>
+    ##include <RF24.h>
+    ##include <SPI.h>
+
+    RF24 radio(8,7);                // nRF24L01(+) radio attached using Getting Started board 
+
+    RF24Network network(radio);      // Network uses that radio
+    const uint16_t this_node = 01;    // Address of our node in Octal format ( 04,031, etc)
+    const uint16_t other_node = 0;   // Address of the other node in Octal format
+
+    typedef struct payload_t {                 // Structure of our payload
+        unsigned long ms;
+        unsigned long counter;
+    } payload_t;
+
+    static RF24NetworkHeader header;        // If so, grab it and print it out
+    static payload_t payload;
+end
+
+input (_RF24NetworkHeader&&, _payload_t&&) NETWORK;
+
+var Lock spi = _;
+spawn Spi();
+
+event bool irq;
+spawn PCInt_to_Event(10, false, &irq);
+
+var Nrf24l01_ nrf = val Nrf24l01_(&spi, &irq, 8,7, _,_,_,_,_,_,_);
+spawn Nrf24l01(&nrf);
+await nrf.ok;
+
+var RF24Network_ net = val RF24Network_(&nrf,{this_node},_,_,_,_);
+spawn RF24Network(&net, 90);
+await net.ok;
+
+// XXX
+{
+    network.node_address = @net.address;
+    network.node_mask    = @net.mask;
+    network.parent_node  = @net.parent_address;
+    network.parent_pipe  = @net.parent_pipe;
+}
+
+#if 1
+
+spawn do
+    loop do
+        var[32] byte buf;
+        var u8 pipe = await Nrf24l01_RX(&nrf, &buf);
+        var _RF24NetworkHeader&& header = &&buf[0] as _RF24NetworkHeader&&;
+		{ Serial.println(@(header:to_node)); }
+		{
+            network.frame_size = 32;
+            memcpy(network.frame_buffer, @(&&buf[0]), 32);
+            //network.write(@(header:to_node),1); //Send it on, indicate it is a routed payload
+        }
+
+        var bool is_ack = (buf[6]>64 and buf[6]<192);
+        var u16  to_node = header:to_node;
+        var u8   direct_to = 1;
+
+        // load info into our conversion structure, and get the converted address info
+        var _RF24Network__logicalToPhysicalStruct conversion = { {@to_node,@direct_to,0} };
+        {network.logicalToPhysicalAddress(&@conversion);}
+
+        var bool ok = await RF24Network_Write_To_Pipe(&net, conversion.send_node, conversion.send_pipe, conversion.multicast as bool, &buf);
+        _ceu_assert(ok, "bug found");
+
+	    if direct_to=={TX_ROUTED} and conversion.send_node==to_node and is_ack then
+            var _RF24NetworkHeader&& header = &&buf[0] as _RF24NetworkHeader&&;
+			header:type    = {NETWORK_ACK};     // Set the payload type to NETWORK_ACK			
+			header:to_node = header:from_node;  // Change the 'to' address to the 'from' address			
+
+			conversion.send_node = header:from_node;
+			conversion.send_pipe = {TX_ROUTED};
+			conversion.multicast = 0;
+			{network.logicalToPhysicalAddress(&@conversion);}
+			
+			//Write the data using the resulting physical address
+			{network.frame_size = sizeof(RF24NetworkHeader);}
+			{network.write_to_pipe(@conversion.send_node, @conversion.send_pipe, @conversion.multicast);}
+	    end
+    end
+end
+
+#else
+
+// startListening
+await Nrf24l01_Write(&nrf, STATUS, _bit(RX_DR) | _bit(TX_DS) | _bit(MAX_RT));
+await Nrf24l01_Write(&nrf, CONFIG, nrf.config | _bit(PRIM_RX) | _bit(MASK_TX_DS) | _bit(MASK_MAX_RT));
+_digitalWrite(nrf.ce, 1);
+do finalize with
+    _digitalWrite(nrf.ce, 0);
+end
+
+spawn do
+    await async do
+        loop do
+            {network.update();}
+            if {network.available()} as bool then
+                {network.read(header,&payload,sizeof(payload));}
+                emit NETWORK({&header}, {&payload});
+            end
+        end
+    end
+end
+
+#endif
+
+var _RF24NetworkHeader&& header;
+var _payload_t&& payload;
+every (header,payload) in NETWORK do
+    {
+        Serial.print("Received packet #");
+        Serial.print(@(payload:counter));
+        Serial.print(" at ");
+        Serial.println(@(payload:ms));
+    }
+end

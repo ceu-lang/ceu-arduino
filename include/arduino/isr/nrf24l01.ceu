@@ -7,8 +7,10 @@ data Nrf24l01_ with
     event& bool irq;
     var    int  ce;
     var    int  csn;
+    var    u8   payload_size = 32;
 
     var    byte config;
+    var    u64  pipe0;
     event  none ok;
     event  none rx;
     event  none tx;
@@ -16,7 +18,7 @@ data Nrf24l01_ with
 end
 
 code/await Nrf24l01    (var& Nrf24l01_ nrf)             -> NEVER;
-code/await Nrf24l01_RX (var& Nrf24l01_ nrf, var&[] byte buf) -> none;
+code/await Nrf24l01_RX (var& Nrf24l01_ nrf, var&[] byte buf) -> u8;
 code/await Nrf24l01_TX (var& Nrf24l01_ nrf, var&[] byte buf) -> bool;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -222,6 +224,18 @@ FIFO before you do the CE toggle to send them on their way.
 #define RF_PWR_HIGH 2
 #define RF_PWR_LOW  1
 
+native/pre do
+    static const uint8_t child_pipe_enable[] PROGMEM = {
+        ERX_P0, ERX_P1, ERX_P2, ERX_P3, ERX_P4, ERX_P5
+    };
+    static const uint8_t child_pipe[] PROGMEM = {
+        RX_ADDR_P0, RX_ADDR_P1, RX_ADDR_P2, RX_ADDR_P3, RX_ADDR_P4, RX_ADDR_P5
+    };
+    static const uint8_t child_payload_size[] PROGMEM = {
+        RX_PW_P0, RX_PW_P1, RX_PW_P2, RX_PW_P3, RX_PW_P4, RX_PW_P5
+    };
+end
+
 ///////////////////////////////////////////////////////////////////////////////
 // ABSTRACTIONS
 ///////////////////////////////////////////////////////////////////////////////
@@ -272,7 +286,9 @@ do
     await Nrf24l01_Write(&nrf, RF_CH, 76);
 
     // RF24_2MBPS, 0dBm
-    await Nrf24l01_Write(&nrf, RF_SETUP, _bit(RF_DR_HIGH)|_bit(RF_PWR_LOW)|_bit(RF_PWR_HIGH));
+    //await Nrf24l01_Write(&nrf, RF_SETUP, _bit(RF_DR_HIGH)|_bit(RF_PWR_LOW)|_bit(RF_PWR_HIGH));
+    // 1MBPS
+    await Nrf24l01_Write(&nrf, RF_SETUP, _bit(RF_DR_LOW)|_bit(RF_DR_HIGH)|_bit(RF_PWR_LOW)|_bit(RF_PWR_HIGH));
 
     // set pipe addresses, lengths
     var[5] byte addr = [0xEE, 0xDD, 0xCC, 0xBB, 0xAA];
@@ -309,7 +325,7 @@ do
     await FOREVER;
 end
 
-code/await Nrf24l01_RX (var& Nrf24l01_ nrf, var&[] byte buf) -> none
+code/await Nrf24l01_RX (var& Nrf24l01_ nrf, var&[] byte buf) -> u8
 do
     await Nrf24l01_Write(&nrf, STATUS, _bit(RX_DR) | _bit(TX_DS) | _bit(MAX_RT));
     await Nrf24l01_Write(&nrf, CONFIG, nrf.config | _bit(PRIM_RX) | _bit(MASK_TX_DS) | _bit(MASK_MAX_RT));
@@ -320,6 +336,17 @@ do
     end
 
     await nrf.irq;
+
+    // read status for receiving pipe
+    var u8 pipe = do
+        lock nrf.spi do
+            watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, _, nrf.csn) do
+                var byte v = await SPI_Transfer(0xFF);
+                escape v as u8;
+            end
+        end
+    end;
+    pipe = (pipe >> RX_P_NO) & 0x07;
 
     lock nrf.spi do
         watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, _, nrf.csn) do
@@ -333,6 +360,8 @@ do
     end
 
     await Nrf24l01_Write(&nrf, STATUS, _bit(RX_DR));
+
+    escape pipe;
 end
 
 code/await Nrf24l01_TX (var& Nrf24l01_ nrf, var&[] byte buf) -> bool
@@ -372,4 +401,64 @@ do
     await Nrf24l01_Write(&nrf, STATUS, _bit(TX_DS) | _bit(MAX_RT));
 
     escape ret;
+end
+
+code/await Nrf24l01_Set_Channel (var& Nrf24l01_ nrf, var u8 channel) -> none do
+    _ceu_assert(channel <= 125, "invalid channel");
+    await Nrf24l01_Write(&nrf, RF_CH, channel as byte);
+end
+
+#define Nrf24l01_IDX(i) {(((byte*) &@(address))[i])}
+
+code/await Nrf24l01_Open_Reading_Pipe (var& Nrf24l01_ nrf, var u8 pipe, var u64 address) -> none do
+    _ceu_assert(pipe < 6, "invalid pipe");
+
+    // If this is pipe 0, cache the address.  This is needed because
+    // openWritingPipe() will overwrite the pipe 0 address, so
+    // startListening() will have to restore it.
+    if pipe == 0 then
+        nrf.pipe0 = address;
+    end
+
+    // For pipes 2-5, only write the LSB
+    if pipe < 2 then
+        var[5] byte address_ = [Nrf24l01_IDX(0), Nrf24l01_IDX(1), Nrf24l01_IDX(2), Nrf24l01_IDX(3), Nrf24l01_IDX(4)];
+        await Nrf24l01_Writes(&nrf, {pgm_read_byte(&child_pipe[@pipe])}, &address_);
+    else
+        await Nrf24l01_Write(&nrf, {pgm_read_byte(&child_pipe[@pipe])}, Nrf24l01_IDX(0));
+    end
+
+    await Nrf24l01_Write(&nrf, {pgm_read_byte(&child_payload_size[@pipe])}, nrf.payload_size as byte);
+
+    // Note it would be more efficient to set all of the bits for all open
+    // pipes at once.  However, I thought it would make the calling code
+    // more simple to do it this way.
+    var byte en_rxaddr = await Nrf24l01_Read(&nrf, EN_RXADDR);
+    await Nrf24l01_Write(&nrf, EN_RXADDR, en_rxaddr | {_BV(pgm_read_byte(&child_pipe_enable[@pipe]))});
+end
+
+code/await Nrf24l01_Open_Writing_Pipe (var& Nrf24l01_ nrf, var u64 address) -> none do
+#if 0
+    var[5] byte address_ = [Nrf24l01_IDX(0), Nrf24l01_IDX(1), Nrf24l01_IDX(2), Nrf24l01_IDX(3), Nrf24l01_IDX(4)];
+    await Nrf24l01_Writes(&nrf, RX_ADDR_P0, &address_);
+    await Nrf24l01_Writes(&nrf, TX_ADDR,    &address_);
+    await Nrf24l01_Write(&nrf, RX_PW_P0, nrf.payload_size as byte);
+#else
+    {
+        radio.write_register(RX_ADDR_P0, reinterpret_cast<uint8_t*>(&@address), 5);
+        radio.write_register(TX_ADDR, reinterpret_cast<uint8_t*>(&@address), 5);
+        radio.write_register(RX_PW_P0,radio.payload_size);
+    }
+#endif
+end
+
+code/await Nrf24l01_Set_Auto_Ack (var& Nrf24l01_ nrf, var u8 pipe, var bool enable) -> none do
+    _ceu_assert(pipe < 6, "invalid pipe");
+    var byte en_aa = await Nrf24l01_Read(&nrf, EN_AA);
+    if enable then
+        en_aa = en_aa | _bit(pipe);
+    else
+        en_aa = en_aa & ~_bit(pipe);
+    end
+    await Nrf24l01_Write(&nrf, EN_AA, en_aa);
 end

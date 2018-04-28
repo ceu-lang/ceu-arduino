@@ -1,0 +1,155 @@
+native/plain _RF24NetworkHeader, _RF24Network__logicalToPhysicalStruct;
+native/pre do
+    ##define RF24Network__logicalToPhysicalStruct RF24Network::logicalToPhysicalStruct
+
+    uint64_t pipe_address (uint16_t node, uint8_t pipe) {
+        static uint8_t address_translation[] = { 0xc3,0x3c,0x33,0xce,0x3e,0xe3,0xec };
+        uint64_t result = 0xCCCCCCCCCCLL;
+        uint8_t* out = reinterpret_cast<uint8_t*>(&result);
+      
+        // Translate the address to use our optimally chosen radio address bytes
+        uint8_t count = 1; uint16_t dec = node;
+
+        while (dec) {
+#if defined (RF24NetworkMulticast)
+            if (pipe != 0 || !node)
+#endif
+            {
+                out[count]=address_translation[(dec % 8)];		// Convert our decimal values to octal, translate them to address bytes, and set our address
+            }
+            dec /= 8;	
+            count++;
+        }
+        
+#if defined (RF24NetworkMulticast)
+        if(pipe != 0 || !node)
+#endif
+        {
+            out[0] = address_translation[pipe];
+        }
+#if defined (RF24NetworkMulticast)
+        else
+        {
+          out[1] = address_translation[count-1];
+        }
+#endif
+
+        //IF_SERIAL_DEBUG(uint32_t* top = reinterpret_cast<uint32_t*>(out+1);printf_P(PSTR("%lu: NET Pipe %i on node 0%o has address %lx%x\n\r"),millis(),pipe,node,*top,*out));
+      
+        return result;
+    }
+end
+
+data RF24Network_ with
+    var&  Nrf24l01_ nrf;
+    var   u16       address;
+    var   u16       mask;
+    var   u16       parent_address;
+    var   u8        parent_pipe;
+    event none      ok;
+end
+
+code/tight RF24Network_is_valid_address (var u16 address) -> bool do
+    var bool ret = true;
+    {
+        u16 address = @address;
+        while (address) {
+            u8 digit = address & 0x07;
+#if !defined (RF24NetworkMulticast)
+            if (digit < 1 || digit > 5)
+#else
+	        if (digit < 0 || digit > 5)	//Allow our out of range multicast address
+#endif
+            {
+                @ret = false;
+                IF_SERIAL_DEBUG_MINIMAL(printf_P(PSTR("*** WARNING *** Invalid address 0%o\n\r"),address););
+                break;
+            }
+            address >>= 3;
+        }
+    }
+    escape ret;
+end
+
+code/tight RF24Network_setup_address (var& RF24Network_ net) -> none do
+    // First, establish the node_mask
+    var u16 mask_check = 0xFFFF;  
+#if defined (RF24NetworkMulticast)
+    var u8 count = 0;
+#endif
+  
+    loop do
+        if (net.address & mask_check) == 0 then
+            break;
+        end
+        mask_check = mask_check << 3;
+#if defined (RF24NetworkMulticast)
+        count = count + 1;
+#endif
+    end
+#if defined (RF24NetworkMulticast)
+    net.multicast_level = count;
+#endif
+  
+    net.mask = ~mask_check;
+
+    // parent mask is the next level down
+    var u16 parent_mask = net.mask >> 3;
+
+    // parent node is the part IN the mask
+    net.parent_address = net.address & parent_mask;
+
+    // parent pipe is the part OUT of the mask
+    var u16 i = net.address;
+    var u16 m = parent_mask;
+
+    loop do
+        if m == 0 then
+            break;
+        end
+        i = i >> 3;
+        m = m >> 3;
+    end
+    net.parent_pipe = i as u8;
+
+    {IF_SERIAL_DEBUG_MINIMAL( printf_P(PSTR("setup_address node=0%o mask=0%o parent=0%o pipe=0%o\n\r"),@(net.address),@(net.mask),@(net.parent_address),@(net.parent_pipe)););}
+end
+
+code/await RF24Network (var& RF24Network_ net, var u8? channel) -> NEVER do
+    _ceu_assert(call RF24Network_is_valid_address(net.address), "invalid address");
+
+    if channel? then
+        await Nrf24l01_Set_Channel(&net.nrf, channel!);
+    end
+
+    call RF24Network_setup_address(&net);
+
+    var int i;
+    loop i in [0 <- 5] do
+        await Nrf24l01_Open_Reading_Pipe(&net.nrf, i, {pipe_address(@net.address,@i)});
+    end
+// XXX
+{memcpy(radio.pipe0_reading_address, @net.nrf.pipe0, 5);}
+
+    emit net.ok;
+    await FOREVER;
+end
+
+code/await RF24Network_Write_To_Pipe (var& RF24Network_ net, var u16 node, var u8 pipe, var bool is_mcast, var&[] byte buf) -> bool do
+    if is_mcast then
+        await Nrf24l01_Set_Auto_Ack(&net.nrf, 0, false);
+    else
+        await Nrf24l01_Set_Auto_Ack(&net.nrf, 0, true);
+    end
+
+    var u64 out_pipe = {pipe_address(@node, @pipe)};
+    await Nrf24l01_Open_Writing_Pipe(&net.nrf, out_pipe);
+
+    var bool ok = await Nrf24l01_TX(&net.nrf, &buf);
+  
+    if not ({network.networkFlags & FLAG_FAST_FRAG} as bool) then
+        await Nrf24l01_Set_Auto_Ack(&net.nrf, 0, false);
+    end
+  
+    escape ok;
+end

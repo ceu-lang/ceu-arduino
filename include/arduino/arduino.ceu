@@ -31,6 +31,7 @@ native
     _noTone,
     _pinMode,
     _pulseIn,
+    _S,
     _Serial,
     _random,
     _randomSeed,

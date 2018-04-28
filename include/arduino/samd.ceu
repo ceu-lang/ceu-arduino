@@ -13,6 +13,8 @@ native/const
 native/pre do
     ##include "LowPower.h"
 
+    ##define S SerialUSB
+
 ##ifdef __cplusplus
 extern "C" {
 ##endif

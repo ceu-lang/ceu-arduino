@@ -2,7 +2,7 @@
 //#define ceu_assert_ex(a,b,c)      // no assert
 
 #if ARDUINO_ARCH_AVR
-    #define CEU_STACK_MAX  200
+    #define CEU_STACK_MAX  500
 #elif ARDUINO_ARCH_SAMD
     #define CEU_STACK_MAX 1000
 #else
@@ -42,6 +42,7 @@ void ceu_arduino_halt (int v);
 void ceu_arduino_halt (int v) {
     if (v<1 || v>10) { v=1; }
     noInterrupts();
+    SPCR &= ~_BV(SPE);  // releases PIN13
     pinMode(13, OUTPUT);
     digitalWrite(13, 1);
     for (;;) {
@@ -143,9 +144,11 @@ static int ceu_callback_arduino (int cmd, tceu_callback_val p1, tceu_callback_va
         case CEU_CALLBACK_ISR_ATTACH: {
             tceu_isr* isr = (tceu_isr*) p1.ptr;
             int* args = (int*) p2.ptr;
-            //if (args[0] < EXTERNAL_NUM_INTERRUPTS) {
-                //attachInterrupt(args[0], (void(*)())(isr->fun), args[1]);    /* TODO: no mem */
-            //} else
+#if 1
+            if (args[0] < EXTERNAL_NUM_INTERRUPTS) {
+                attachInterrupt(args[0], (void(*)())(isr->fun), args[1]);    /* TODO: no mem */
+            } else
+#endif
             {
                 isrs[args[0]] = *isr;
             }

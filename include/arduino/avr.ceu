@@ -47,6 +47,8 @@ native/pre do
     ##include <avr/io.h>
     ##include "LowPower.h"
 
+    ##define S Serial
+
 #ifdef CEU_FEATURES_ISR_SLEEP
     enum {
         CEU_PM_ADC = 0,

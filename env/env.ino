@@ -1,8 +1,8 @@
-#define CEU_ARDUINO_ASSERT          // numeric assert
-//#define ceu_assert_ex(a,b,c)      // no assert
+//#define ceu_assert_ex(a,b,c) // no assert
+#define ceu_assert_ex(a,b,c) ceu_arduino_assert(a,1)
 
 #if ARDUINO_ARCH_AVR
-    #define CEU_STACK_MAX  500
+    #define CEU_STACK_MAX 1000
 #elif ARDUINO_ARCH_SAMD
     #define CEU_STACK_MAX 1000
 #else
@@ -18,10 +18,7 @@
         }                               \
     }
 
-#ifdef CEU_ARDUINO_ASSERT
-#define ceu_assert_ex(a,b,c) if (a == 0) { ceu_arduino_halt((int)b); }
-void ceu_arduino_halt (int v);
-#endif
+void ceu_arduino_assert (int cnd, int v);
 
 #ifdef CEU_FEATURES_ISR
     #ifdef CEU_FEATURES_ISR_SLEEP
@@ -38,9 +35,8 @@ void ceu_arduino_halt (int v);
 
 #include "_ceu_app.c.h"
 
-#ifdef CEU_ARDUINO_ASSERT
-void ceu_arduino_halt (int v) {
-    if (v<1 || v>10) { v=1; }
+void ceu_arduino_assert (int cnd, int v) {
+    if (cnd) { return; }
     noInterrupts();
     SPCR &= ~_BV(SPE);  // releases PIN13
     pinMode(13, OUTPUT);
@@ -56,7 +52,6 @@ void ceu_arduino_halt (int v) {
     }
     interrupts();
 }
-#endif
 
 #ifdef CEU_FEATURES_ISR
     #include "wiring_private.h"

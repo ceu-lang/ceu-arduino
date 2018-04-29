@@ -1,8 +1,70 @@
-native/plain _RF24NetworkHeader, _RF24Network__logicalToPhysicalStruct;
-native/pre do
-    ##define RF24Network__logicalToPhysicalStruct RF24Network::logicalToPhysicalStruct
+#define NETWORK_ACK 193
+#define TX_ROUTED 1
 
-    uint64_t pipe_address (uint16_t node, uint8_t pipe) {
+data RF24Network_ with
+    var&  Nrf24l01_ nrf;
+    var   u16       address;
+    var   u16       mask;
+    var   u16       parent_address;
+    var   u8        parent_pipe;
+    event none      ok;
+end
+
+native/plain _RF24Network__Header, _RF24Network__logicalToPhysicalStruct;
+native/pre do
+    struct RF24Network__Header
+    {
+      uint16_t from_node; /**< Logical address where the message was generated */
+      uint16_t to_node; /**< Logical address where the message is going */
+      uint16_t id; /**< Sequential message ID, incremented every time a new frame is constructed */
+      /**
+       * Message Types:
+       * User message types 1 through 64 will NOT be acknowledged by the network, while message types 65 through 127 will receive a network ACK.
+       * System message types 192 through 255 will NOT be acknowledged by the network. Message types 128 through 192 will receive a network ACK. <br>
+       * <br><br>
+       */
+      unsigned char type; /**< <b>Type of the packet. </b> 0-127 are user-defined types, 128-255 are reserved for system */
+
+      /**
+      * During fragmentation, it carries the fragment_id, and on the last fragment
+      * it carries the header_type.<br>
+      */
+      unsigned char reserved; /**< *Reserved for system use* */
+
+      static uint16_t next_id; /**< The message ID of the next message to be sent (unused)*/
+    };
+
+    struct RF24Network__logicalToPhysicalStruct{
+        uint16_t send_node;
+        uint8_t send_pipe;
+        bool multicast;
+    };
+end
+
+native/pos do
+    bool RF24Network__is_valid_address( uint16_t node ) {
+      bool result = true;
+
+      while(node)
+      {
+        uint8_t digit = node & 0x07;
+#if !defined (RF24NetworkMulticast)
+        if (digit < 1 || digit > 5)
+#else
+        if (digit < 0 || digit > 5) //Allow our out of range multicast address
+#endif
+        {
+          result = false;
+          //IF_SERIAL_DEBUG_MINIMAL(printf_P(PSTR("*** WARNING *** Invalid address 0%o\n\r"),node););
+          break;
+        }
+        node >>= 3;
+      }
+
+      return result;
+    }
+
+    uint64_t RF24Network__pipe_address (uint16_t node, uint8_t pipe) {
         static uint8_t address_translation[] = { 0xc3,0x3c,0x33,0xce,0x3e,0xe3,0xec };
         uint64_t result = 0xCCCCCCCCCCLL;
         uint8_t* out = reinterpret_cast<uint8_t*>(&result);
@@ -38,37 +100,83 @@ native/pre do
 
         return result;
     }
-end
 
-data RF24Network_ with
-    var&  Nrf24l01_ nrf;
-    var   u16       address;
-    var   u16       mask;
-    var   u16       parent_address;
-    var   u8        parent_pipe;
-    event none      ok;
-end
-
-code/tight RF24Network_is_valid_address (var u16 address) -> bool do
-    var bool ret = true;
-    {
-        u16 address = @address;
-        while (address) {
-            u8 digit = address & 0x07;
-#if !defined (RF24NetworkMulticast)
-            if (digit < 1 || digit > 5)
-#else
-            if (digit < 0 || digit > 5) //Allow our out of range multicast address
-#endif
-            {
-                @ret = false;
-                IF_SERIAL_DEBUG_MINIMAL(printf_P(PSTR("*** WARNING *** Invalid address 0%o\n\r"),address););
-                break;
-            }
-            address >>= 3;
-        }
+    bool RF24Network__is_descendant(tceu_data_RF24Network_* net, uint16_t node ) {
+        return ( node & net->mask ) == net->address;
     }
-    escape ret;
+
+    bool RF24Network__is_direct_child(tceu_data_RF24Network_* net, uint16_t node ) {
+      bool result = false;
+
+      // A direct child of ours has the same low numbers as us, and only
+      // one higher number.
+      //
+      // e.g. node 0234 is a direct child of 034, and node 01234 is a
+      // descendant but not a direct child
+
+      // First, is it even a descendant?
+      if ( RF24Network__is_descendant(net, node) )
+      {
+        // Does it only have ONE more level than us?
+        uint16_t child_node_mask = ( ~ net->mask ) << 3;
+        result = ( node & child_node_mask ) == 0 ;
+      }
+      return result;
+    }
+
+    uint16_t RF24Network__direct_child_route_to( tceu_data_RF24Network_* net, uint16_t node )
+    {
+      // Presumes that this is in fact a child!!
+      uint16_t child_mask = ( net->mask << 3 ) | 0x07;
+      return node & child_mask;
+
+    }
+
+    bool RF24Network__logicalToPhysicalAddress(tceu_data_RF24Network_* net, RF24Network__logicalToPhysicalStruct *conversionInfo)
+    {
+      //Create pointers so this makes sense.. kind of
+      //We take in the to_node(logical) now, at the end_ of the function, output the send_node(physical) address, etc.
+      //back to the original memory address that held the logical information.
+      uint16_t *to_node = &conversionInfo->send_node;
+      uint8_t *directTo = &conversionInfo->send_pipe;
+      bool *multicast = &conversionInfo->multicast;
+
+      // Where do we send this?  By default, to our parent
+      uint16_t pre_conversion_send_node = net->parent_address;
+
+      // On which pipe
+      uint8_t pre_conversion_send_pipe = net->parent_pipe;
+
+     if(*directTo > TX_ROUTED) {
+        pre_conversion_send_node = *to_node;
+        *multicast = 1;
+        //if(*directTo == USER_TX_MULTICAST || *directTo == USER_TX_TO_PHYSICAL_ADDRESS){
+            pre_conversion_send_pipe=0;
+        //}
+      }
+      // If the node is a direct child,
+      else
+      if ( RF24Network__is_direct_child(net, *to_node) )
+      {
+        // Send directly
+        pre_conversion_send_node = *to_node;
+        // To its listening pipe
+        pre_conversion_send_pipe = 5;
+      }
+      // If the node is a child of a child
+      // talk on our child's listening pipe,
+      // and let the direct child relay it.
+      else if ( RF24Network__is_descendant(net, *to_node) )
+      {
+        pre_conversion_send_node = RF24Network__direct_child_route_to(net, *to_node);
+        pre_conversion_send_pipe = 5;
+      }
+
+      *to_node = pre_conversion_send_node;
+      *directTo = pre_conversion_send_pipe;
+
+      return 1;
+    }
 end
 
 code/tight RF24Network_setup_address (var& RF24Network_ net) -> none do
@@ -112,7 +220,7 @@ code/tight RF24Network_setup_address (var& RF24Network_ net) -> none do
     end
     net.parent_pipe = i as u8;
 
-    {IF_SERIAL_DEBUG_MINIMAL( printf_P(PSTR("setup_address node=0%o mask=0%o parent=0%o pipe=0%o\n\r"),@(net.address),@(net.mask),@(net.parent_address),@(net.parent_pipe)););}
+    //{IF_SERIAL_DEBUG_MINIMAL( printf_P(PSTR("setup_address node=0%o mask=0%o parent=0%o pipe=0%o\n\r"),@(net.address),@(net.mask),@(net.parent_address),@(net.parent_pipe)););}
 end
 
 code/await RF24Network_Write_To_Pipe (var& RF24Network_ net, var u16 node, var u8 pipe, var bool is_mcast, var&[] byte buf) -> bool do
@@ -122,20 +230,49 @@ code/await RF24Network_Write_To_Pipe (var& RF24Network_ net, var u16 node, var u
         await Nrf24l01_Set_Auto_Ack(&net.nrf, 0, true);
     end
 
-    var u64 out_pipe = {pipe_address(@node, @pipe)};
+    var u64 out_pipe = {RF24Network__pipe_address(@node, @pipe)};
     await Nrf24l01_Open_Writing_Pipe(&net.nrf, out_pipe);
 
     var bool ok = await Nrf24l01_TX(&net.nrf, &buf);
 
-    if not ({network.networkFlags & FLAG_FAST_FRAG} as bool) then
+    //if not ({network.networkFlags & FLAG_FAST_FRAG} as bool) then
         await Nrf24l01_Set_Auto_Ack(&net.nrf, 0, false);
+    //end
+
+    escape ok;
+end
+
+code/await RF24Network_Write (var& RF24Network_ net, var u16 to_node, var u8 direct_to, var&[] byte buf) -> bool do
+    var bool is_ack = (buf[6]>64 and buf[6]<192);
+
+    // load info into our conversion structure, and get the converted address info
+    var _RF24Network__logicalToPhysicalStruct conversion = { {@to_node,@direct_to,0} };
+    {RF24Network__logicalToPhysicalAddress(@&&net, &@conversion);}
+
+    var bool ok = await RF24Network_Write_To_Pipe(&net, conversion.send_node, conversion.send_pipe, conversion.multicast as bool, &buf);
+    _ceu_assert(ok, "bug found");
+
+    if direct_to=={TX_ROUTED} and conversion.send_node==to_node and is_ack then
+_ceu_arduino_assert(0,5); // nunca entrei aqui
+        var _RF24Network__Header&& header = &&buf[0] as _RF24Network__Header&&;
+        header:type    = {NETWORK_ACK};     // Set the payload type to NETWORK_ACK
+        header:to_node = header:from_node;  // Change the 'to' address to the 'from' address
+
+        conversion.send_node = header:from_node;
+        conversion.send_pipe = {TX_ROUTED};
+        conversion.multicast = 0;
+        {RF24Network__logicalToPhysicalAddress(@&&net, &@conversion);}
+
+        //Write the data using the resulting physical address
+        //{network.frame_size = sizeof(RF24Network__Header);}
+        await RF24Network_Write_To_Pipe(&net, conversion.send_node, conversion.send_pipe, conversion.multicast as bool, &buf);
     end
 
     escape ok;
 end
 
 code/await RF24Network (var& RF24Network_ net, var u8? channel) -> NEVER do
-    _ceu_assert(call RF24Network_is_valid_address(net.address), "invalid address");
+    _ceu_assert({RF24Network__is_valid_address(@net.address)}, "invalid address");
 
     if channel? then
         await Nrf24l01_Set_Channel(&net.nrf, channel!);
@@ -145,49 +282,16 @@ code/await RF24Network (var& RF24Network_ net, var u8? channel) -> NEVER do
 
     var int i;
     loop i in [0 <- 5] do
-        await Nrf24l01_Open_Reading_Pipe(&net.nrf, i, {pipe_address(@net.address,@i)});
+        await Nrf24l01_Open_Reading_Pipe(&net.nrf, i, {RF24Network__pipe_address(@net.address,@i)});
     end
-// XXX
-{memcpy(radio.pipe0_reading_address, @net.nrf.pipe0, 5);}
 
     emit net.ok;
 
     loop do
         var[32] byte buf;
         var u8 pipe = await Nrf24l01_RX(&net.nrf, &buf);
-        var _RF24NetworkHeader&& header = &&buf[0] as _RF24NetworkHeader&&;
+        var _RF24Network__Header&& header = &&buf[0] as _RF24Network__Header&&;
         { Serial.println(@(header:to_node)); }
-        {
-            network.frame_size = 32;
-            memcpy(network.frame_buffer, @(&&buf[0]), 32);
-            //network.write(@(header:to_node),1); //Send it on, indicate it is a routed payload
-        }
-
-        var bool is_ack = (buf[6]>64 and buf[6]<192);
-        var u16  to_node = header:to_node;
-        var u8   direct_to = 1;
-
-        // load info into our conversion structure, and get the converted address info
-        var _RF24Network__logicalToPhysicalStruct conversion = { {@to_node,@direct_to,0} };
-        {network.logicalToPhysicalAddress(&@conversion);}
-
-        var bool ok = await RF24Network_Write_To_Pipe(&net, conversion.send_node, conversion.send_pipe, conversion.multicast as bool, &buf);
-        _ceu_assert(ok, "bug found");
-
-        if direct_to=={TX_ROUTED} and conversion.send_node==to_node and is_ack then
-_ceu_arduino_assert(0,5); // nunca entrei aqui
-            var _RF24NetworkHeader&& header = &&buf[0] as _RF24NetworkHeader&&;
-            header:type    = {NETWORK_ACK};     // Set the payload type to NETWORK_ACK
-            header:to_node = header:from_node;  // Change the 'to' address to the 'from' address
-
-            conversion.send_node = header:from_node;
-            conversion.send_pipe = {TX_ROUTED};
-            conversion.multicast = 0;
-            {network.logicalToPhysicalAddress(&@conversion);}
-
-            //Write the data using the resulting physical address
-            {network.frame_size = sizeof(RF24NetworkHeader);}
-            await RF24Network_Write_To_Pipe(&net, conversion.send_node, conversion.send_pipe, conversion.multicast as bool, &buf);
-        end
+        await RF24Network_Write(&net, header:to_node, 1, &buf);
     end
 end

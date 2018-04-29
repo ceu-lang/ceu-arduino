@@ -13,13 +13,10 @@
 
 native/plain _payload_t;
 native/pre do
-    ##include <RF24Network.h>
-    ##include <RF24.h>
-    ##include <SPI.h>
+    //##include <SPI.h>
+    //##include <RF24.h>
+    //RF24 radio(8,7);                // nRF24L01(+) radio attached using Getting Started board
 
-    RF24 radio(8,7);                // nRF24L01(+) radio attached using Getting Started board
-
-    RF24Network network(radio);      // Network uses that radio
     const uint16_t this_node = 01;    // Address of our node in Octal format ( 04,031, etc)
     const uint16_t other_node = 0;   // Address of the other node in Octal format
 
@@ -28,11 +25,11 @@ native/pre do
         unsigned long counter;
     } payload_t;
 
-    static RF24NetworkHeader header;        // If so, grab it and print it out
+    static RF24Network__Header header;        // If so, grab it and print it out
     static payload_t payload;
 end
 
-input (_RF24NetworkHeader&&, _payload_t&&) NETWORK;
+input (_RF24Network__Header&&, _payload_t&&) NETWORK;
 
 var Lock spi = _;
 spawn Spi();
@@ -48,41 +45,7 @@ var RF24Network_ net = val RF24Network_(&nrf,{this_node},_,_,_,_);
 spawn RF24Network(&net, 90);
 await net.ok;
 
-// XXX
-{
-    network.node_address = @net.address;
-    network.node_mask    = @net.mask;
-    network.parent_node  = @net.parent_address;
-    network.parent_pipe  = @net.parent_pipe;
-}
-
-#if 1
-
-#else
-
-// startListening
-await Nrf24l01_Write(&nrf, STATUS, _bit(RX_DR) | _bit(TX_DS) | _bit(MAX_RT));
-await Nrf24l01_Write(&nrf, CONFIG, nrf.config | _bit(PRIM_RX) | _bit(MASK_TX_DS) | _bit(MASK_MAX_RT));
-_digitalWrite(nrf.ce, 1);
-do finalize with
-    _digitalWrite(nrf.ce, 0);
-end
-
-spawn do
-    await async do
-        loop do
-            {network.update();}
-            if {network.available()} as bool then
-                {network.read(header,&payload,sizeof(payload));}
-                emit NETWORK({&header}, {&payload});
-            end
-        end
-    end
-end
-
-#endif
-
-var _RF24NetworkHeader&& header;
+var _RF24Network__Header&& header;
 var _payload_t&& payload;
 every (header,payload) in NETWORK do
     {

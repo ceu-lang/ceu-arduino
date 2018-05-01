@@ -1,13 +1,19 @@
+#define NETWORK_REQ_ADDRESS 195
+#define NETWORK_DEFAULT_ADDRESS 04444
+#define NETWORK_ADDR_RESPONSE 128
+#define NETWORK_PING 130
 #define NETWORK_ACK 193
 #define TX_ROUTED 1
 
 data RF24Network_ with
-    var&  Nrf24l01_ nrf;
-    var   u16       address;
-    var   u16       mask;
-    var   u16       parent_address;
-    var   u8        parent_pipe;
-    event none      ok;
+    var&    Nrf24l01_ nrf;
+    var     u16       address;
+    var     u16       mask;
+    var     u16       parent_address;
+    var     u8        parent_pipe;
+    var[32] byte      buf;
+    event   none      ok;
+    event   none      rx;
 end
 
 native/plain _RF24Network__Header, _RF24Network__logicalToPhysicalStruct;
@@ -223,7 +229,7 @@ code/tight RF24Network_setup_address (var& RF24Network_ net) -> none do
     //{IF_SERIAL_DEBUG_MINIMAL( printf_P(PSTR("setup_address node=0%o mask=0%o parent=0%o pipe=0%o\n\r"),@(net.address),@(net.mask),@(net.parent_address),@(net.parent_pipe)););}
 end
 
-code/await RF24Network_Write_To_Pipe (var& RF24Network_ net, var u16 node, var u8 pipe, var bool is_mcast, var&[] byte buf) -> bool do
+code/await RF24Network_Write_To_Pipe (var& RF24Network_ net, var u16 node, var u8 pipe, var bool is_mcast) -> bool do
     if is_mcast then
         await Nrf24l01_Set_Auto_Ack(&net.nrf, 0, false);
     else
@@ -233,7 +239,7 @@ code/await RF24Network_Write_To_Pipe (var& RF24Network_ net, var u16 node, var u
     var u64 out_pipe = {RF24Network__pipe_address(@node, @pipe)};
     await Nrf24l01_Open_Writing_Pipe(&net.nrf, out_pipe);
 
-    var bool ok = await Nrf24l01_TX(&net.nrf, &buf);
+    var bool ok = await Nrf24l01_TX(&net.nrf, &net.buf);
 
     //if not ({network.networkFlags & FLAG_FAST_FRAG} as bool) then
         await Nrf24l01_Set_Auto_Ack(&net.nrf, 0, false);
@@ -242,19 +248,19 @@ code/await RF24Network_Write_To_Pipe (var& RF24Network_ net, var u16 node, var u
     escape ok;
 end
 
-code/await RF24Network_Write (var& RF24Network_ net, var u16 to_node, var u8 direct_to, var&[] byte buf) -> bool do
-    var bool is_ack = (buf[6]>64 and buf[6]<192);
+code/await RF24Network_Write (var& RF24Network_ net, var u16 to_node, var u8 direct_to) -> bool do
+    var bool is_ack = (net.buf[6]>64 and net.buf[6]<192);
 
     // load info into our conversion structure, and get the converted address info
     var _RF24Network__logicalToPhysicalStruct conversion = { {@to_node,@direct_to,0} };
     {RF24Network__logicalToPhysicalAddress(@&&net, &@conversion);}
 
-    var bool ok = await RF24Network_Write_To_Pipe(&net, conversion.send_node, conversion.send_pipe, conversion.multicast as bool, &buf);
-    _ceu_assert(ok, "bug found");
+    var bool ok = await RF24Network_Write_To_Pipe(&net, conversion.send_node, conversion.send_pipe, conversion.multicast as bool);
+    //_ceu_assert(ok, "bug found");
 
     if direct_to=={TX_ROUTED} and conversion.send_node==to_node and is_ack then
 _ceu_arduino_assert(0,5); // nunca entrei aqui
-        var _RF24Network__Header&& header = &&buf[0] as _RF24Network__Header&&;
+        var _RF24Network__Header&& header = &&net.buf[0] as _RF24Network__Header&&;
         header:type    = {NETWORK_ACK};     // Set the payload type to NETWORK_ACK
         header:to_node = header:from_node;  // Change the 'to' address to the 'from' address
 
@@ -265,7 +271,7 @@ _ceu_arduino_assert(0,5); // nunca entrei aqui
 
         //Write the data using the resulting physical address
         //{network.frame_size = sizeof(RF24Network__Header);}
-        await RF24Network_Write_To_Pipe(&net, conversion.send_node, conversion.send_pipe, conversion.multicast as bool, &buf);
+        await RF24Network_Write_To_Pipe(&net, conversion.send_node, conversion.send_pipe, conversion.multicast as bool);
     end
 
     escape ok;
@@ -288,10 +294,56 @@ code/await RF24Network (var& RF24Network_ net, var u8? channel) -> NEVER do
     emit net.ok;
 
     loop do
-        var[32] byte buf;
-        var u8 pipe = await Nrf24l01_RX(&net.nrf, &buf);
-        var _RF24Network__Header&& header = &&buf[0] as _RF24Network__Header&&;
-        { Serial.println(@(header:to_node)); }
-        await RF24Network_Write(&net, header:to_node, 1, &buf);
+        $net.buf = 0;
+        var u8 pipe = await Nrf24l01_RX(&net.nrf, &net.buf);
+        var _RF24Network__Header&& header = &&net.buf[0] as _RF24Network__Header&&;
+        { S.println(@(header:to_node)); }
+
+#if 0
+        if header:to_node == net.address then
+            if header:type == NETWORK_PING then
+_ceu_arduino_assert(0,4); // nunca entrei aqui
+                continue;
+            end
+
+            if header:type == NETWORK_ADDR_RESPONSE then
+                var u16 requester = NETWORK_DEFAULT_ADDRESS;
+                if requester != net.address then
+_ceu_arduino_assert(0,4); // nunca entrei aqui
+                    header:to_node = requester;
+                    //write(header->to_node,USER_TX_TO_PHYSICAL_ADDRESS);
+                    //await 10ms; // TODO: pode perder pacotes
+                    //write(header->to_node,USER_TX_TO_PHYSICAL_ADDRESS);
+                    //printf("Fwd add response to 0%o\n",requester);
+                    continue;
+                end
+            end
+
+            if header:type==NETWORK_REQ_ADDRESS and net.address!=0 then
+_ceu_arduino_assert(0,3); // nunca entrei aqui
+                //printf("Fwd add req to 0\n");
+                header:from_node = net.address;
+                header:to_node = 0;
+                //write(header->to_node,TX_NORMAL);
+                continue;
+            end
+
+#if 0
+            if( (returnSysMsgs && header->type > 127) || header->type == NETWORK_ACK ){
+                IF_SERIAL_DEBUG_ROUTING( printf_P(PSTR("%lu MAC: System payload rcvd %d\n"),millis(),returnVal); );
+                //if( (header->type < 148 || header->type > 150) && header->type != NETWORK_MORE_FRAGMENTS_NACK && header->type != EXTERNAL_DATA_TYPE && header->type!= NETWORK_LAST_FRAGMENT)
+                if( header->type != NETWORK_FIRST_FRAGMENT && header->type != NETWORK_MORE_FRAGMENTS && header->type != NETWORK_MORE_FRAGMENTS_NACK && header->type != EXTERNAL_DATA_TYPE && header->type!= NETWORK_LAST_FRAGMENT){
+                    return returnVal;
+                }
+            }
+#endif
+
+            emit net.rx;
+        else
+            await RF24Network_Write(&net, header:to_node, TX_ROUTED);
+        end
+#else
+        await RF24Network_Write(&net, header:to_node, TX_ROUTED);
+#endif
     end
 end

@@ -41,7 +41,7 @@ var Nrf24l01_ nrf = val Nrf24l01_(&spi, &irq, 8,7, _,_,_,_,_,_,_);
 spawn Nrf24l01(&nrf);
 await nrf.ok;
 
-var RF24Network_ net = val RF24Network_(&nrf,{this_node},_,_,_,_);
+var RF24Network_ net = val RF24Network_(&nrf,{this_node},_,_,_,_,_,_);
 spawn RF24Network(&net, 90);
 await net.ok;
 

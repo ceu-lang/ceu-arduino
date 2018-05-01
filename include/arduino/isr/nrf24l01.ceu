@@ -265,37 +265,12 @@ end
 
 code/await Nrf24l01_Read (var& Nrf24l01_ nrf, var byte reg) -> byte do
     lock nrf.spi do
-#if 0
-        var u8 config = {radio.read_register(CONFIG)};
-        var u8 status = {radio.read_register(STATUS)};
-        {
-            S.print("RED ");
-            S.println(@status);
-            S.print("CFG ");
-            S.println(@config);
-            _DELAY(20);
-        }
-#endif
         watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, _, nrf.csn) do
             var byte status = await SPI_Transfer(R_REGISTER | (REGISTER_MASK & reg));
             if reg == STATUS then
                 escape status;
             end
-#if 1
-        {
-            S.print("MID ");
-            S.println(@status);
-            _DELAY(15);
-        }
-#endif
             var byte v = await SPI_Transfer(0xFF);
-#if 1
-        {
-            S.print("AFT ");
-            S.println(@v);
-            _DELAY(15);
-        }
-#endif
             escape v;
         end
     end
@@ -413,41 +388,16 @@ do
         _digitalWrite(nrf.ce, 0);
         await FOREVER;
     end
-    // POINT-1
 
     // ISR -> event
     var bool ret = do
         var byte status = await Nrf24l01_Read(&nrf, STATUS);
-        // POINT-2
-#if 1
-        {
-            S.print("ERR ");
-            S.println(@status);
-            _DELAY(15);
-        }
-#endif
         if _bitRead(status, {TX_DS}) as bool then
             escape true;
         else/if _bitRead(status, {MAX_RT}) as bool then
             escape false;
         else
-#if 0
-        var u8 config = {radio.read_register(CONFIG)};
-        {
-            S.print("CFG ");
-            S.println(@config);
-            _DELAY(15);
-        }
-#endif
-_ceu_arduino_assert(0,3);
-            // It should be impossible to reach this state but it is happening.
-            // On POINT-1, TX_DS is set (status=46).
-            // On POINT-2, RX_DR is set (status=64), which should be impossible:
-            // - I did not clear TX_DS
-            // - PRIM_RX is off
-            // - CE stays on for only 10us
-            //_ceu_assert(0, "unexpected interrupt");
-            escape true;
+            _ceu_assert(0, "unexpected interrupt");
         end
     end;
 

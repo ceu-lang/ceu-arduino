@@ -29,8 +29,6 @@ native/pre do
     static payload_t payload;
 end
 
-input (_RF24Network__Header&&, _payload_t&&) NETWORK;
-
 var Lock spi = _;
 spawn Spi();
 
@@ -45,13 +43,14 @@ var RF24Network_ net = val RF24Network_(&nrf,{this_node},_,_,_,_,_,_);
 spawn RF24Network(&net, 90);
 await net.ok;
 
-var _RF24Network__Header&& header;
-var _payload_t&& payload;
-every (header,payload) in NETWORK do
+every net.rx do
+    var _RF24Network__Header&& header = &&net.buf[0] as _RF24Network__Header&&;
+    var _payload_t&& payload = &&net.buf[0 + sizeof(_RF24Network__Header)] as _payload_t&&;
     {
-        Serial.print("Received packet #");
+        Serial.print("RX #");
         Serial.print(@(payload:counter));
         Serial.print(" at ");
         Serial.println(@(payload:ms));
+        _DELAY(20);
     }
 end

@@ -1,5 +1,6 @@
 //#define ceu_assert_ex(a,b,c) // no assert
-#define ceu_assert_ex(a,b,c) ceu_arduino_assert(a,1)
+#define ceu_assert_ex(a,b,c) ceu_arduino_assert(a,__COUNTER__)
+#define ceu_assert_sys(a,b)  ceu_arduino_assert(a,__COUNTER__)
 
 #if ARDUINO_ARCH_AVR
     #define CEU_STACK_MAX 1000
@@ -43,9 +44,9 @@ void ceu_arduino_assert (int cnd, int v) {
     digitalWrite(13, 1);
     for (;;) {
         for (int j=0; j<v; j++) {
-            _DELAY(150);
+            _DELAY(200);
             digitalWrite(13, 0);
-            _DELAY(150);
+            _DELAY(200);
             digitalWrite(13, 1);
         }
         _DELAY(1000);

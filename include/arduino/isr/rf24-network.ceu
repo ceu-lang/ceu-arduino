@@ -36,8 +36,6 @@ native/pre do
       * it carries the header_type.<br>
       */
       unsigned char reserved; /**< *Reserved for system use* */
-
-      static uint16_t next_id; /**< The message ID of the next message to be sent (unused)*/
     };
 
     struct RF24Network__logicalToPhysicalStruct{
@@ -299,7 +297,6 @@ code/await RF24Network (var& RF24Network_ net, var u8? channel) -> NEVER do
         var _RF24Network__Header&& header = &&net.buf[0] as _RF24Network__Header&&;
         { S.println(@(header:to_node)); }
 
-#if 0
         if header:to_node == net.address then
             if header:type == NETWORK_PING then
 _ceu_arduino_assert(0,4); // nunca entrei aqui
@@ -342,8 +339,5 @@ _ceu_arduino_assert(0,3); // nunca entrei aqui
         else
             await RF24Network_Write(&net, header:to_node, TX_ROUTED);
         end
-#else
-        await RF24Network_Write(&net, header:to_node, TX_ROUTED);
-#endif
     end
 end

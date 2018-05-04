@@ -380,6 +380,12 @@ do
                 loop i in [0 -> $buf[ do
                     await SPI_Transfer(buf[i]);
                 end
+#if 1
+                // needed for non-dynamic payloads
+                loop i in [$buf -> $$buf[ do
+                    await SPI_Transfer(0);
+                end
+#endif
             end
         end
 
@@ -397,6 +403,7 @@ do
         else/if _bitRead(status, {MAX_RT}) as bool then
             escape false;
         else
+_ceu_arduino_assert(0, 2);
             _ceu_assert(0, "unexpected interrupt");
         end
     end;

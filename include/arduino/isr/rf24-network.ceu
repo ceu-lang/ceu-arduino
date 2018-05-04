@@ -3,6 +3,8 @@
 #define NETWORK_ADDR_RESPONSE 128
 #define NETWORK_PING 130
 #define NETWORK_ACK 193
+
+#define TX_NORMAL 0
 #define TX_ROUTED 1
 
 data RF24Network_ with
@@ -11,6 +13,7 @@ data RF24Network_ with
     var     u16       mask;
     var     u16       parent_address;
     var     u8        parent_pipe;
+    var     u16       tx_seqno = 0;
     var[32] byte      buf;
     event   none      ok;
     event   none      rx;
@@ -234,6 +237,7 @@ code/await RF24Network_Write_To_Pipe (var& RF24Network_ net, var u16 node, var u
         await Nrf24l01_Set_Auto_Ack(&net.nrf, 0, true);
     end
 
+{ S.print("P "); S.print(@node); S.print(" "); S.println(@pipe); _DELAY(10); }
     var u64 out_pipe = {RF24Network__pipe_address(@node, @pipe)};
     await Nrf24l01_Open_Writing_Pipe(&net.nrf, out_pipe);
 
@@ -290,7 +294,10 @@ code/await RF24Network (var& RF24Network_ net, var u8? channel) -> NEVER do
     end
 
     emit net.ok;
+    await FOREVER;
+end
 
+code/await RF24Network_RX (var& RF24Network_ net) -> NEVER do
     loop do
         $net.buf = 0;
         var u8 pipe = await Nrf24l01_RX(&net.nrf, &net.buf);
@@ -340,4 +347,21 @@ _ceu_arduino_assert(0,3); // nunca entrei aqui
             await RF24Network_Write(&net, header:to_node, TX_ROUTED);
         end
     end
+end
+
+code/await RF24Network_TX (var& RF24Network_ net, var _RF24Network__Header&& header, var byte&& payload, var usize len) -> bool do
+    header:from_node = net.address;
+    header:id        = net.tx_seqno;
+    header:type      = 0;
+    net.tx_seqno = net.tx_seqno + 1;
+    {
+        ceu_vector_setlen(@&&net.buf, sizeof(RF24Network__Header), 1);
+        memcpy(@&&net.buf[0], @header, sizeof(RF24Network__Header));
+
+        ceu_vector_setlen(@&&net.buf, sizeof(RF24Network__Header)+@len, 1);
+        memcpy(@&&net.buf[sizeof(_RF24Network__Header)], @payload, @len);
+    }
+
+    var bool ok = await RF24Network_Write(&net, header:to_node, {TX_NORMAL});
+    escape ok;
 end

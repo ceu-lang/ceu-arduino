@@ -1,6 +1,6 @@
 //#define ceu_assert_ex(a,b,c) // no assert
-#define ceu_assert_ex(a,b,c) ceu_arduino_assert(a,__COUNTER__)
-#define ceu_assert_sys(a,b)  ceu_arduino_assert(a,__COUNTER__)
+#define ceu_assert_ex(a,b,c) ceu_arduino_assert(a,(10+__COUNTER__))
+#define ceu_assert_sys(a,b)  ceu_arduino_assert(a,(10+__COUNTER__))
 
 #if ARDUINO_ARCH_AVR
     #define CEU_STACK_MAX 1000

@@ -231,13 +231,15 @@ code/tight RF24Network_setup_address (var& RF24Network_ net) -> none do
 end
 
 code/await RF24Network_Write_To_Pipe (var& RF24Network_ net, var u16 node, var u8 pipe, var bool is_mcast) -> bool do
+#if 0
     if is_mcast then
         await Nrf24l01_Set_Auto_Ack(&net.nrf, 0, false);
     else
-        await Nrf24l01_Set_Auto_Ack(&net.nrf, 0, true);
+        // TODO: nao esta funcionando
+        //await Nrf24l01_Set_Auto_Ack(&net.nrf, 0, true);
     end
+#endif
 
-{ S.print("P "); S.print(@node); S.print(" "); S.println(@pipe); _DELAY(10); }
     var u64 out_pipe = {RF24Network__pipe_address(@node, @pipe)};
     await Nrf24l01_Open_Writing_Pipe(&net.nrf, out_pipe);
 
@@ -262,6 +264,7 @@ code/await RF24Network_Write (var& RF24Network_ net, var u16 to_node, var u8 dir
 
     if direct_to=={TX_ROUTED} and conversion.send_node==to_node and is_ack then
 _ceu_arduino_assert(0,5); // nunca entrei aqui
+#if 0
         var _RF24Network__Header&& header = &&net.buf[0] as _RF24Network__Header&&;
         header:type    = {NETWORK_ACK};     // Set the payload type to NETWORK_ACK
         header:to_node = header:from_node;  // Change the 'to' address to the 'from' address
@@ -274,6 +277,7 @@ _ceu_arduino_assert(0,5); // nunca entrei aqui
         //Write the data using the resulting physical address
         //{network.frame_size = sizeof(RF24Network__Header);}
         await RF24Network_Write_To_Pipe(&net, conversion.send_node, conversion.send_pipe, conversion.multicast as bool);
+#endif
     end
 
     escape ok;

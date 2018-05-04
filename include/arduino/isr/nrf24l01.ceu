@@ -392,6 +392,14 @@ do
         _digitalWrite(nrf.ce, 1);
         _delayMicroseconds(10);
         _digitalWrite(nrf.ce, 0);
+        //await 1ms;
+        //_delayMicroseconds(75); // TODO: this line is required, why?
+                                // - needed before MCU sleep?
+                                // - just luck?
+                                // - 50us is not enough
+                                // - await 1ms is enough
+                                //      - but puts MCU to sleep
+                                //          - so is it just luck?
         await FOREVER;
     end
 

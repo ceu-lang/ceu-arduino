@@ -32,7 +32,7 @@ end
 
 code/await PCInt_to_Event (var int pin, var bool? value, event& bool evt) -> NEVER do
     loop do
-        var bool v = await PCInt(10,false);
+        var bool v = await PCInt(pin,value);
         emit evt(v);
     end
 end

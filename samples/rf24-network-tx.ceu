@@ -41,7 +41,7 @@ var u16 to = {011};
 var int i;
 loop i do
     if to == {01} then
-        //to = {011};
+        to = {011};
     else
         to = {01};
     end

@@ -393,7 +393,7 @@ do
         _delayMicroseconds(10);
         _digitalWrite(nrf.ce, 0);
         //await 1ms;
-        //_delayMicroseconds(75); // TODO: this line is required, why?
+        _delayMicroseconds(75); // TODO: this line is required, why?
                                 // - needed before MCU sleep?
                                 // - just luck?
                                 // - 50us is not enough

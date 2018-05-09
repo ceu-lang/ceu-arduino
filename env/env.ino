@@ -1,24 +1,6 @@
 #include "types.h"
 
-#ifdef CEU_FEATURES_ISR
-    #define ceu_callback_start(trace)
-#else
-
-#define ceu_callback_start(trace) ceu_arduino_callback_start()
-void ceu_arduino_callback_start (void);
-
-#define ceu_callback_wclock_dt(trace) ceu_arduino_callback_wclock_dt()
-s32 ceu_arduino_callback_wclock_dt (void);
-#endif
-
-void ceu_arduino_callback_abort (int err);
-#define ceu_callback_abort(err,trace) ceu_arduino_callback_abort(err)
-#define ceu_arduino_assert(cnd,err) if (!cnd) { ceu_arduino_callback_abort(err); }
-
-//#define ceu_assert_ex(a,b,c) // no assert
-#define ceu_assert_ex(a,b,c) if (!a) { ceu_callback_abort((10+__COUNTER__),c); }
-#define ceu_assert_sys(a,b)  if (!a) { ceu_callback_abort((10+__COUNTER__),CEU_TRACE_null); }
-
+#define CEU_STACK_N 100
 #if ARDUINO_ARCH_AVR
     #define CEU_STACK_MAX 1000
 #elif ARDUINO_ARCH_SAMD
@@ -26,7 +8,7 @@ void ceu_arduino_callback_abort (int err);
 #else
     #error "Unsupported Platform!"
 #endif
-//#undef CEU_STACK_MAX
+#undef CEU_STACK_MAX
 
 #define _DELAY(ms)                      \
     {                                   \
@@ -47,6 +29,31 @@ void ceu_arduino_callback_abort (int err);
         #error "Invalid option!"
     #endif
 #endif
+
+/* CALLBACKS */
+
+#ifdef CEU_FEATURES_ISR
+    #define ceu_callback_start(trace)
+#else
+
+#define ceu_callback_start(trace) ceu_arduino_callback_start()
+void ceu_arduino_callback_start (void);
+
+#define ceu_callback_wclock_dt(trace) ceu_arduino_callback_wclock_dt()
+s32 ceu_arduino_callback_wclock_dt (void);
+#endif
+
+void ceu_arduino_callback_abort (int err);
+#define ceu_callback_abort(err,trace) ceu_arduino_callback_abort(err)
+#define ceu_arduino_assert(cnd,err) if (!cnd) { ceu_arduino_callback_abort(err); }
+
+#include "X_pins_outputs.c.h"
+
+//#define ceu_assert_ex(a,b,c) // no assert
+#define ceu_assert_ex(a,b,c) if (!a) { ceu_callback_abort((10+__COUNTER__),c); }
+#define ceu_assert_sys(a,b)  if (!a) { ceu_callback_abort((10+__COUNTER__),CEU_TRACE_null); }
+
+/* PROGRAM */
 
 #include "_ceu_app.c.h"
 
@@ -112,6 +119,7 @@ void ceu_arduino_callback_abort (int err) {
     interrupts();
 }
 
+#if 0
 static int ceu_callback_arduino (int cmd, tceu_callback_val p1, tceu_callback_val p2)
 {
     int is_handled = 1;
@@ -171,6 +179,7 @@ static int ceu_callback_arduino (int cmd, tceu_callback_val p1, tceu_callback_va
     }
     return is_handled;
 }
+#endif
 
 void setup () {
     #include "pins_modes.c.h"
@@ -183,11 +192,12 @@ void setup () {
     memset((void*)&isrs, 0, sizeof(isrs));
 #endif
 
-    tceu_callback cb = { &ceu_callback_arduino, NULL };
+    //tceu_callback cb = { &ceu_callback_arduino, NULL };
 #ifdef CEU_FEATURES_ISR_SLEEP
     ceu_pm_init();
 #endif
-    ceu_start(&cb, 0, NULL);
+    //ceu_start(&cb, 0, NULL);
+    ceu_start(NULL, 0, NULL);
 
     while (!CEU_APP.end_ok)
     {

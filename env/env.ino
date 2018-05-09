@@ -1,6 +1,23 @@
+#include "types.h"
+
+#ifdef CEU_FEATURES_ISR
+    #define ceu_callback_start(trace)
+#else
+
+#define ceu_callback_start(trace) ceu_arduino_callback_start()
+void ceu_arduino_callback_start (void);
+
+#define ceu_callback_wclock_dt(trace) ceu_arduino_callback_wclock_dt()
+s32 ceu_arduino_callback_wclock_dt (void);
+#endif
+
+void ceu_arduino_callback_abort (int err);
+#define ceu_callback_abort(err,trace) ceu_arduino_callback_abort(err)
+#define ceu_arduino_assert(cnd,err) if (!cnd) { ceu_arduino_callback_abort(err); }
+
 //#define ceu_assert_ex(a,b,c) // no assert
-#define ceu_assert_ex(a,b,c) ceu_arduino_assert(a,(10+__COUNTER__))
-#define ceu_assert_sys(a,b)  ceu_arduino_assert(a,(10+__COUNTER__))
+#define ceu_assert_ex(a,b,c) if (!a) { ceu_callback_abort((10+__COUNTER__),c); }
+#define ceu_assert_sys(a,b)  if (!a) { ceu_callback_abort((10+__COUNTER__),CEU_TRACE_null); }
 
 #if ARDUINO_ARCH_AVR
     #define CEU_STACK_MAX 1000
@@ -19,11 +36,8 @@
         }                               \
     }
 
-void ceu_arduino_assert (int cnd, int v);
-
 #ifdef CEU_FEATURES_ISR
     #ifdef CEU_FEATURES_ISR_SLEEP
-        #include "types.h"
         #include "pm.c.h"
     #else
         // Set SLEEP always.
@@ -35,24 +49,6 @@ void ceu_arduino_assert (int cnd, int v);
 #endif
 
 #include "_ceu_app.c.h"
-
-void ceu_arduino_assert (int cnd, int v) {
-    if (cnd) { return; }
-    noInterrupts();
-    SPCR &= ~_BV(SPE);  // releases PIN13
-    pinMode(13, OUTPUT);
-    digitalWrite(13, 1);
-    for (;;) {
-        for (int j=0; j<v; j++) {
-            _DELAY(200);
-            digitalWrite(13, 0);
-            _DELAY(200);
-            digitalWrite(13, 1);
-        }
-        _DELAY(1000);
-    }
-    interrupts();
-}
 
 #ifdef CEU_FEATURES_ISR
     #include "wiring_private.h"
@@ -85,49 +81,42 @@ typedef struct tceu_arduino {
 } tceu_arduino;
 
 static tceu_arduino CEU_ARDUINO;
+
+void ceu_arduino_callback_start (void) {
+    CEU_ARDUINO.old       = micros();
+    CEU_ARDUINO.pins_bits = 0;
+}
+
+s32 ceu_arduino_callback_wclock_dt (void) {
+    u32 now = micros();
+    u32 dt  = (now - CEU_ARDUINO.old);  // no problems with overflow
+    CEU_ARDUINO.old = now;
+    return dt;
+}
 #endif
+
+void ceu_arduino_callback_abort (int err) {
+    noInterrupts();
+    SPCR &= ~_BV(SPE);  // releases PIN13
+    pinMode(13, OUTPUT);
+    digitalWrite(13, 1);
+    for (;;) {
+        for (int j=0; j<err; j++) {
+            _DELAY(200);
+            digitalWrite(13, 0);
+            _DELAY(200);
+            digitalWrite(13, 1);
+        }
+        _DELAY(1000);
+    }
+    interrupts();
+}
 
 static int ceu_callback_arduino (int cmd, tceu_callback_val p1, tceu_callback_val p2)
 {
     int is_handled = 1;
 
     switch (cmd) {
-        case CEU_CALLBACK_START:
-#ifndef CEU_FEATURES_ISR
-            CEU_ARDUINO.old       = micros();
-            CEU_ARDUINO.pins_bits = 0;
-#endif
-            break;
-
-        case CEU_CALLBACK_ABORT: {
-            noInterrupts();
-            pinMode(13, OUTPUT);
-            for (;;) {
-                digitalWrite(13, !digitalRead(13));
-                for (int i=0; i<50; i++) {
-                    delayMicroseconds(1000);    /* max is 16383 */
-                }
-            }
-            interrupts();
-        }
-
-#if 0
-        case CEU_CALLBACK_LOG: {
-            switch (p1.num) {
-                case 0:
-                    Serial.print((char*)p2.ptr);
-                    break;
-                case 1:
-                    Serial.print(p2.num,HEX);
-                    break;
-                case 2:
-                    Serial.print(p2.num);
-                    break;
-            }
-            break;
-        }
-#endif
-
 #ifdef CEU_FEATURES_ISR
         case CEU_CALLBACK_ISR_ENABLE: {
             if (p1.num == 1) {
@@ -167,10 +156,6 @@ static int ceu_callback_arduino (int cmd, tceu_callback_val p1, tceu_callback_va
         case CEU_CALLBACK_WCLOCK_DT:
             ceu_callback_ret.num = CEU_WCLOCK_INACTIVE;
             break;
-#else
-        case CEU_CALLBACK_WCLOCK_DT:
-            ceu_callback_ret.num = ceu_arduino_dt();
-            break;
 #endif
 
         case CEU_CALLBACK_OUTPUT:
@@ -186,15 +171,6 @@ static int ceu_callback_arduino (int cmd, tceu_callback_val p1, tceu_callback_va
     }
     return is_handled;
 }
-
-#ifndef CEU_FEATURES_ISR
-s32 ceu_arduino_dt (void) {
-    u32 now = micros();
-    u32 dt  = (now - CEU_ARDUINO.old);  // no problems with overflow
-    CEU_ARDUINO.old = now;
-    return dt;
-}
-#endif
 
 void setup () {
     #include "pins_modes.c.h"

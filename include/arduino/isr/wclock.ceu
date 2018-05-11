@@ -34,34 +34,20 @@ end
 
 native/pos do
     static bool ceu_wclock_is_active = 0;
-    static int ceu_callback_wclock (int cmd, tceu_callback_val p1, tceu_callback_val p2)
-    {
-        switch (cmd) {
-            case CEU_CALLBACK_WCLOCK_MIN:
-                ceu_wclock_request(p1.num, ceu_wclock_is_active);
-                ceu_wclock_is_active = (p1.num != CEU_WCLOCK_INACTIVE);
-#ifdef CEU_FEATURES_ISR_SLEEP
-                ceu_pm_set(CEU_PM_WCLOCK, ceu_wclock_is_active);
-#endif
-                return 1;
-            case CEU_CALLBACK_WCLOCK_DT:
-                if (ceu_wclock_is_active) {
-                    ceu_callback_ret.num = ceu_wclock_dt();
-                } else {
-                    ceu_callback_ret.num = CEU_WCLOCK_INACTIVE;
-                }
-                return 1;
-            default:
-                return 0;
-        }
-    }
-    static tceu_callback CEU_CALLBACK_WCLOCK = { &ceu_callback_wclock, NULL };
-end
 
-{
-    ceu_callback_register(&CEU_CALLBACK_WCLOCK);
-    ceu_wclock_init();
-}
+    static void ceu_arduino_callback_wclock_min (s32 dt) {
+        ceu_wclock_request(dt, ceu_wclock_is_active);
+        ceu_wclock_is_active = (dt != CEU_WCLOCK_INACTIVE);
+#ifdef CEU_FEATURES_ISR_SLEEP
+        ceu_pm_set(CEU_PM_WCLOCK, ceu_wclock_is_active);
+#endif
+        return 1;
+    }
+
+    static s32 ceu_arduino_callback_wclock_dt (void) {
+        return (ceu_wclock_is_active) ? ceu_wclock_dt() : CEU_WCLOCK_INACTIVE;
+    }
+end
 
 ///////////////////////////////////////////////////////////////////////////////
 // INPUT / OUTPUT

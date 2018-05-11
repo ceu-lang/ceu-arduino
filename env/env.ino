@@ -32,26 +32,37 @@
 
 /* CALLBACKS */
 
+#define ceu_callback_wclock_dt(trace) ceu_arduino_callback_wclock_dt()
+s32 ceu_arduino_callback_wclock_dt (void);
+#define ceu_callback_wclock_min(dt,trace) ceu_arduino_callback_wclock_min(dt)
+void ceu_arduino_callback_wclock_min (s32);
+#define ceu_callback_abort(err,trace) ceu_arduino_callback_abort(err)
+void ceu_arduino_callback_abort (int err);
+
 #ifdef CEU_FEATURES_ISR
-    #define ceu_callback_start(trace)
+
+#define ceu_callback_start(trace)
+void ceu_arduino_callback_isr_enable (int on);
+void ceu_arduino_callback_isr_attach (int on, void* isr, int* args);
+void ceu_arduino_callback_isr_emit (int idx, void* args);
+#define ceu_callback_isr_enable(on,trace) ceu_arduino_callback_isr_enable(err)
+#define ceu_callback_isr_attach(on,isr,args,trace) ceu_arduino_callback_isr_attach(on,isr,args)
+#define ceu_callback_isr_emit(idx,args,trace) ceu_arduino_callback_isr_emit(idx,args)
+
 #else
 
 #define ceu_callback_start(trace) ceu_arduino_callback_start()
 void ceu_arduino_callback_start (void);
 
-#define ceu_callback_wclock_dt(trace) ceu_arduino_callback_wclock_dt()
-s32 ceu_arduino_callback_wclock_dt (void);
 #endif
 
-void ceu_arduino_callback_abort (int err);
-#define ceu_callback_abort(err,trace) ceu_arduino_callback_abort(err)
-#define ceu_arduino_assert(cnd,err) if (!cnd) { ceu_arduino_callback_abort(err); }
+#define ceu_arduino_assert(cnd,err) if (!(cnd)) { ceu_arduino_callback_abort(err); }
 
 #include "X_pins_outputs.c.h"
 
 //#define ceu_assert_ex(a,b,c) // no assert
-#define ceu_assert_ex(a,b,c) if (!a) { ceu_callback_abort((10+__COUNTER__),c); }
-#define ceu_assert_sys(a,b)  if (!a) { ceu_callback_abort((10+__COUNTER__),CEU_TRACE_null); }
+#define ceu_assert_ex(a,b,c) if (!(a)) { ceu_callback_abort((10+__COUNTER__),c); }
+#define ceu_assert_sys(a,b)  if (!(a)) { ceu_callback_abort((10+__COUNTER__),CEU_TRACE_null); }
 
 /* PROGRAM */
 
@@ -72,6 +83,40 @@ void ceu_arduino_callback_abort (int err);
 
     static tceu_isr isrs[_VECTOR_SIZE];
     #include "isrs.c.h"
+
+    void ceu_arduino_callback_isr_enable (int on) {
+        if (on) {
+            interrupts();
+        } else {
+            noInterrupts();
+        }
+    }
+
+    void ceu_arduino_callback_isr_attach (int on, void* isr, int* args) {
+        if (on) {
+            tceu_isr* isr_ = (tceu_isr*) isr;
+#if 1
+            if (args[0] < EXTERNAL_NUM_INTERRUPTS) {
+                attachInterrupt(args[0], (void(*)())(isr_->fun), args[1]);    /* TODO: no mem */
+            } else
+#endif
+            {
+                isrs[args[0]] = *isr_;
+            }
+        } else {
+            if (args[0] < EXTERNAL_NUM_INTERRUPTS) {
+                detachInterrupt(args[0]);
+            } else {
+                isrs[args[0]].fun = NULL;
+            }
+        }
+    }
+
+    void ceu_arduino_callback_isr_emit (int idx, void* args) {
+        //ceu_dbg_assert(isrs[p1.num].evt.id == CEU_INPUT__NONE);
+        isrs[idx].evt = *((tceu_evt_id_params*)args);
+    }
+
 #else
     #ifdef CEU_FEATURES_ISR_SLEEP
         #error "Invalid option!"
@@ -93,6 +138,8 @@ void ceu_arduino_callback_start (void) {
     CEU_ARDUINO.old       = micros();
     CEU_ARDUINO.pins_bits = 0;
 }
+
+void ceu_arduino_callback_wclock_min (s32 dt) {}
 
 s32 ceu_arduino_callback_wclock_dt (void) {
     u32 now = micros();
@@ -125,47 +172,6 @@ static int ceu_callback_arduino (int cmd, tceu_callback_val p1, tceu_callback_va
     int is_handled = 1;
 
     switch (cmd) {
-#ifdef CEU_FEATURES_ISR
-        case CEU_CALLBACK_ISR_ENABLE: {
-            if (p1.num == 1) {
-                interrupts();
-            } else {
-                noInterrupts();
-            }
-            break;
-        }
-        case CEU_CALLBACK_ISR_ATTACH: {
-            tceu_isr* isr = (tceu_isr*) p1.ptr;
-            int* args = (int*) p2.ptr;
-#if 1
-            if (args[0] < EXTERNAL_NUM_INTERRUPTS) {
-                attachInterrupt(args[0], (void(*)())(isr->fun), args[1]);    /* TODO: no mem */
-            } else
-#endif
-            {
-                isrs[args[0]] = *isr;
-            }
-            break;
-        }
-        case CEU_CALLBACK_ISR_DETACH: {
-            int* args = (int*)p2.ptr;
-            if (args[0] < EXTERNAL_NUM_INTERRUPTS) {
-                detachInterrupt(args[0]);
-            } else {
-                isrs[args[0]].fun = NULL;
-            }
-            break;
-        }
-        case CEU_CALLBACK_ISR_EMIT: {
-            //ceu_dbg_assert(isrs[p1.num].evt.id == CEU_INPUT__NONE);
-            isrs[p1.num].evt = *((tceu_evt_id_params*) p2.ptr);
-            break;
-        }
-        case CEU_CALLBACK_WCLOCK_DT:
-            ceu_callback_ret.num = CEU_WCLOCK_INACTIVE;
-            break;
-#endif
-
         case CEU_CALLBACK_OUTPUT:
             switch (p1.num) {
                 #include "pins_outputs.c.h"

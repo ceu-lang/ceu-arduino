@@ -6,6 +6,7 @@ native/const
     _PCINT0_vect_num,
     _SPI_STC_vect_num,
     _TIMER1_COMPA_vect_num,
+    _TIMER1_OVF_vect,
     _TIMER1_OVF_vect_num,
     _USART0_RX_vect_num,
     _USART0_TX_vect_num,

@@ -43,11 +43,15 @@ void ceu_arduino_callback_abort (int err);
 
 #define ceu_callback_start(trace)
 void ceu_arduino_callback_isr_enable (int on);
-void ceu_arduino_callback_isr_attach (int on, void* isr, int* args);
-void ceu_arduino_callback_isr_emit (int idx, void* args);
 #define ceu_callback_isr_enable(on,trace) ceu_arduino_callback_isr_enable(err)
-#define ceu_callback_isr_attach(on,isr,args,trace) ceu_arduino_callback_isr_attach(on,isr,args)
 #define ceu_callback_isr_emit(idx,args,trace) ceu_arduino_callback_isr_emit(idx,args)
+#ifdef CEU_FEATURES_ISR_STATIC
+void ceu_arduino_callback_isr_emit (int evt_id, void* evt_params);
+#else
+void ceu_arduino_callback_isr_emit (int idx, void* args);
+void ceu_arduino_callback_isr_attach (int on, void* isr, int* args);
+#define ceu_callback_isr_attach(on,isr,args,trace) ceu_arduino_callback_isr_attach(on,isr,args)
+#endif
 
 #else
 
@@ -66,6 +70,11 @@ void ceu_arduino_callback_start (void);
 
 /* PROGRAM */
 
+#ifdef CEU_FEATURES_ISR_STATIC
+#define CEU_ISR_EVT2IDX(evt) (evt-CEU_INPUT__MIN-1)
+#define CEU_ISR_IDX2EVT(idx) (CEU_INPUT__MIN+idx+1)
+#endif
+
 #include "_ceu_app.c.h"
 
 #ifdef CEU_FEATURES_ISR
@@ -81,8 +90,13 @@ void ceu_arduino_callback_start (void);
         #endif
     #endif
 
+#ifdef CEU_FEATURES_ISR_DYNAMIC
     static tceu_isr isrs[_VECTOR_SIZE];
     #include "isrs.c.h"
+#else
+    static u32   isrs_on = 0;
+    static void* isrs_params[CEU_ISR_EVT2IDX(CEU_INPUT__MAX)];
+#endif
 
     void ceu_arduino_callback_isr_enable (int on) {
         if (on) {
@@ -92,6 +106,7 @@ void ceu_arduino_callback_start (void);
         }
     }
 
+#ifdef CEU_FEATURES_ISR_DYNAMIC
     void ceu_arduino_callback_isr_attach (int on, void* isr, int* args) {
         if (on) {
             tceu_isr* isr_ = (tceu_isr*) isr;
@@ -111,11 +126,27 @@ void ceu_arduino_callback_start (void);
             }
         }
     }
+#endif
 
+#ifdef CEU_FEATURES_ISR_STATIC
+    void ceu_arduino_callback_isr_emit (int evt_id, void* evt_params) {
+        int idx = CEU_ISR_EVT2IDX(evt_id);
+        //ceu_assert(bitRead(isrs_on,idx), "re-emit before handling");
+        bitSet(isrs_on, idx);
+        isrs_params[idx] = evt_params;
+    }
+#else
     void ceu_arduino_callback_isr_emit (int idx, void* args) {
         //ceu_dbg_assert(isrs[p1.num].evt.id == CEU_INPUT__NONE);
         isrs[idx].evt = *((tceu_evt_id_params*)args);
+//digitalWrite(13, 1);
+//if (idx == SPI_STC_vect_num) {
+    //S.println(idx);
+    //digitalWrite(13, !digitalRead(13));
+    //_DELAY(10);
+//}
     }
+#endif
 
 #else
     #ifdef CEU_FEATURES_ISR_SLEEP
@@ -194,7 +225,7 @@ void setup () {
     Serial.begin(CEU_ARDUINO_SERIAL_SPEED);
 #endif
 
-#ifdef CEU_FEATURES_ISR
+#ifdef CEU_FEATURES_ISR_DYNAMIC
     memset((void*)&isrs, 0, sizeof(isrs));
 #endif
 
@@ -209,19 +240,29 @@ void setup () {
     {
 #ifdef CEU_FEATURES_ISR
         {
-            tceu_evt_id_params evt;
             int i;
             noInterrupts();
+#ifdef CEU_FEATURES_ISR_STATIC
+            for (i=0; i<CEU_ISR_EVT2IDX(CEU_INPUT__MAX); i++) {
+                if (bitRead(isrs_on,i)) {
+                    bitClear(isrs_on, i);
+                    interrupts();
+                    ceu_input(CEU_ISR_IDX2EVT(i), isrs_params[i]);
+                    goto _CEU_ARDUINO_AWAKE_;
+                }
+            }
+#else
             for (i=0; i<_VECTOR_SIZE; i++) {
                 tceu_isr* isr = &isrs[i];
                 if (isr->evt.id != CEU_INPUT__NONE) {
-                    evt = isr->evt;
+                    tceu_evt_id_params evt = isr->evt;
                     isr->evt.id = CEU_INPUT__NONE;
                     interrupts();
                     ceu_input(evt.id, evt.params);
                     goto _CEU_ARDUINO_AWAKE_;
                 }
             }
+#endif
             interrupts();
 #ifdef CEU_FEATURES_ISR_SLEEP
             if (!CEU_APP.async_pending) {

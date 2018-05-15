@@ -2,7 +2,7 @@
 
 #ifndef CEU_WCLOCK_IMPL
 
-#define CEU_WCLOCK_IRQ_N        _TIMER1_OVF_vect_num
+#define CEU_WCLOCK_IRQ_N        _TIMER1_OVF_vect
 #define CEU_PM_WCLOCK           CEU_PM_TIMER1
 #define CEU_WCLOCK_PRESCALER    1024
 

@@ -37,16 +37,13 @@ code/await SPI_Transfer    (var byte? value) -> byte;
 #define SPI_2XCLOCK_MASK 0x01  // SPI2X = bit 0 on SPSR
 
 native/pos do
-    int ceu_callback_spi (int cmd, tceu_callback_val p1, tceu_callback_val p2)
-    {
-        if (cmd == CEU_CALLBACK_ABORT) {
-            SPCR &= ~_BV(SPE);  // releases PIN13
-        }
-        return 0;               // lets the Ceu runtime abort
+    #undef ceu_callback_abort
+    #define ceu_callback_abort(err,trace) ceu_arduino_spi_callback_abort(err)
+    void ceu_arduino_spi_callback_abort (int err) {
+        SPCR &= ~_BV(SPE);  // releases PIN13
+        ceu_arduino_callback_abort(err);
     }
-    tceu_callback CEU_CALLBACK_SPI = { &ceu_callback_spi, NULL };
 end
-{ ceu_callback_register(&CEU_CALLBACK_SPI); }
 
 ///////////////////////////////////////////////////////////////////////////////
 // INPUT / OUTPUT
@@ -110,6 +107,7 @@ end
 
 spawn async/isr [_SPI_STC_vect_num,0] do
     { bitClear(SPCR,SPIE); }
+//{S.println(SPDR);}
     emit SPI_TRANSFER_DONE({SPDR});
 end
 

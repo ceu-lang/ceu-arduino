@@ -94,8 +94,8 @@ void ceu_arduino_callback_start (void);
     static tceu_isr isrs[_VECTOR_SIZE];
     #include "isrs.c.h"
 #else
-    static u32   isrs_on = 0;
-    static void* isrs_params[CEU_ISR_EVT2IDX(CEU_INPUT__MAX)];
+    static u32 isrs_on = 0;
+    static u32 isrs_params[CEU_ISR_EVT2IDX(CEU_INPUT__MAX)];
 #endif
 
     void ceu_arduino_callback_isr_enable (int on) {
@@ -133,18 +133,12 @@ void ceu_arduino_callback_start (void);
         int idx = CEU_ISR_EVT2IDX(evt_id);
         //ceu_assert(bitRead(isrs_on,idx), "re-emit before handling");
         bitSet(isrs_on, idx);
-        isrs_params[idx] = evt_params;
+        isrs_params[idx] = *((u32*)evt_params);
     }
 #else
     void ceu_arduino_callback_isr_emit (int idx, void* args) {
         //ceu_dbg_assert(isrs[p1.num].evt.id == CEU_INPUT__NONE);
         isrs[idx].evt = *((tceu_evt_id_params*)args);
-//digitalWrite(13, 1);
-//if (idx == SPI_STC_vect_num) {
-    //S.println(idx);
-    //digitalWrite(13, !digitalRead(13));
-    //_DELAY(10);
-//}
     }
 #endif
 
@@ -247,7 +241,7 @@ void setup () {
                 if (bitRead(isrs_on,i)) {
                     bitClear(isrs_on, i);
                     interrupts();
-                    ceu_input(CEU_ISR_IDX2EVT(i), isrs_params[i]);
+                    ceu_input(CEU_ISR_IDX2EVT(i), &isrs_params[i]);
                     goto _CEU_ARDUINO_AWAKE_;
                 }
             }

@@ -105,9 +105,8 @@ output (byte? value) SPI_TRANSFER_REQUEST do
     end
 end
 
-spawn async/isr [_SPI_STC_vect_num,0] do
+spawn async/isr [_SPI_STC_vect,0] do
     { bitClear(SPCR,SPIE); }
-//{S.println(SPDR);}
     emit SPI_TRANSFER_DONE({SPDR});
 end
 

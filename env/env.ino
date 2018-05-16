@@ -10,6 +10,8 @@
 #endif
 #undef CEU_STACK_MAX
 
+#define CEU_ISRS_N 100
+
 #define _DELAY(ms)                      \
     {                                   \
         int i;                          \
@@ -46,7 +48,7 @@ void ceu_arduino_callback_isr_enable (int on);
 #define ceu_callback_isr_enable(on,trace) ceu_arduino_callback_isr_enable(err)
 #define ceu_callback_isr_emit(idx,args,trace) ceu_arduino_callback_isr_emit(idx,args)
 #ifdef CEU_FEATURES_ISR_STATIC
-void ceu_arduino_callback_isr_emit (int evt_id, void* evt_params);
+void ceu_arduino_callback_isr_emit (int idx, void* evt);
 #else
 void ceu_arduino_callback_isr_emit (int idx, void* args);
 void ceu_arduino_callback_isr_attach (int on, void* isr, int* args);
@@ -94,8 +96,9 @@ void ceu_arduino_callback_start (void);
     static tceu_isr isrs[_VECTOR_SIZE];
     #include "isrs.c.h"
 #else
-    static u32 isrs_on = 0;
-    static u32 isrs_params[CEU_ISR_EVT2IDX(CEU_INPUT__MAX)];
+    static byte  isrs_buf[CEU_ISRS_N];
+    static usize isrs_i = 0;
+    static usize isrs_n = 0;
 #endif
 
     void ceu_arduino_callback_isr_enable (int on) {
@@ -129,11 +132,15 @@ void ceu_arduino_callback_start (void);
 #endif
 
 #ifdef CEU_FEATURES_ISR_STATIC
-    void ceu_arduino_callback_isr_emit (int evt_id, void* evt_params) {
-        int idx = CEU_ISR_EVT2IDX(evt_id);
-        //ceu_assert(bitRead(isrs_on,idx), "re-emit before handling");
-        bitSet(isrs_on, idx);
-        isrs_params[idx] = *((u32*)evt_params);
+    void ceu_arduino_callback_isr_emit (int idx, void* evt) {
+        tceu_isr_evt* evt_ = (tceu_isr_evt*) evt;
+        ceu_assert(isrs_n+sizeof(tceu_nevt)+sizeof(u8)+evt_->len < CEU_ISRS_N, "isrs buffer is full");
+
+        *((tceu_nevt*)&isrs_buf[isrs_n]) = evt_->id;
+        isrs_n += sizeof(tceu_nevt);
+        *((u8*)&isrs_buf[isrs_n]) = evt_->len;
+        isrs_n += sizeof(u8);
+        memcpy(&isrs_buf[isrs_n], evt_->args, evt_->len);
     }
 #else
     void ceu_arduino_callback_isr_emit (int idx, void* args) {
@@ -234,19 +241,23 @@ void setup () {
     {
 #ifdef CEU_FEATURES_ISR
         {
-            int i;
             noInterrupts();
 #ifdef CEU_FEATURES_ISR_STATIC
-            for (i=0; i<CEU_ISR_EVT2IDX(CEU_INPUT__MAX); i++) {
-                if (bitRead(isrs_on,i)) {
-                    bitClear(isrs_on, i);
-                    interrupts();
-                    ceu_input(CEU_ISR_IDX2EVT(i), &isrs_params[i]);
-                    goto _CEU_ARDUINO_AWAKE_;
-                }
+            if (isrs_i < isrs_n) {
+                tceu_nevt id = *((tceu_nevt*)&isrs_buf[isrs_i]);
+                isrs_i += sizeof(tceu_nevt);
+                u8 len = *((u8*)&isrs_buf[isrs_i]);
+                isrs_i += sizeof(u8);
+                void* args = &isrs_buf[isrs_i];
+                isrs_i += len;
+                interrupts();
+                ceu_input(id, args);
+                goto _CEU_ARDUINO_AWAKE_;
+            } else {
+                isrs_i = isrs_n = 0;
             }
 #else
-            for (i=0; i<_VECTOR_SIZE; i++) {
+            for (int i=0; i<_VECTOR_SIZE; i++) {
                 tceu_isr* isr = &isrs[i];
                 if (isr->evt.id != CEU_INPUT__NONE) {
                     tceu_evt_id_params evt = isr->evt;

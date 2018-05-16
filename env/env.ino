@@ -74,25 +74,9 @@ void ceu_arduino_callback_start (void);
 
 /* PROGRAM */
 
-#ifdef CEU_FEATURES_ISR_STATIC
-#define CEU_ISR_EVT2IDX(evt) (evt-CEU_INPUT__MIN-1)
-#define CEU_ISR_IDX2EVT(idx) (CEU_INPUT__MIN+idx+1)
-#endif
-
 #include "_ceu_app.c.h"
 
 #ifdef CEU_FEATURES_ISR
-    #include "wiring_private.h"
-
-    #ifndef _VECTOR_SIZE
-        #ifdef _VECTORS_SIZE
-            #define _VECTOR_SIZE (_VECTORS_SIZE/4)
-        #elif ARDUINO_ARCH_SAMD
-            #define _VECTOR_SIZE PERIPH_COUNT_IRQn
-        #else
-            #error "Unsupported Platform!"
-        #endif
-    #endif
 
 #ifdef CEU_FEATURES_ISR_DYNAMIC
     static tceu_isr isrs[_VECTOR_SIZE];
@@ -239,7 +223,7 @@ void setup () {
     //ceu_start(&cb, 0, NULL);
     ceu_start(NULL, 0, NULL);
 
-    while (!CEU_APP.end_ok)
+    while (1)
     {
 #ifdef CEU_FEATURES_ISR
         {
@@ -272,20 +256,29 @@ void setup () {
 #endif
             interrupts();
 #ifdef CEU_FEATURES_ISR_SLEEP
-            if (!CEU_APP.async_pending) {
-                ceu_pm_sleep();
-            }
-            else
+#ifdef CEU_FEATURES_ASYNC
+            if (!CEU_APP.async_pending)
 #endif
             {
+                ceu_pm_sleep();
+            }
+#ifdef CEU_FEATURES_ASYNC
+            else
+#endif
+#endif
+            {
+#ifdef CEU_FEATURES_ASYNC
                 ceu_input(CEU_INPUT__ASYNC, NULL);
+#endif
             }
 _CEU_ARDUINO_AWAKE_:;
         }
 
 #else // !CEU_FEATURES_ISR
 
+#ifdef CEU_FEATURES_ASYNC
         ceu_input(CEU_INPUT__ASYNC, NULL);
+#endif
         #include "pins_inputs.c.h"
 #ifdef _CEU_INPUT_SERIAL_RECEIVE_BYTE_
         if (Serial.available()) {
@@ -296,9 +289,6 @@ _CEU_ARDUINO_AWAKE_:;
 
 #endif
     }
-    ceu_stop();
-    ceu_assert_ex(0, 10, CEU_TRACE_null);
-    while (1);
 }
 
 void loop () {}

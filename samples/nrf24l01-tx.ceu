@@ -1,0 +1,39 @@
+#include "arduino/arduino.ceu"
+#include "wclock.ceu"
+#include "spi.ceu"
+#include "nrf24l01.ceu"
+#include "pcint0.ceu"
+
+{S.begin(9600);}
+
+event bool irq;
+#if 1
+#include "pin-10.ceu"
+#define PIN PIN_10
+#else
+#include "pin-02.ceu"
+#define PIN PIN_02
+#endif
+spawn do
+    var bool v;
+    every v in PIN do
+        emit irq(v);
+    end
+end
+
+var Lock spi = _;
+spawn Spi();
+
+var Nrf24l01_ nrf = val Nrf24l01_(&spi, &irq, 8,7, _,_,_,_,_,_,_);
+spawn Nrf24l01(&nrf);
+await nrf.ok;
+
+output on/off PIN_13;
+
+var int i;
+loop i do
+    await 1s;
+    var[1] byte buf = [i];
+    await Nrf24l01_TX(&nrf, &buf);
+    {S.print("< "); S.println(@buf[0]); _DELAY(10);}
+end

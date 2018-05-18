@@ -1,3 +1,13 @@
+#if 0
+    #define ceu_assert_ex(a,b,c) if (!(a)) { ceu_callback_abort((10+__COUNTER__),c); }
+    #define ceu_assert_sys(a,b)  if (!(a)) { ceu_callback_abort((10+__COUNTER__),CEU_TRACE_null); }
+    #define ceu_arduino_assert(cnd,err) if (!(cnd)) { ceu_arduino_callback_abort(err); }
+#else
+    #define ceu_assert_ex(a,b,c)        // no assert
+    #define ceu_assert_sys(a,b)         // no assert
+    #define ceu_arduino_assert(cnd,err) // no assert
+#endif
+
 #include "types.h"
 
 #define CEU_STACK_N 100
@@ -64,13 +74,7 @@ void ceu_arduino_callback_start (void);
 
 #endif
 
-#define ceu_arduino_assert(cnd,err) if (!(cnd)) { ceu_arduino_callback_abort(err); }
-
 #include "X_pins_outputs.c.h"
-
-//#define ceu_assert_ex(a,b,c) // no assert
-#define ceu_assert_ex(a,b,c) if (!(a)) { ceu_callback_abort((10+__COUNTER__),c); }
-#define ceu_assert_sys(a,b)  if (!(a)) { ceu_callback_abort((10+__COUNTER__),CEU_TRACE_null); }
 
 /* PROGRAM */
 
@@ -79,6 +83,16 @@ void ceu_arduino_callback_start (void);
 #ifdef CEU_FEATURES_ISR
 
 #ifdef CEU_FEATURES_ISR_DYNAMIC
+    #include "wiring_private.h"
+    #ifndef _VECTOR_SIZE
+        #ifdef _VECTORS_SIZE
+            #define _VECTOR_SIZE (_VECTORS_SIZE/4)
+        #elif ARDUINO_ARCH_SAMD
+            #define _VECTOR_SIZE PERIPH_COUNT_IRQn
+        #else
+            #error "Unsupported Platform!"
+        #endif
+    #endif
     static tceu_isr isrs[_VECTOR_SIZE];
     #include "isrs.c.h"
 #else
@@ -120,7 +134,21 @@ void ceu_arduino_callback_start (void);
 #ifdef CEU_FEATURES_ISR_STATIC
     void ceu_arduino_callback_isr_emit (int idx, void* evt) {
         tceu_isr_evt* evt_ = (tceu_isr_evt*) evt;
-        ceu_assert(isrs_n+sizeof(tceu_nevt)+sizeof(u8)+evt_->len < CEU_ISRS_N, "isrs buffer is full");
+
+        int nxt = isrs_n+sizeof(tceu_nevt)+sizeof(u8)+evt_->len;
+        if (isrs_i < isrs_n) {
+            if (nxt+sizeof(tceu_nevt) >= CEU_ISRS_N) {      // +sizeof(tceu_nevt) to fit NONE
+                if (isrs_n < CEU_ISRS_N) {
+                    *((tceu_nevt*)&isrs_buf[isrs_n]) = CEU_INPUT__NONE;     // evt does not fit the end of the buffer
+                }
+                isrs_n = 0;
+                nxt = isrs_n+sizeof(tceu_nevt)+sizeof(u8)+evt_->len;
+                ceu_assert(isrs_i>0, "isrs buffer is full");
+            }
+        }
+        if (isrs_i > isrs_n) {     // test again b/c isrs_n may change above
+            ceu_assert(nxt < isrs_i, "isrs buffer is full");
+        }
 
         *((tceu_nevt*)&isrs_buf[isrs_n]) = evt_->id;
         isrs_n += sizeof(tceu_nevt);
@@ -230,13 +258,16 @@ void setup () {
         {
             noInterrupts();
 #ifdef CEU_FEATURES_ISR_STATIC
-            if (isrs_i < isrs_n) {
+            if (isrs_i != isrs_n) {
                 tceu_nevt id = *((tceu_nevt*)&isrs_buf[isrs_i]);
                 isrs_i += sizeof(tceu_nevt);
                 u8 len = *((u8*)&isrs_buf[isrs_i]);
                 isrs_i += sizeof(u8);
                 void* args = &isrs_buf[isrs_i];
                 isrs_i += len;
+                if (*((tceu_nevt*)&isrs_buf[isrs_i]) == CEU_INPUT__NONE) {
+                    isrs_i = 0;
+                }
                 interrupts();
                 ceu_input(id, args);
                 goto _CEU_ARDUINO_AWAKE_;

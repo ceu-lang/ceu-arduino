@@ -17,6 +17,8 @@ code/await PCInt (var int pin, var bool? value) -> bool do
         pinMode(@pin, INPUT);
         if (@(pin) == 10) {
             bitSet(PCMSK0, PCINT4);
+        } else {
+            ceu_assert(0, "not implemented");
         }
     }
     var bool value_ = _;

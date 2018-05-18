@@ -3,6 +3,7 @@
 
 native/const
     _ADC_vect_num,
+    _INT0_vect,
     _PCINT0_vect,
     _PCINT0_vect_num,
     _SPI_STC_vect,

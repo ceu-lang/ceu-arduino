@@ -36,15 +36,6 @@ code/await SPI_Transfer    (var byte? value) -> byte;
 #define SPI_CLOCK_MASK   0x03  // SPR1 = bit 1, SPR0 = bit 0 on SPCR
 #define SPI_2XCLOCK_MASK 0x01  // SPI2X = bit 0 on SPSR
 
-native/pos do
-    #undef ceu_callback_abort
-    #define ceu_callback_abort(err,trace) ceu_arduino_spi_callback_abort(err)
-    void ceu_arduino_spi_callback_abort (int err) {
-        SPCR &= ~_BV(SPE);  // releases PIN13
-        ceu_arduino_callback_abort(err);
-    }
-end
-
 ///////////////////////////////////////////////////////////////////////////////
 // INPUT / OUTPUT
 ///////////////////////////////////////////////////////////////////////////////
@@ -94,6 +85,10 @@ output (u32 clock, u8 bit_order, u8 data_mode) SPI_TRANSACTION_BEGIN do
           (@data_mode & SPI_MODE_MASK) | ((clock_div >> 1) & SPI_CLOCK_MASK);
         SPSR = clock_div & SPI_2XCLOCK_MASK;
     }
+end
+
+output none SPI_TRANSACTION_END do
+    nothing;
 end
 
 output (byte? value) SPI_TRANSFER_REQUEST do

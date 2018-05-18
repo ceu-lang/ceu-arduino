@@ -127,6 +127,7 @@ void ceu_arduino_callback_start (void);
         *((u8*)&isrs_buf[isrs_n]) = evt_->len;
         isrs_n += sizeof(u8);
         memcpy(&isrs_buf[isrs_n], evt_->args, evt_->len);
+        isrs_n += evt_->len;
     }
 #else
     void ceu_arduino_callback_isr_emit (int idx, void* args) {

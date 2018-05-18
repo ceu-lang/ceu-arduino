@@ -3,7 +3,7 @@
 
 input none PCINT0;
 
-spawn async/isr [_PCINT0_vect_num, 0] do
+spawn async/isr [_PCINT0_vect, 0] do
     emit PCINT0;
 end
 

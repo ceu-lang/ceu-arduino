@@ -393,10 +393,10 @@ do
         _delayMicroseconds(10);
         _digitalWrite(nrf.ce, 0);
         //await 1ms;
-        _delayMicroseconds(75); // TODO: this line is required, why?
+        _delayMicroseconds(100); // TODO: this line is required, why?
                                 // - needed before MCU sleep?
                                 // - just luck?
-                                // - 50us is not enough
+                                // - 75us is not enough
                                 // - await 1ms is enough
                                 //      - but puts MCU to sleep
                                 //          - so is it just luck?
@@ -411,7 +411,7 @@ do
         else/if _bitRead(status, {MAX_RT}) as bool then
             escape false;
         else
-_ceu_arduino_assert(0, 2);
+_ceu_arduino_assert(0, 4);
             _ceu_assert(0, "unexpected interrupt");
         end
     end;

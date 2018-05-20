@@ -15,6 +15,7 @@ native/const
     _USART0_TX_vect_num,
     _USART_RX_vect_num,
     _USART_TX_vect_num,
+    _WDT_vect,
     _WDT_vect_num,
 ;
 

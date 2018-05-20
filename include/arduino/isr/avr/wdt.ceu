@@ -32,7 +32,7 @@ output (int period) WDT_REQUEST do
     }
 end
 
-spawn async/isr [_WDT_vect_num, 0] do
+spawn async/isr [_WDT_vect, 0] do
     //{wdt_disable();}
     emit WDT_DONE;
 end

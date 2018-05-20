@@ -1,4 +1,4 @@
-#if 0
+#if 1
     #define ceu_assert_ex(a,b,c) if (!(a)) { ceu_callback_abort((10+__COUNTER__),c); }
     #define ceu_assert_sys(a,b)  if (!(a)) { ceu_callback_abort((10+__COUNTER__),CEU_TRACE_null); }
     #define ceu_arduino_assert(cnd,err) if (!(cnd)) { ceu_arduino_callback_abort(err); }
@@ -136,14 +136,11 @@ void ceu_arduino_callback_start (void);
         tceu_isr_evt* evt_ = (tceu_isr_evt*) evt;
 
         int nxt = isrs_n+sizeof(tceu_nevt)+sizeof(u8)+evt_->len;
-        if (isrs_i < isrs_n) {
-            if (nxt+sizeof(tceu_nevt) >= CEU_ISRS_N) {      // +sizeof(tceu_nevt) to fit NONE
-                if (isrs_n < CEU_ISRS_N) {
-                    *((tceu_nevt*)&isrs_buf[isrs_n]) = CEU_INPUT__NONE;     // evt does not fit the end of the buffer
-                }
+        if (isrs_i <= isrs_n) {
+            if (nxt+sizeof(tceu_nevt) > CEU_ISRS_N) {      // +sizeof(tceu_nevt) to fit NONE
+                *((tceu_nevt*)&isrs_buf[isrs_n]) = CEU_INPUT__NONE;     // evt does not fit the end of the buffer
                 isrs_n = 0;
-                nxt = isrs_n+sizeof(tceu_nevt)+sizeof(u8)+evt_->len;
-                ceu_assert(isrs_i>0, "isrs buffer is full");
+                nxt = sizeof(tceu_nevt)+sizeof(u8)+evt_->len;
             }
         }
         if (isrs_i > isrs_n) {     // test again b/c isrs_n may change above
@@ -264,15 +261,14 @@ void setup () {
                 u8 len = *((u8*)&isrs_buf[isrs_i]);
                 isrs_i += sizeof(u8);
                 void* args = &isrs_buf[isrs_i];
-                isrs_i += len;
-                if (*((tceu_nevt*)&isrs_buf[isrs_i]) == CEU_INPUT__NONE) {
+                if (id == CEU_INPUT__NONE) {
                     isrs_i = 0;
+                } else {
+                    isrs_i += len;
                 }
                 interrupts();
                 ceu_input(id, args);
                 goto _CEU_ARDUINO_AWAKE_;
-            } else {
-                isrs_i = isrs_n = 0;
             }
 #else
             for (int i=0; i<_VECTOR_SIZE; i++) {

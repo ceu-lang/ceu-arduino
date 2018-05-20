@@ -2,9 +2,9 @@
 #include "wclock.ceu"
 #include "spi.ceu"
 #include "nrf24l01.ceu"
-#include "pcint0.ceu"
 
 {S.begin(9600);}
+{S.println("Ceu - nrf-tx");}
 
 event bool irq;
 #if 1

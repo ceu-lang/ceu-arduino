@@ -4,6 +4,7 @@
 #include "nrf24l01.ceu"
 
 {S.begin(9600);}
+{S.println("Ceu - nrf-rx");}
 
 event bool irq;
 #if 1

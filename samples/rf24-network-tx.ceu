@@ -3,11 +3,10 @@
 #include "spi.ceu"
 #include "nrf24l01.ceu"
 #include "rf24-network.ceu"
-#include "pcint0.ceu"
 
 {
     Serial.begin(9600);
-    Serial.println("Ceu - helloworld_tx_2");
+    Serial.println("Ceu - rf24-tx");
     _DELAY(20);
 }
 
@@ -22,11 +21,23 @@ native/pre do
     static payload_t payload;
 end
 
+event bool irq;
+#if 1
+#include "pin-10.ceu"
+#define PIN PIN_10
+#else
+#include "pin-02.ceu"
+#define PIN PIN_02
+#endif
+spawn do
+    var bool v;
+    every v in PIN do
+        emit irq(v);
+    end
+end
+
 var Lock spi = _;
 spawn Spi();
-
-event bool irq;
-spawn PCInt_to_Event(10, false, &irq);
 
 var Nrf24l01_ nrf = val Nrf24l01_(&spi, &irq, 8,7, _,_,_,_,_,_,_);
 spawn Nrf24l01(&nrf);

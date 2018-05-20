@@ -5,9 +5,10 @@
 #include "nrf24l01.ceu"
 
 {Serial.begin(9600);}
+{S.println("Ceu - nrf-tx-seq");}
 
 event bool irq;
-#if 1
+#if 0
 #include "pin-10.ceu"
 #define PIN PIN_10
 #else

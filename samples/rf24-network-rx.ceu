@@ -1,6 +1,15 @@
 #include "arduino/arduino.ceu"
 #include "wclock.ceu"
 #include "spi.ceu"
+
+#ifdef ARDUINO_BOARD_MEGA
+#include "pin-10.ceu"
+#define NRF_IRQ_PIN PIN_10
+#else
+#include "pin-02.ceu"
+#define NRF_IRQ_PIN PIN_02
+#endif
+
 #include "nrf24l01.ceu"
 #include "rf24-network.ceu"
 
@@ -25,25 +34,10 @@ native/pre do
     static payload_t payload;
 end
 
-event bool irq;
-#if 1
-#include "pin-10.ceu"
-#define PIN PIN_10
-#else
-#include "pin-02.ceu"
-#define PIN PIN_02
-#endif
-spawn do
-    var bool v;
-    every v in PIN do
-        emit irq(v);
-    end
-end
-
 var Lock spi = _;
 spawn Spi();
 
-var Nrf24l01_ nrf = val Nrf24l01_(&spi, &irq, 8,7, _,_,_,_,_,_,_);
+var Nrf24l01_ nrf = val Nrf24l01_(&spi, 8,7, _,_,_,_,_,_,_);
 spawn Nrf24l01(&nrf);
 await nrf.ok;
 

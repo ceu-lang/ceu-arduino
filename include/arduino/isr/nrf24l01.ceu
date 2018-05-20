@@ -1,10 +1,13 @@
+#ifndef NRF_IRQ_PIN
+#error "Missing #define NRF_IRQ_PIN..."
+#endif
+
 ///////////////////////////////////////////////////////////////////////////////
 // EXTERNAL INTERFACE
 ///////////////////////////////////////////////////////////////////////////////
 
 data Nrf24l01_ with
     var&   Lock spi;
-    event& bool irq;
     var    int  ce;
     var    int  csn;
     var    u8   payload_size = 32;
@@ -338,7 +341,7 @@ do
         _digitalWrite(nrf.ce, 0);
     end
 
-    await nrf.irq;
+    await NRF_IRQ_PIN;
 
     // read status for receiving pipe
     var u8 pipe = do
@@ -371,7 +374,7 @@ code/await Nrf24l01_TX (var& Nrf24l01_ nrf, var&[] byte buf) -> bool
 do
     await Nrf24l01_Write(&nrf, STATUS, _bit(RX_DR) | _bit(TX_DS) | _bit(MAX_RT));
 
-    watching nrf.irq do
+    watching NRF_IRQ_PIN do
         await Nrf24l01_Write(&nrf, CONFIG, nrf.config | _bit(MASK_RX_DR));
         lock nrf.spi do
             watching SPI_Transaction(4000000, SPI_MSBFIRST, SPI_MODE0, _, nrf.csn) do
@@ -393,10 +396,10 @@ do
         _delayMicroseconds(10);
         _digitalWrite(nrf.ce, 0);
         //await 1ms;
-        _delayMicroseconds(100); // TODO: this line is required, why?
+        _delayMicroseconds(125); // TODO: this line is required, why?
                                 // - needed before MCU sleep?
                                 // - just luck?
-                                // - 75us is not enough
+                                // - 100us is not enough
                                 // - await 1ms is enough
                                 //      - but puts MCU to sleep
                                 //          - so is it just luck?

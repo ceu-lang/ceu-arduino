@@ -1,0 +1,21 @@
+#include "arduino/arduino.ceu"
+
+input bool PIN_03;
+
+#ifdef CEU_PIN_03_PULL
+{ pinMode(3, CEU_PIN_03_PULL); }
+#endif
+
+#ifndef CEU_PIN_03_MODE
+#define CEU_PIN_03_MODE CHANGE
+#endif
+
+{
+    EICRA = (EICRA & ~((1<<ISC10) | (1<<ISC11))) | (CEU_PIN_03_MODE << ISC10);
+    EIMSK |= (1<<INT1);
+}
+
+spawn async/isr [_INT1_vect] do
+    //{digitalWrite(13, !digitalRead(13));}
+    emit PIN_03(_digitalRead(3) as bool);
+end

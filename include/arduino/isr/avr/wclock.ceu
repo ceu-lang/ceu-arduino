@@ -1,5 +1,10 @@
+#ifndef _WCLOCK_CEU_
+#define _WCLOCK_CEU_
+
 #include "wclocks/timer1.ceu"
 
 {
     ceu_wclock_init();
 }
+
+#endif

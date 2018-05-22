@@ -1,0 +1,23 @@
+#include "arduino/avr.ceu"
+
+output on/off PIN_13;
+
+#ifdef ARDUINO_BOARD_MEGA
+#include "pin-10.ceu"
+#define PIN_INPUT PIN_10
+#else
+#include "pin-03.ceu"
+#define PIN_INPUT PIN_03
+#endif
+
+{
+    //S.begin(9600);
+    //S.println("Ceu - TCCRT5000 - 01");
+    //_DELAY(20);
+}
+
+var bool v;
+every v in PIN_INPUT do
+    emit PIN_13(not v);
+end
+

@@ -17,6 +17,7 @@
 #endif
 
 native/pre do
+    ##define __WCLOCK_CEU__
     void ceu_wclock_init    (void);
     //void ceu_wclock         (bool v);      // TODO: ???
     void ceu_wclock_request (s32 us, bool was_active);

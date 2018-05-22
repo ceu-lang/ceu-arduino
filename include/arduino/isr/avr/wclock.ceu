@@ -1,5 +1,5 @@
-#ifndef _WCLOCK_CEU_
-#define _WCLOCK_CEU_
+#ifndef _AVR_WCLOCK_CEU_
+#define _AVR_WCLOCK_CEU_
 
 #include "wclocks/timer1.ceu"
 

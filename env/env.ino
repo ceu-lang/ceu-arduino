@@ -80,6 +80,11 @@ void ceu_arduino_callback_start (void);
 
 #include "_ceu_app.c.h"
 
+#ifndef __WCLOCK_CEU__
+s32 ceu_arduino_callback_wclock_dt (void) { return 0; }
+void ceu_arduino_callback_wclock_min (s32) {}
+#endif
+
 #ifdef CEU_FEATURES_ISR
 
 #ifdef CEU_FEATURES_ISR_DYNAMIC

@@ -21,10 +21,6 @@
 
 native/plain _payload_t;
 native/pre do
-    //##include <SPI.h>
-    //##include <RF24.h>
-    //RF24 radio(8,7);                // nRF24L01(+) radio attached using Getting Started board
-
     typedef struct payload_t {                 // Structure of our payload
         unsigned long ms;
         unsigned long counter;

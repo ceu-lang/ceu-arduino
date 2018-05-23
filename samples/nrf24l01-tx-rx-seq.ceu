@@ -1,31 +1,26 @@
 #include "arduino/arduino.ceu"
 //#include "wdt.ceu"
 #include "wclock.ceu"
+
+#ifdef ARDUINO_BOARD_MEGA
+#include "pin-10.ceu"
+#define NRF_IRQ_PIN PIN_10
+#else
+#include "pin-02.ceu"
+#define NRF_IRQ_PIN PIN_02
+#endif
+
 #include "spi.ceu"
 #include "nrf24l01.ceu"
 
 {Serial.begin(9600);}
 {S.println("Ceu - nrf-tx-seq");}
-
-event bool irq;
-#if 0
-#include "pin-10.ceu"
-#define PIN PIN_10
-#else
-#include "pin-02.ceu"
-#define PIN PIN_02
-#endif
-spawn do
-    var bool v;
-    every v in PIN do
-        emit irq(v);
-    end
-end
+{_DELAY(15);}
 
 var Lock spi = _;
 spawn Spi();
 
-var Nrf24l01_ nrf = val Nrf24l01_(&spi, &irq, 8,7, _,_,_,_,_,_,_);
+var Nrf24l01_ nrf = val Nrf24l01_(&spi, 8,7, _,_,_,_,_,_,_);
 spawn Nrf24l01(&nrf);
 await nrf.ok;
 
@@ -38,7 +33,6 @@ loop i do
         //emit PIN_13((i % 2) as on/off);
         do
             var[1] byte buf = [i];
-            //{ Serial.println("---"); _DELAY(5); }
             await Nrf24l01_TX(&nrf, &buf);
             {Serial.print("< "); Serial.println(@buf[0]); _DELAY(8);}
         end
@@ -47,6 +41,6 @@ loop i do
             await Nrf24l01_RX(&nrf, &buf);
             {Serial.print("> "); Serial.println(@buf[0]); _DELAY(8);}
         end
-        await 1s;
+        await 5s;
     end
 end

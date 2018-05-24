@@ -1,4 +1,9 @@
+#ifndef CEU_PM
+#define ceu_pm_set(a,b)
+#else
+
 #define CEU_PM_STATE(peripheral) bitRead(ceu_pm_state, peripheral)
+#define ceu_pm_set(a,b) ceu_pm_set_(a,b)
 
 #ifdef __cplusplus
 extern "C" {
@@ -14,4 +19,6 @@ void ceu_pm_set (u8 peripheral, bool state) {
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif

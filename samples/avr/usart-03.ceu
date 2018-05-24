@@ -1,7 +1,5 @@
 /* TODO: only working with original Arduino (but see other TODO comment below) */
 
-#define CEU_FEATURES_ISR_SLEEP_MIN
-
 #include "arduino/arduino.ceu"
 #include "arduino/avr.ceu"
 #include "wclock.ceu"

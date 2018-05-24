@@ -1,147 +1,57 @@
-#ifdef _CEU_OUTPUT_PIN_00_
-case CEU_OUTPUT_PIN_00:
-    digitalWrite(0, *((bool*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PIN_01_
-case CEU_OUTPUT_PIN_01:
-    digitalWrite(1, *((bool*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PIN_02_
-case CEU_OUTPUT_PIN_02:
-    digitalWrite(2, *((bool*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PIN_03_
-case CEU_OUTPUT_PIN_03:
-    digitalWrite(3, *((bool*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PIN_04_
-case CEU_OUTPUT_PIN_04:
-    digitalWrite(4, *((bool*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PIN_05_
-case CEU_OUTPUT_PIN_05:
-    digitalWrite(5, *((bool*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PIN_06_
-case CEU_OUTPUT_PIN_06:
-    digitalWrite(6, *((bool*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PIN_07_
-case CEU_OUTPUT_PIN_07:
-    digitalWrite(7, *((bool*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PIN_08_
-case CEU_OUTPUT_PIN_08:
-    digitalWrite(8, *((bool*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PIN_09_
-case CEU_OUTPUT_PIN_09:
-    digitalWrite(9, *((bool*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PIN_10_
-case CEU_OUTPUT_PIN_10:
-    digitalWrite(10, *((bool*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PIN_11_
-case CEU_OUTPUT_PIN_11:
-    digitalWrite(11, *((bool*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PIN_12_
-case CEU_OUTPUT_PIN_12:
-    digitalWrite(12, *((bool*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PIN_13_
-case CEU_OUTPUT_PIN_13:
-    digitalWrite(13, *((bool*)p2.ptr));
-    break;
-#endif
+#define ceu_callback_output_PIN_00(ps,trace) \
+    digitalWrite( 0, *((bool*)ps))
+#define ceu_callback_output_PIN_01(ps,trace) \
+    digitalWrite( 1, *((bool*)ps))
+#define ceu_callback_output_PIN_02(ps,trace) \
+    digitalWrite( 2, *((bool*)ps))
+#define ceu_callback_output_PIN_03(ps,trace) \
+    digitalWrite( 3, *((bool*)ps))
+#define ceu_callback_output_PIN_04(ps,trace) \
+    digitalWrite( 4, *((bool*)ps))
+#define ceu_callback_output_PIN_05(ps,trace) \
+    digitalWrite( 5, *((bool*)ps))
+#define ceu_callback_output_PIN_06(ps,trace) \
+    digitalWrite( 6, *((bool*)ps))
+#define ceu_callback_output_PIN_07(ps,trace) \
+    digitalWrite( 7, *((bool*)ps))
+#define ceu_callback_output_PIN_08(ps,trace) \
+    digitalWrite( 8, *((bool*)ps))
+#define ceu_callback_output_PIN_09(ps,trace) \
+    digitalWrite( 9, *((bool*)ps))
+#define ceu_callback_output_PIN_10(ps,trace) \
+    digitalWrite(10, *((bool*)ps))
+#define ceu_callback_output_PIN_11(ps,trace) \
+    digitalWrite(11, *((bool*)ps))
+#define ceu_callback_output_PIN_12(ps,trace) \
+    digitalWrite(12, *((bool*)ps))
+#define ceu_callback_output_PIN_13(ps,trace) \
+    digitalWrite(13, *((bool*)ps))
 
-#ifdef _CEU_OUTPUT_PWM_00_
-case CEU_OUTPUT_PWM_00:
-    analogWrite(0, *((int*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PWM_01_
-case CEU_OUTPUT_PWM_01:
-    analogWrite(1, *((int*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PWM_02_
-case CEU_OUTPUT_PWM_02:
-    analogWrite(2, *((int*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PWM_03_
-case CEU_OUTPUT_PWM_03:
-    analogWrite(3, *((int*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PWM_04_
-case CEU_OUTPUT_PWM_04:
-    analogWrite(4, *((int*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PWM_05_
-case CEU_OUTPUT_PWM_05:
-    analogWrite(5, *((int*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PWM_06_
-case CEU_OUTPUT_PWM_06:
-    analogWrite(6, *((int*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PWM_07_
-case CEU_OUTPUT_PWM_07:
-    analogWrite(7, *((int*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PWM_08_
-case CEU_OUTPUT_PWM_08:
-    analogWrite(8, *((int*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PWM_09_
-case CEU_OUTPUT_PWM_09:
-    analogWrite(9, *((int*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PWM_10_
-case CEU_OUTPUT_PWM_10:
-    analogWrite(10, *((int*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PWM_11_
-case CEU_OUTPUT_PWM_11:
-    analogWrite(11, *((int*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PWM_12_
-case CEU_OUTPUT_PWM_12:
-    analogWrite(12, *((int*)p2.ptr));
-    break;
-#endif
-#ifdef _CEU_OUTPUT_PWM_13_
-case CEU_OUTPUT_PWM_13:
-    analogWrite(13, *((int*)p2.ptr));
-    break;
-#endif
-
-#ifdef _CEU_OUTPUT_SERIAL_SEND_BYTE_
-case CEU_OUTPUT_SERIAL_SEND_BYTE:
-    Serial.write(*((byte*)p2.ptr));
-    break;
-#endif
+#define ceu_callback_output_PWM_00(ps,trace) \
+    analogWrite( 0, *((int*)ps))
+#define ceu_callback_output_PWM_01(ps,trace) \
+    analogWrite( 1, *((int*)ps))
+#define ceu_callback_output_PWM_02(ps,trace) \
+    analogWrite( 2, *((int*)ps))
+#define ceu_callback_output_PWM_03(ps,trace) \
+    analogWrite( 3, *((int*)ps))
+#define ceu_callback_output_PWM_04(ps,trace) \
+    analogWrite( 4, *((int*)ps))
+#define ceu_callback_output_PWM_05(ps,trace) \
+    analogWrite( 5, *((int*)ps))
+#define ceu_callback_output_PWM_06(ps,trace) \
+    analogWrite( 6, *((int*)ps))
+#define ceu_callback_output_PWM_07(ps,trace) \
+    analogWrite( 7, *((int*)ps))
+#define ceu_callback_output_PWM_08(ps,trace) \
+    analogWrite( 8, *((int*)ps))
+#define ceu_callback_output_PWM_09(ps,trace) \
+    analogWrite( 9, *((int*)ps))
+#define ceu_callback_output_PWM_00(ps,trace) \
+    analogWrite(10, *((int*)ps))
+#define ceu_callback_output_PWM_01(ps,trace) \
+    analogWrite(11, *((int*)ps))
+#define ceu_callback_output_PWM_02(ps,trace) \
+    analogWrite(12, *((int*)ps))
+#define ceu_callback_output_PWM_03(ps,trace) \
+    analogWrite(13, *((int*)ps))

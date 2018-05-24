@@ -1,3 +1,8 @@
+#define ceu_callback_output_PIN(ps,trace) {         \
+    tceu_output_PIN* ps_ = (tceu_output_PIN*) ps;   \
+    digitalWrite(ps_->_1, ps_->_2);                 \
+}
+
 #define ceu_callback_output_PIN_00(ps,trace) \
     digitalWrite( 0, *((bool*)ps))
 #define ceu_callback_output_PIN_01(ps,trace) \

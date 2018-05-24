@@ -57,7 +57,7 @@ void ceu_arduino_callback_abort (int err);
 
 #define ceu_callback_start(trace)
 void ceu_arduino_callback_isr_enable (int on);
-#define ceu_callback_isr_enable(on,trace) ceu_arduino_callback_isr_enable(err)
+#define ceu_callback_isr_enable(on,trace) ceu_arduino_callback_isr_enable(on)
 #define ceu_callback_isr_emit(idx,args,trace) ceu_arduino_callback_isr_emit(idx,args)
 #ifdef CEU_FEATURES_ISR_STATIC
 void ceu_arduino_callback_isr_emit (int idx, void* evt);

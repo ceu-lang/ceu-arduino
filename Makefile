@@ -1,16 +1,13 @@
-include Makefile.dirs
-
-CEU_SRC ?= samples/blink-01.ceu
-
-INO_SRC ?= env/env.ino
-
-ARD_EXE = arduino
-ARD_ARCH  = avr
-ARD_BOARD = uno
-ARD_PORT  = /dev/ttyACM*
+include Makefile.conf
 
 # make ARD_BOARD=mega ARD_CPU=atmega2560    ARD_PORT=/dev/ttyACM1 CEU_SRC=...
 # make ARD_BOARD=pro  ARD_CPU=8MHzatmega328 ARD_PORT=/dev/ttyUSB0 CEU_SRC=...
+
+ifndef CEU_SRC
+$(error missing `CEU_SRC` path to compile)
+endif
+
+INO_SRC ?= env/env.ino
 
 PRESERVE = --preserve-temp-files
 

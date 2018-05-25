@@ -82,6 +82,7 @@ void ceu_arduino_callback_isr_emit (int idx, void* evt);
 #include "_ceu_app.c.h"
 
 #ifndef __WCLOCK_CEU__
+//#error "Missing WCLOCK driver!"
 s32 ceu_arduino_callback_wclock_dt (void) { return 0; }
 void ceu_arduino_callback_wclock_min (s32) {}
 #endif

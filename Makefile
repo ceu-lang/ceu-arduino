@@ -16,7 +16,10 @@ ARD_CPU_UPPER   = $(shell echo $(ARD_CPU)   | tr a-z A-Z)
 ARD_BOARD_UPPER = $(shell echo $(ARD_BOARD) | tr a-z A-Z)
 
 LIBRARIES = $(sort $(dir $(wildcard libraries/*/)))
-CEU_INCS  = $(addprefix -I./, $(addsuffix $(ARD_ARCH)/$(ARD_CPU), $(LIBRARIES))) $(addprefix -I./, $(addsuffix $(ARD_ARCH), $(LIBRARIES))) $(addprefix -I./, $(LIBRARIES))
+CEU_INCS  = $(addprefix -I./, $(addsuffix $(ARD_ARCH)/$(ARD_BOARD)/$(ARD_CPU), $(LIBRARIES))) \
+            $(addprefix -I./, $(addsuffix $(ARD_ARCH)/$(ARD_BOARD), $(LIBRARIES)))            \
+            $(addprefix -I./, $(addsuffix $(ARD_ARCH), $(LIBRARIES)))                         \
+            $(addprefix -I./, $(LIBRARIES))
 
 ifdef ARD_CPU
 	ARD_CPU_ = :cpu=$(ARD_CPU)

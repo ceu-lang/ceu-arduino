@@ -25,9 +25,7 @@ ifdef ARD_CPU
 	ARD_CPU_ = :cpu=$(ARD_CPU)
 endif
 
-#CEU_DEFS = -DCEU_PM
-#CC_DEFS = -DCEU_PM_MIN
-ARD_PREFS = --pref compiler.cpp.extra_flags="$(CEU_DEFS) $(CC_DEFS)"
+ARD_PREFS = --pref compiler.cpp.extra_flags="$(CEU_INCS) $(CEU_DEFS)"
 
 all: ceu c
 
@@ -38,7 +36,7 @@ c:
 	           --upload $(INO_SRC)
 
 ceu:
-	ceu --pre --pre-args="-include ./include/arduino/arduino.ceu -include ./libraries/arch-$(ARD_ARCH)/$(ARD_ARCH).ceu -I$(CEU_DIR)/include/ -I./include/ $(CEU_INCS) $(CEU_DEFS) -DCEUMAKER_ARDUINO -DARDUINO_ARCH_$(ARD_ARCH_UPPER) -DARDUINO_MCU_$(ARD_MCU_UPPER) -DARDUINO_BOARD_$(ARD_BOARD_UPPER)" \
+	ceu --pre --pre-args="-include ./include/arduino/arduino.ceu -I$(CEU_DIR)/include/ -I./include/ $(CEU_INCS) -include pm.ceu $(CEU_DEFS) -DCEUMAKER_ARDUINO -DARDUINO_ARCH_$(ARD_ARCH_UPPER) -DARDUINO_MCU_$(ARD_MCU_UPPER) -DARDUINO_BOARD_$(ARD_BOARD_UPPER)" \
 	          --pre-input=$(CEU_SRC)                                           \
 	    --ceu --ceu-err-unused=pass --ceu-err-uninitialized=pass               \
 	          --ceu-line-directives=true                                       \

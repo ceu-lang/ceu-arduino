@@ -19,9 +19,6 @@
 #undef CEU_STACK_MAX
 
 #define CEU_ISRS_N 100
-#define CEU_PM
-//#define CEU_PM_MIN
-//#define CEU_PM_DEBUG
 
 ///////////////////////////////////////////////////////////////////////////////
 // DO NOT EDIT
@@ -68,17 +65,6 @@ void ceu_arduino_callback_isr_enable (int on);
 #define ceu_callback_isr_emit(idx,args,trace) ceu_arduino_callback_isr_emit(idx,args)
 void ceu_arduino_callback_isr_emit (int idx, void* evt);
 
-#include "pins_outputs.c.h"
-
-#include "pm.c.h"
-#ifndef CEU_PM
-    // Set SLEEP always.
-    // Currently, if ISR is set, but not ISR_SLEEP, the timer will not work well
-    // because `ceu_timer_request` is called every tick and intermediary ticks are
-    // lost due to prescaling.
-    #error "Invalid option!"
-#endif
-
 #include "_ceu_app.c.h"
 
 #ifndef __WCLOCK_CEU__
@@ -123,8 +109,6 @@ void ceu_arduino_callback_isr_emit (int idx, void* evt) {
 }
 
 void setup () {
-    #include "pins_modes.c.h"
-
 #ifdef CEU_PM
     ceu_pm_init();
 #endif
@@ -149,7 +133,6 @@ void setup () {
             goto _CEU_ARDUINO_AWAKE_;
         }
         interrupts();
-#ifdef CEU_PM
 #ifdef CEU_FEATURES_ASYNC
         if (!CEU_APP.async_pending)
 #endif
@@ -158,7 +141,6 @@ void setup () {
         }
 #ifdef CEU_FEATURES_ASYNC
         else
-#endif
 #endif
         {
 #ifdef CEU_FEATURES_ASYNC

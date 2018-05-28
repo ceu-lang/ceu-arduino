@@ -2,7 +2,7 @@ Céu-Arduino supports the development of Arduino applications in the programming
 language Céu:
 
 - Source Code:   https://github.com/ceu-lang/ceu-arduino/
-<!-- - Documentation: http://fsantanna.github.io/ceu-arduino/ -->
+<!-- - Documentation: http://ceu-lang.github.io/ceu-arduino/ -->
 - Chat:          https://gitter.im/fsantanna/ceu
 
 [Arduino](https://www.arduino.cc/) Arduino is an open-source project that

@@ -1,11 +1,1 @@
-#include "arduino/arduino.ceu"
-
-input  on/off PIN_02;
-output on/off PIN_13;
-
-emit PIN_13(off);
-
-loop do
-    var on/off v = await PIN_02;
-    emit PIN_13(v);
-end
+../libraries/driver-gpio/examples/gpio-01.ceu

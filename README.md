@@ -1,8 +1,8 @@
 Céu-Arduino supports the development of Arduino applications in the programming
 language Céu:
 
-- Source Code:   https://github.com/fsantanna/ceu-arduino/
-- Documentation: http://fsantanna.github.io/ceu-arduino/
+- Source Code:   https://github.com/ceu-lang/ceu-arduino/
+<!-- - Documentation: http://fsantanna.github.io/ceu-arduino/ -->
 - Chat:          https://gitter.im/fsantanna/ceu
 
 [Arduino](https://www.arduino.cc/) Arduino is an open-source project that
@@ -13,7 +13,7 @@ Céu is a reactive language that aims to offer a higher-level and safer
 alternative to C:
 
 - Home Page:   http://www.ceu-lang.org/
-- Source code: https://github.com/fsantanna/ceu/
+- Source code: https://github.com/ceu-lang/ceu/
 
 Céu-Arduino empowers the development of Arduino applications with the following
 extensions:
@@ -39,34 +39,39 @@ https://www.arduino.cc/
 
 ## Install Céu:
 
-https://github.com/fsantanna/ceu/
+https://github.com/ceu-lang/ceu/
 
 ## Clone Céu-Arduino:
 
 ```
-$ git clone https://github.com/fsantanna/ceu-arduino
+$ git clone https://github.com/ceu-lang/ceu-arduino
 $ cd ceu-arduino/
-$ git checkout v0.30
+$ git checkout v0.40
+$ cd libraries/
+$ make clone
 ```
 
-## Compile and Upload
+## Configure:
 
-Edit the `Makefile` to point to your `ceu` directory and then run `make`:
+Edit the `Makefile.conf` to point to the `ceu` repository and to set your
+preferences:
 
 ```
-$ gedit Makefile
-$ make
+$ gedit Makefile.conf
 ```
+
+Use
+===
+
+Run `make` with the file you want to compile & upload:
+
+```
+$ make CEU_SRC=samples/blink-01.ceu
+```
+
+This example blinks the on-board LED every second.
 
 Certify that your Arduino is connected to the USB.
-If necessary, configure the variables in the `Makefile`.
-The default example blinks the on-board LED every second.
-
-To compile and upload another application, run `make` and set `CEU_SRC`:
-
-```
-$ make CEU_SRC=<path-to-ceu-application>
-```
 
 Examples
 ========
@@ -87,14 +92,15 @@ The program is an infinite `loop` that intercalates between turning the LED
 *on* and *off* in intervals of 1 second:
 
 ```
-#include "arduino/arduino.ceu"  // include standard declarations
+#include "gpio.ceu"             // uses GPIO (PIN_13)
+#include "wclock.ceu"           // uses timers (await 1s)
 
-output int PIN_13;              // PIN_13 is an output pin
+output high/low PIN_13;         // PIN_13 is an output pin
 
 loop do                         // an infinite loop that:
-    emit PIN_13(HIGH);          //   - turns the LED on
+    emit PIN_13(high);          //   - turns the LED on
     await 1s;                   //   - awaits 1 second
-    emit PIN_13(LOW);           //   - turns the LED off
+    emit PIN_13(low);           //   - turns the LED off
     await 1s;                   //   - awaits another 1 second
 end                             //   - repeats
 ```
@@ -127,18 +133,20 @@ The program waits for changes on *pin 2* (the switch), copying its value to
 *pin 13* (the LED):
 
 ```
-#include "arduino/arduino.ceu"
+#include "gpio.ceu"
+#include "pin_02.ceu"   // declares "input high/low PIN_02"
 
-input  int PIN_02;
-output int PIN_13;
-
-emit PIN_13(LOW);
+output high/low PIN_13;
+emit PIN_13(_digitalRead(2));
 
 loop do
-    var int v = await PIN_02;
+    var high/low v = await PIN_02;
     emit PIN_13(v);
 end
 ```
+
+Céu can directly use standard Arduino functionality by prefixing its symbols
+with an underscore (e.g., `_digitalRead(2)`).
 
 <!--
 Now, we also use an input event to read <tt>int</tt> values from <tt>PIN2</tt>.
@@ -153,37 +161,38 @@ Blinking in Parallel
 {{#ev:youtube|6ZsF6X1wn84|300|right}}
 -->
 
-The example `blink-03.ceu` requires two additional LEDs connected to
+The example `blink-02.ceu` requires two additional LEDs connected to
 *pins 11 and 12*.
 
 The program blinks the LEDs with different frequencies, in parallel:
 
 ```
-#include "arduino/arduino.ceu"
+#include "gpio.ceu"
+#include "wclock.ceu"
 
-output int PIN_11;
-output int PIN_12;
-output int PIN_13;
+output high/low PIN_11;
+output high/low PIN_12;
+output high/low PIN_13;
 
 par do
     loop do
-        emit PIN_11(HIGH);
+        emit PIN_11(high);
         await 1s;
-        emit PIN_11(LOW);
+        emit PIN_11(low);
         await 1s;
     end
 with
     loop do
-        emit PIN_12(HIGH);
+        emit PIN_12(high);
         await 500ms;
-        emit PIN_12(LOW);
+        emit PIN_12(low);
         await 500ms;
     end
 with
     loop do
-        emit PIN_13(HIGH);
+        emit PIN_13(high);
         await 250ms;
-        emit PIN_13(LOW);
+        emit PIN_13(low);
         await 250ms;
     end
 end
@@ -197,24 +206,25 @@ concurrently in the same program.
 Fading a LED
 ------------
 
-The example `pwm-01.ceu` assumes that a LED is connected to *pin 11*.
+The example `pwm-01.ceu` assumes that a LED is connected to *pin 06*.
 
 The program fades the LED from `0` to `255` and from `255` to `0` in two
 consecutive loops:
 
 ```
-#include "arduino/arduino.ceu"
+#include "gpio.ceu"
+#include "wclock.ceu"
 
-output u8 PWM_11;
+output u8 PWM_06;
 
 loop do
     var int i;
     loop i in [0->255] do
-        emit PWM_11(i);
+        emit PWM_06(i);
         await 5ms;
     end
     loop i in [0<-255] do
-        emit PWM_11(i);
+        emit PWM_06(i);
         await 5ms;
     end
 end
@@ -223,89 +233,22 @@ end
 Serial Echo
 -----------
 
-The example `serial-01.ceu` reads and write bytes from and to the serial in a
+The example `usart-01.ceu` reads and write strings from and to the serial in a
 continuous loop:
 
 ```
-#include "arduino/arduino.ceu"
+#include "usart.ceu"
 
-input byte SERIAL;
-
-loop do
-    var byte c = await SERIAL;
-    _Serial.write(c);
-end
-```
-
-Céu can directly use standard Arduino functionality by prefixing its symbols
-with an underscore (e.g., `_Serial.write(c)`).
-
-Switching a LED with Interrupts
--------------------------------
-
-The example `isr-01.ceu` is equivalent to `button-01.ceu` but uses interrupts
-instead of polling:
-
-```
-#include "arduino/arduino.ceu"
-
-input  int PIN_02;
-output int PIN_13;
-
-spawn async/isr [_digitalPinToInterrupt(2),_CHANGE] do
-    emit PIN_02(_digitalRead(2));
-end
-
-emit PIN_13(LOW);
+spawn Usart(9600);
 
 loop do
-    var int v = await PIN_02;
-    emit PIN_13(v);
+    var[20] byte str = [];
+    await Usart_RX(&str, _);
+    await Usart_TX(&str);
 end
 ```
 
-The `async/isr` is an interrupt service routine written in Céu.
-It is attached to the interrupt number for *pin 2*
-(`_digitalPinToInterrupt(2)`) and is triggered whenever the pin changes value
-(`_CHANGE`).
-The routine emits a `PIN_02` input to the application.
-
-Examples that use interrupts have to be compiled with `CEU_ISR=true`:
-
-```
-make CEU_ISR=true CEU_SRC=samples/isr-01.ceu
-```
-
-Interrupts with Drivers
------------------------
-
-The example `isr-08.ceu` uses the interrupt drivers `timer.ceu` and
-`pin-02.ceu` from the library.
-
-The program blinks the LED connected to *pin 13* until the button connected to
-*pin 02* is clicked.
-After another click, the blinking restarts.
-
-```
-#include "arduino/isr/timer.ceu"        // timer ISR
-#include "arduino/isr/pin-02.ceu"       // pin-02 ISR
-
-output int PIN_13;
-
-loop do
-    watching PIN_02 do                  // aborts on click
-        var int x = 0;
-        every 500ms do                  // blinks every 500ms
-            x = 1 - x;
-            emit PIN_13(x);
-        end
-    end
-    await 500ms;                        // debouncing
-    await PIN_02;                       // restarts
-    await 500ms;                        // debouncing
-end
-```
-
+<!--
 Applications
 ============
 
@@ -316,81 +259,4 @@ The game `ship.ceu` is described in a blog post:
 
 - https://github.com/fsantanna/ceu-arduino/blob/master/samples/ship.ceu
 - http://thesynchronousblog.wordpress.com/2012/07/08/ceu-arduino/
-
-<!--
-[[http://www.ceu-lang.org/downloads/ceu_arduino_current.tgz download]] The current version of Céu for Arduino.
-
-The Céu compiler requires [[Lua]] and [[LPeg]] installed.
-
-We assume you are using a Linux-like programming environment.
-
-After downloading Céu for Arduino, unpack it, adjust the <tt>Makefile</tt>, and run <tt>make</tt>:
-
-    $ tar xvzf ceu_arduino_*.tgz
-    $ cd ceu_arduino_*
-    $ vi Makefile
-    $ make
-
-You should see the LED on PIN13 blinking, just like in the video on the right.
-
-By default, Céu uses the file <tt>samples/blink1.ceu</tt>, as defined in the Makefile.
-However, it's possible to pass different files to <tt>make</tt>.
-
-== Project Files ==
-
-Céu requires two files to generate your application:
-* <tt>INOFILE</tt>: a binding to C (.pde)
-* <tt>CEUFILE</tt>: the actual Céu program (.ceu)
-
-By default, Céu uses the files <tt>poll.pde</tt> and <tt>samples/blink1.ceu</tt>, as defined in the Makefile.
-However, it's possible to pass different files to <tt>make</tt>:
-
-    $ make INOFILE=async.pde CEUFILE=samples/blink1_async.ceu
-
-== C Binding ==
-
-The C binding is more complex to write, but fortunately, requires just a few adjustments from project to project.
-
-The default binding <tt>poll.pde</tt> uses a polling mechanism to generate events to Céu.
-
-Follows a simplified version of the file:
-
-    void setup ()
-    {
-        pinMode(2, INPUT);              // this project uses pin 2 as input
-        ceu_go_init(millis());          // initializes Ceu with the current time
-    }
-
-    int p2;                             // current value of pin 2
-
-    void loop()
-    {
-        // generates the events related to pin 2
-        int tmp = digitalRead(2);
-        if (p2 != tmp) {                // pin 2 has changed
-            p2 = tmp;
-            if (p2==HIGH)
-                ceu_go_event(IO_PIN2_HIGH, NULL);
-            else
-                ceu_go_event(IO_PIN2_LOW, NULL);
-            ceu_go_event(IO_PIN2, (void*)p2);
-        }
-
-        delay(POLLING_INTERVAL);        // saves CPU
-        ceu_go_time(millis());          // generates time for Ceu
-    }
-
-When creating a new project, just copy <tt>poll.pde</tt> and make the changes according to the new configuration of pins.
-
-== What's next? ==
-
-* Examples in the <tt>samples/</tt> directory.
-* [[Tutorial]] on Céu.
-
-Did you like Céu?
-Would you like to use it?
-Please, let me know, I can help you!
-
-http://www.lua.inf.puc-rio.br/~francisco
-
 -->

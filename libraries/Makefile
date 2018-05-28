@@ -8,7 +8,7 @@ clone:
 	for i in $(LIBRARIES); do                          \
 	    echo;                                          \
 	    echo ">>> $$i";                                \
-	    git clone https://github.com/ceu-arduino/$(i); \
+	    git clone https://github.com/ceu-arduino/$$i;  \
 	    cd "$$i";                                      \
 	    git checkout $(BRANCH);                        \
 	    cd -;                                          \

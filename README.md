@@ -66,7 +66,7 @@ Use
 Run `make` with the file you want to compile & upload:
 
 ```
-$ make CEU_SRC=samples/blink-01.ceu
+$ make CEU_SRC=examples/blink-01.ceu
 ```
 
 This example blinks the on-board LED every second.
@@ -76,7 +76,7 @@ Certify that your Arduino is connected to the USB.
 Examples
 ========
 
-The `samples/` directory contains a number of examples.
+The `examples/` directory contains a number of examples.
 
 Blinking a LED
 --------------

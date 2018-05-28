@@ -41,7 +41,7 @@ ceu:
 	    --ceu --ceu-err-unused=pass --ceu-err-uninitialized=pass               \
 	          --ceu-line-directives=true                                       \
 	          --ceu-features-lua=false --ceu-features-thread=false             \
-	          --ceu-features-callbacks=static --ceu-features-isr=static        \
+	          --ceu-features-isr=static                                        \
 	    --env --env-types=env/types.h                                          \
 	          --env-output=env/_ceu_app.c.h
 

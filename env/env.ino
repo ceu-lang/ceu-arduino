@@ -112,7 +112,7 @@ void setup () {
 #ifdef CEU_PM
     ceu_pm_init();
 #endif
-    ceu_start(NULL, 0, NULL);
+    ceu_start(0, NULL);
 
     while (1)
     {

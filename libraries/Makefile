@@ -4,6 +4,9 @@ LIBRARIES = arch-avr driver-adc driver-gpio driver-hcsr04 driver-millis-micros \
 	        driver-nrf24l01 driver-pm driver-spi driver-usart driver-wclock    \
 	        driver-wdt #protocol-rf24network
 
+all:
+	$(error Choose target...)
+
 clone:
 	for i in $(LIBRARIES); do                          \
 	    echo;                                          \

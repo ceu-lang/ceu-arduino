@@ -1,1 +1,11 @@
-../libraries/driver-wclock/examples/blink-01.ceu
+#include "gpio.ceu"
+#include "wclock.ceu"
+
+output high/low PIN_13;
+
+loop do
+    emit PIN_13(on);
+    await 1s;
+    emit PIN_13(off);
+    await 1s;
+end

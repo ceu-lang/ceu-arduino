@@ -1,1 +1,14 @@
-../libraries/driver-gpio/examples/gpio-01.ceu
+#include "gpio.ceu"
+
+#include "pin_02.ceu"       // UNO
+//#include "pin_03.ceu"       // UNO
+//#include "pin_04.ceu"       // UNO
+//#include "pin_10.ceu"     // MEGA
+
+output high/low PIN_13;
+emit PIN_13(_digitalRead(2));
+
+loop do
+    var high/low v = await PIN_02;
+    emit PIN_13(v);
+end

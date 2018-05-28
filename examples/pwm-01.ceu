@@ -1,1 +1,16 @@
-../libraries/driver-gpio/examples/pwm-01.ceu
+#include "gpio.ceu"
+#include "wclock.ceu"
+
+output u8 PWM_06;
+
+loop do
+    var int i;
+    loop i in [0->255] do
+        emit PWM_06(i);
+        await 5ms;
+    end
+    loop i in [0<-255] do
+        emit PWM_06(i);
+        await 5ms;
+    end
+end

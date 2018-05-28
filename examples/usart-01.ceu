@@ -1,1 +1,9 @@
-../libraries/driver-usart/examples/usart-01.ceu
+#include "usart.ceu"
+
+spawn Usart(9600);
+
+loop do
+    var[20] byte str = [];
+    await Usart_RX(&str, _);
+    await Usart_TX(&str);
+end

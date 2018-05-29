@@ -46,7 +46,7 @@ https://github.com/ceu-lang/ceu/
 ```
 $ git clone https://github.com/ceu-lang/ceu-arduino
 $ cd ceu-arduino/
-$ git checkout v0.40
+$ git checkout pre-v0.40
 $ cd libraries/
 $ make clone
 ```

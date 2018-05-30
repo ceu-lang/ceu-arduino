@@ -36,7 +36,9 @@
 
 void ceu_arduino_callback_abort (int err) {
     noInterrupts();
+#ifdef ARDUINO_ARCH_AVR
     SPCR &= ~_BV(SPE);  // releases PIN13
+#endif
     pinMode(13, OUTPUT);
     digitalWrite(13, 1);
     for (;;) {
@@ -62,14 +64,20 @@ void ceu_arduino_callback_abort (int err);
 #define ceu_callback_start(trace)
 #define ceu_callback_isr_enable(on,trace) ceu_arduino_callback_isr_enable(on)
 void ceu_arduino_callback_isr_enable (int on);
-#define ceu_callback_isr_emit(idx,args,trace) ceu_arduino_callback_isr_emit(idx,args)
-void ceu_arduino_callback_isr_emit (int idx, void* evt);
+#define ceu_callback_isr_emit(evt,trace) ceu_arduino_callback_isr_emit(evt)
+void ceu_arduino_callback_isr_emit (void* evt);
 
 #include "_ceu_app.c.h"
 
+#ifdef CEU_PM
+#ifndef CEU_PM_IMPL
+#error Missing architecture implementation for power management.
+#endif
+#endif
+
 #ifndef __WCLOCK_CEU__
 //#error "Missing WCLOCK driver!"
-s32 ceu_arduino_callback_wclock_dt (void) { return 0; }
+s32 ceu_arduino_callback_wclock_dt (void) { return CEU_WCLOCK_INACTIVE; }
 void ceu_arduino_callback_wclock_min (s32) {}
 #endif
 
@@ -85,25 +93,29 @@ void ceu_arduino_callback_isr_enable (int on) {
     }
 }
 
-void ceu_arduino_callback_isr_emit (int idx, void* evt) {
+void ceu_arduino_callback_isr_emit (void* evt) {
     tceu_isr_evt* evt_ = (tceu_isr_evt*) evt;
+    if (evt_->len%2 == 1) {
+        evt_->len++;            // TODO: prevents unaligned access to ceu_isrs_buf
+    }
 
-    int nxt = ceu_isrs_n+sizeof(tceu_nevt)+sizeof(u8)+evt_->len;
+    int nxt = ceu_isrs_n + offsetof(tceu_isr_evt,args) + evt_->len;
+
     if (ceu_isrs_i <= ceu_isrs_n) {
         if (nxt+sizeof(tceu_nevt) > CEU_ISRS_N) {      // +sizeof(tceu_nevt) to fit NONE
             *((tceu_nevt*)&ceu_isrs_buf[ceu_isrs_n]) = CEU_INPUT__NONE;     // evt does not fit the end of the buffer
             ceu_isrs_n = 0;
-            nxt = sizeof(tceu_nevt)+sizeof(u8)+evt_->len;
+            nxt = 0 + offsetof(tceu_isr_evt,args) + evt_->len;
         }
     }
     if (ceu_isrs_i > ceu_isrs_n) {     // test again b/c ceu_isrs_n may change above
         ceu_assert(nxt < ceu_isrs_i, "isrs buffer is full");
     }
 
-    *((tceu_nevt*)&ceu_isrs_buf[ceu_isrs_n]) = evt_->id;
-    ceu_isrs_n += sizeof(tceu_nevt);
-    *((u8*)&ceu_isrs_buf[ceu_isrs_n]) = evt_->len;
-    ceu_isrs_n += sizeof(u8);
+    *((tceu_nevt*)&ceu_isrs_buf[ceu_isrs_n+offsetof(tceu_isr_evt,id )]) = evt_->id;
+    *((u8*)       &ceu_isrs_buf[ceu_isrs_n+offsetof(tceu_isr_evt,len)]) = evt_->len;
+    ceu_isrs_n += offsetof(tceu_isr_evt,args);
+
     memcpy(&ceu_isrs_buf[ceu_isrs_n], evt_->args, evt_->len);
     ceu_isrs_n += evt_->len;
 }
@@ -118,10 +130,9 @@ void setup () {
     {
         noInterrupts();
         if (ceu_isrs_i != ceu_isrs_n) {
-            tceu_nevt id = *((tceu_nevt*)&ceu_isrs_buf[ceu_isrs_i]);
-            ceu_isrs_i += sizeof(tceu_nevt);
-            u8 len = *((u8*)&ceu_isrs_buf[ceu_isrs_i]);
-            ceu_isrs_i += sizeof(u8);
+            tceu_nevt id  = *((tceu_nevt*)&ceu_isrs_buf[ceu_isrs_i+offsetof(tceu_isr_evt,id )]);
+            u8        len = *((u8*)       &ceu_isrs_buf[ceu_isrs_i+offsetof(tceu_isr_evt,len)]);
+            ceu_isrs_i += offsetof(tceu_isr_evt,args);
             void* args = &ceu_isrs_buf[ceu_isrs_i];
             if (id == CEU_INPUT__NONE) {
                 ceu_isrs_i = 0;

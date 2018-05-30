@@ -53,6 +53,28 @@ void ceu_arduino_callback_abort (int err) {
     interrupts();
 }
 
+void ceu_arduino_warn (int cnd, int err) {
+    if (cnd) return;
+
+    noInterrupts();
+#ifdef ARDUINO_ARCH_AVR
+    //SPCR &= ~_BV(SPE);  // releases PIN13
+#endif
+    pinMode(13, OUTPUT);
+    digitalWrite(13, 1);
+    //for (;;) {
+        for (int j=0; j<err; j++) {
+            _DELAY(100);
+            digitalWrite(13, 0);
+            _DELAY(100);
+            digitalWrite(13, 1);
+        }
+        _DELAY(500);
+    //}
+    digitalWrite(13, 0);
+    interrupts();
+}
+
 #define ceu_callback_stop(trace)
 #define ceu_callback_step(trace)
 #define ceu_callback_wclock_dt(trace) ceu_arduino_callback_wclock_dt()

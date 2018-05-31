@@ -18,7 +18,7 @@
 #endif
 #undef CEU_STACK_MAX
 
-#define CEU_ISRS_N 100
+#define CEU_ISRS_N 200
 
 ///////////////////////////////////////////////////////////////////////////////
 // DO NOT EDIT
@@ -117,9 +117,11 @@ void ceu_arduino_callback_isr_enable (int on) {
 
 void ceu_arduino_callback_isr_emit (void* evt) {
     tceu_isr_evt* evt_ = (tceu_isr_evt*) evt;
-    if (evt_->len%2 == 1) {
-        evt_->len++;            // TODO: prevents unaligned access to ceu_isrs_buf
+#ifdef ARDUINO_ARCH_SAMD
+    if (evt_->len%4 != 0) {
+        evt_->len += 4-(evt_->len%4); // TODO: prevents unaligned access to ceu_isrs_buf
     }
+#endif
 
     int nxt = ceu_isrs_n + offsetof(tceu_isr_evt,args) + evt_->len;
 

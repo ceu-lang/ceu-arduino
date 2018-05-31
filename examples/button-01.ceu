@@ -6,6 +6,8 @@
 //#include "pin_05.ceu"       // SAMD
 //#include "pin_10.ceu"     // MEGA
 
+//#include "gpio_in.ceu"      // SAMD
+
 output high/low PIN_13;
 emit PIN_13(_digitalRead(2));
 

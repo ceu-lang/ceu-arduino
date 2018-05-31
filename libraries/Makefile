@@ -1,8 +1,8 @@
 BRANCH = pre-v0.40
 
-LIBRARIES = arch-avr driver-adc driver-gpio driver-hcsr04 driver-millis-micros \
-	        driver-nrf24l01 driver-pm driver-spi driver-usart driver-wclock    \
-	        driver-wdt #protocol-rf24network
+LIBRARIES = arch-avr arch-samd driver-adc driver-gpio driver-hcsr04 \
+            driver-millis-micros driver-nrf24l01 driver-pm driver-spi \
+            driver-usart driver-wclock driver-wdt #protocol-rf24network
 
 all:
 	$(error Choose target...)

@@ -27,6 +27,7 @@ native
     _digitalRead,
     _digitalWrite,
     _ceu_arduino_assert,
+    _ceu_arduino_warn,
     _F,
     _map,
     _micros,

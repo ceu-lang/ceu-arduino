@@ -11,6 +11,7 @@ native/const
     _HIGH,
     _LOW,
     _INPUT,
+    _INPUT_PULLDOWN,
     _INPUT_PULLUP,
     _OUTPUT,
     _HEX,

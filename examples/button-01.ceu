@@ -1,17 +1,11 @@
 #include "gpio.ceu"
 
-#include "pin_02.ceu"       // UNO/SAMD
-//#include "pin_03.ceu"       // UNO/SAMD
-//#include "pin_04.ceu"       // UNO
-//#include "pin_05.ceu"       // SAMD
-//#include "pin_10.ceu"     // MEGA
+#define OUT 13
+#define IN   2      // UNO/ZERO
+//#define IN  10      // MEGA
 
-//#include "gpio_in.ceu"      // SAMD
-
-output high/low PIN_13;
-emit PIN_13(_digitalRead(2));
-
+emit PIN(OUT, _digitalRead(IN));
 loop do
-    var high/low v = await PIN_02;
-    emit PIN_13(v);
+    var high/low v = await Pin(IN);
+    emit PIN(OUT, v);
 end

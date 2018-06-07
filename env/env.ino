@@ -40,7 +40,7 @@ void ceu_arduino_callback_abort (int err) {
     SPCR &= ~_BV(SPE);  // releases PIN13
 #endif
     pinMode(13, OUTPUT);
-    digitalWrite(13, 1);
+    //digitalWrite(13, 1);
     for (;;) {
         for (int j=0; j<err; j++) {
             _DELAY(200);
@@ -61,12 +61,12 @@ void ceu_arduino_warn (int cnd, int err) {
     //SPCR &= ~_BV(SPE);  // releases PIN13
 #endif
     pinMode(13, OUTPUT);
-    digitalWrite(13, 1);
+    //digitalWrite(13, 1);
     //for (;;) {
         for (int j=0; j<err; j++) {
-            _DELAY(100);
+            _DELAY(200);
             digitalWrite(13, 0);
-            _DELAY(100);
+            _DELAY(200);
             digitalWrite(13, 1);
         }
         _DELAY(500);

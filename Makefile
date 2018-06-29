@@ -47,6 +47,7 @@ ceu:
 	          --ceu-line-directives=true                                       \
 	          --ceu-features-lua=false --ceu-features-thread=false             \
 	          --ceu-features-isr=static                                        \
+	          $(CEU_FEATURES)                                                  \
 	    --env --env-types=env/types.h                                          \
 	          --env-output=env/_ceu_app.c.h
 

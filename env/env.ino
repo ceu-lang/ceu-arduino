@@ -77,6 +77,7 @@ void ceu_arduino_warn (int cnd, int err) {
 
 #define ceu_callback_stop(trace)
 #define ceu_callback_step(trace)
+#define ceu_callback_async_pending(trace)
 #define ceu_callback_wclock_dt(trace) ceu_arduino_callback_wclock_dt()
 s32 ceu_arduino_callback_wclock_dt (void);
 #define ceu_callback_wclock_min(dt,trace) ceu_arduino_callback_wclock_min(dt)

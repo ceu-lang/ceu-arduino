@@ -26,11 +26,13 @@ CEU_INCS  = $(addprefix -I./, $(addsuffix $(ARD_ARCH)/$(ARD_BOARD)/$(ARD_CPU), $
             $(addprefix -I./, $(addsuffix $(ARD_ARCH), $(LIBRARIES)))                         \
             $(addprefix -I./, $(LIBRARIES))
 
+CEU_PM = -DCEU_PM
+
 ifdef ARD_CPU
 	ARD_CPU_ := :cpu=$(ARD_CPU)
 endif
 
-ARD_PREFS = --pref compiler.cpp.extra_flags="$(CEU_INCS) $(CEU_DEFS) -DCEU_PM"
+ARD_PREFS = --pref compiler.cpp.extra_flags="$(CEU_INCS) $(CEU_DEFS) $(CEU_PM)"
 
 all: ceu c
 
@@ -41,7 +43,7 @@ c:
 	           --upload env/env.ino
 
 ceu:
-	$(CEU_EXE) --pre --pre-args="-include ./include/arduino/arduino.ceu -include ./libraries/arch-$(ARD_ARCH)/$(ARD_ARCH).ceu -I./include/ $(CEU_INCS) -include pm.ceu $(CEU_DEFS) -DCEUMAKER_ARDUINO -DARDUINO_ARCH_$(ARD_ARCH_UPPER) -DARDUINO_MCU_$(ARD_MCU_UPPER) -DARDUINO_BOARD_$(ARD_BOARD_UPPER) -DCEU_PM" \
+	$(CEU_EXE) --pre --pre-args="-include ./include/arduino/arduino.ceu -include ./libraries/arch-$(ARD_ARCH)/$(ARD_ARCH).ceu -I./include/ $(CEU_INCS) -include pm.ceu $(CEU_DEFS) -DCEUMAKER_ARDUINO -DARDUINO_ARCH_$(ARD_ARCH_UPPER) -DARDUINO_MCU_$(ARD_MCU_UPPER) -DARDUINO_BOARD_$(ARD_BOARD_UPPER) $(CEU_PM)" \
 	          --pre-input=$(CEU_SRC_)                                          \
 	    --ceu --ceu-err-unused=pass --ceu-err-uninitialized=pass               \
 	          --ceu-line-directives=true                                       \

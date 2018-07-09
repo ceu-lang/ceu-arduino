@@ -46,7 +46,7 @@ c:
 
 ceu:
 	$(CEU_EXE) --pre --pre-args="-include ./include/arduino/arduino.ceu -include ./libraries/arch-$(ARD_ARCH)/$(ARD_ARCH).ceu -I./include/ $(CEU_INCS) -include pm.ceu $(CEU_DEFS) -DCEUMAKER_ARDUINO -DARDUINO_ARCH_$(ARD_ARCH_UPPER) -DARDUINO_MCU_$(ARD_MCU_UPPER) -DARDUINO_BOARD_$(ARD_BOARD_UPPER) -DCEU_PM" \
-	          --pre-input=$(CEU_SRC_)                                          \
+	          --pre-input="$(CEU_SRC_)"                                        \
 	    --ceu --ceu-err-unused=pass --ceu-err-uninitialized=pass               \
 	          --ceu-line-directives=true                                       \
 	          --ceu-features-lua=false --ceu-features-thread=false             \
@@ -55,7 +55,7 @@ ceu:
 	    --env --env-types=env/types.h                                          \
 	          --env-output=env/_ceu_app.c.h
 pre:
-	ceu --pre --pre-args="-include ./include/arduino/arduino.ceu -include ./libraries/arch-$(ARD_ARCH)/$(ARD_ARCH).ceu -I$(CEU_DIR)/include/ -I./include/ $(CEU_INCS) $(CEU_DEFS) -DCEUMAKER_ARDUINO -DARDUINO_ARCH_$(ARD_ARCH_UPPER) -DARDUINO_MCU_$(ARD_MCU_UPPER) -DARDUINO_BOARD_$(ARD_BOARD_UPPER)" --pre-input=$(CEU_SRC_)		
+	ceu --pre --pre-args="-include ./include/arduino/arduino.ceu -include ./libraries/arch-$(ARD_ARCH)/$(ARD_ARCH).ceu -I$(CEU_DIR)/include/ -I./include/ $(CEU_INCS) $(CEU_DEFS) -DCEUMAKER_ARDUINO -DARDUINO_ARCH_$(ARD_ARCH_UPPER) -DARDUINO_MCU_$(ARD_MCU_UPPER) -DARDUINO_BOARD_$(ARD_BOARD_UPPER)" --pre-input="$(CEU_SRC_)"		
 endif
 
 .PHONY: all ceu c

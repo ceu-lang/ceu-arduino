@@ -93,15 +93,28 @@ void ceu_arduino_callback_isr_emit (void* evt);
 #include "_ceu_app.c.h"
 
 #ifdef CEU_PM
+
 #ifndef CEU_PM_IMPL
 #error Missing architecture implementation for power management.
-#endif
 #endif
 
 #ifndef __WCLOCK_CEU__
 //#error "Missing WCLOCK driver!"
 s32 ceu_arduino_callback_wclock_dt (void) { return CEU_WCLOCK_INACTIVE; }
 void ceu_arduino_callback_wclock_min (s32) {}
+#endif
+
+#else
+
+u32 ceu_arduino_micros_old;
+void ceu_arduino_callback_wclock_min (s32) {}
+s32 ceu_arduino_callback_wclock_dt (void) {
+    u32 now = micros();
+    u32 dt  = (now - ceu_arduino_micros_old);  // no problems with overflow
+    ceu_arduino_micros_old = now;
+    return dt;
+}
+
 #endif
 
 static byte  ceu_isrs_buf[CEU_ISRS_N];
@@ -148,6 +161,8 @@ void ceu_arduino_callback_isr_emit (void* evt) {
 void setup () {
 #ifdef CEU_PM
     ceu_pm_init();
+#else
+    ceu_arduino_micros_old = micros();
 #endif
     ceu_start(0, NULL);
 
@@ -169,6 +184,7 @@ void setup () {
             goto _CEU_ARDUINO_AWAKE_;
         }
         interrupts();
+#ifdef CEU_PM
 #ifdef CEU_FEATURES_ASYNC
         if (!CEU_APP.async_pending)
 #endif
@@ -183,6 +199,9 @@ void setup () {
             ceu_input(CEU_INPUT__ASYNC, NULL);
 #endif
         }
+#else
+        ceu_input(CEU_INPUT__ASYNC, NULL);
+#endif
 _CEU_ARDUINO_AWAKE_:;
     }
 }

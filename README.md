@@ -1,8 +1,8 @@
 Céu-Arduino supports the development of Arduino applications in the programming
 language Céu:
 
-- Source Code:   https://github.com/fsantanna/ceu-arduino/
-- Documentation: http://fsantanna.github.io/ceu-arduino/
+- Source Code:   https://github.com/ceu-lang/ceu-arduino/
+- Documentation: http://ceu-lang.github.io/ceu-arduino/
 - Chat:          https://gitter.im/fsantanna/ceu
 
 [Arduino](https://www.arduino.cc/) Arduino is an open-source project that
@@ -13,7 +13,7 @@ Céu is a reactive language that aims to offer a higher-level and safer
 alternative to C:
 
 - Home Page:   http://www.ceu-lang.org/
-- Source code: https://github.com/fsantanna/ceu/
+- Source code: https://github.com/ceu-lang/ceu/
 
 Céu-Arduino empowers the development of Arduino applications with the following
 extensions:
@@ -39,12 +39,12 @@ https://www.arduino.cc/
 
 ## Install Céu:
 
-https://github.com/fsantanna/ceu/
+https://github.com/ceu-lang/ceu/
 
 ## Clone Céu-Arduino:
 
 ```
-$ git clone https://github.com/fsantanna/ceu-arduino
+$ git clone https://github.com/ceu-lang/ceu-arduino
 $ cd ceu-arduino/
 $ git checkout v0.30
 ```
@@ -314,7 +314,7 @@ The Game "Ship"
 
 The game `ship.ceu` is described in a blog post:
 
-- https://github.com/fsantanna/ceu-arduino/blob/master/samples/ship.ceu
+- https://github.com/ceu-lang/ceu-arduino/blob/master/samples/ship.ceu
 - http://thesynchronousblog.wordpress.com/2012/07/08/ceu-arduino/
 
 <!--

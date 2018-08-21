@@ -32,6 +32,18 @@ ifdef ARD_CPU
 	ARD_CPU_ := :cpu=$(ARD_CPU)
 endif
 
+ifdef ARD_ARCH_
+	ARD_ARCH := $(ARD_ARCH_)
+endif
+
+ifdef ARD_BOARD_
+	ARD_BOARD := $(ARD_BOARD_)
+endif
+
+ifdef ARD_PORT_
+	ARD_PORT := $(ARD_PORT_)
+endif
+
 ARD_PREFS = --pref compiler.cpp.extra_flags="$(CEU_INCS) $(CEU_DEFS) $(CEU_PM)"
 
 all: ceu c

@@ -19,7 +19,6 @@ PRESERVE = --preserve-temp-files
 ARD_ARCH_UPPER  = $(shell echo $(ARD_ARCH)  | tr a-z A-Z)
 ARD_CPU_UPPER   = $(shell echo $(ARD_CPU)   | tr a-z A-Z)
 ARD_BOARD_UPPER = $(shell echo $(ARD_BOARD) | tr a-z A-Z)
-ARD_MCU_UPPER   = $(shell echo $(ARD_MCU)   | tr a-z A-Z)
 
 LIBRARIES := $(sort $(dir $(wildcard libraries/*/)))
 CEU_INCS  = $(addprefix -I./, $(addsuffix $(ARD_ARCH)/$(ARD_BOARD)/$(ARD_CPU), $(LIBRARIES))) \

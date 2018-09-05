@@ -5,6 +5,10 @@ include Makefile.conf
 # make ARD_BOARD=pro  ARD_CPU=8MHzatmega328 ARD_PORT=/dev/ttyUSB0 CEU_SRC=...
 # make ARD_ARCH=samd ARD_BOARD=arduino_zero_native CEU_SRC=...
 
+ifndef ENV
+ENV = env
+endif
+
 ifdef CEU_SRC
 CEU_SRC_ = $(CEU_SRC)
 ifneq ("$(wildcard $(CEU_SRC)/main.ceu)","")
@@ -56,7 +60,7 @@ c:
 	$(ARD_EXE) --verbose $(PRESERVE) $(ARD_PREFS)                              \
 	           --board arduino:$(ARD_ARCH):$(ARD_BOARD)$(ARD_CPU_)             \
 	           --port $(ARD_PORT)                                              \
-	           --upload env/env.ino
+	           --upload $(ENV)/env.ino
 
 ceu:
 	$(CEU_EXE) --pre --pre-args="-include ./include/arduino/arduino.ceu -include ./libraries/arch-$(ARD_ARCH)/$(ARD_ARCH).ceu -I./include/ $(CEU_INCS) -include pm.ceu $(CEU_DEFS) -DCEUMAKER_ARDUINO -DARDUINO_ARCH_$(ARD_ARCH_UPPER) -DARDUINO_MCU_$(ARD_MCU_UPPER) -DARDUINO_BOARD_$(ARD_BOARD_UPPER) $(CEU_PM)"      \
@@ -66,8 +70,8 @@ ceu:
 	          --ceu-features-lua=false --ceu-features-thread=false             \
 	          --ceu-features-isr=static                                        \
 	          $(CEU_FEATURES)                                                  \
-	    --env --env-types=env/types.h                                          \
-	          --env-output=env/_ceu_app.c.h
+	    --env --env-types=$(ENV)/types.h                                          \
+	          --env-output=$(ENV)/_ceu_app.c.h
 pre:
 	ceu --pre --pre-args="-include ./include/arduino/arduino.ceu -include ./libraries/arch-$(ARD_ARCH)/$(ARD_ARCH).ceu -I$(CEU_DIR)/include/ -I./include/ $(CEU_INCS) $(CEU_DEFS) -DCEUMAKER_ARDUINO -DARDUINO_ARCH_$(ARD_ARCH_UPPER) -DARDUINO_MCU_$(ARD_MCU_UPPER) -DARDUINO_BOARD_$(ARD_BOARD_UPPER)" --pre-input="$(CEU_SRC_)"		
 endif

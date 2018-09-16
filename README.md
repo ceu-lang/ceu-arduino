@@ -53,8 +53,7 @@ $ make clone
 
 ## Configure:
 
-Edit the `Makefile.conf` to point to the `ceu` repository and to set your
-preferences:
+Edit the `Makefile.conf` to set your configurations and preferences:
 
 ```
 $ gedit Makefile.conf

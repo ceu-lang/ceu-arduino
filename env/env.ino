@@ -18,8 +18,6 @@
 #endif
 #undef CEU_STACK_MAX
 
-#define CEU_ISRS_N 200
-
 ///////////////////////////////////////////////////////////////////////////////
 // DO NOT EDIT
 ///////////////////////////////////////////////////////////////////////////////
@@ -87,8 +85,8 @@ void ceu_arduino_callback_abort (int err);
 #define ceu_callback_start(trace)
 #define ceu_callback_isr_enable(on,trace) ceu_arduino_callback_isr_enable(on)
 void ceu_arduino_callback_isr_enable (int on);
-#define ceu_callback_isr_emit(evt,trace) ceu_arduino_callback_isr_emit(evt)
-void ceu_arduino_callback_isr_emit (void* evt);
+#define ceu_callback_isr_emit(n,evt,trace) ceu_arduino_callback_isr_emit(n,evt)
+void ceu_arduino_callback_isr_emit (int n, void* evt);
 
 #include "_ceu_app.c.h"
 
@@ -117,9 +115,7 @@ s32 ceu_arduino_callback_wclock_dt (void) {
 
 #endif
 
-static byte  ceu_isrs_buf[CEU_ISRS_N];
-static usize ceu_isrs_i = 0;
-static usize ceu_isrs_n = 0;
+static tceu_nevt ceu_isrs[CEU_ISRS_N];
 
 void ceu_arduino_callback_isr_enable (int on) {
     if (on) {
@@ -129,36 +125,12 @@ void ceu_arduino_callback_isr_enable (int on) {
     }
 }
 
-void ceu_arduino_callback_isr_emit (void* evt) {
-    tceu_isr_evt* evt_ = (tceu_isr_evt*) evt;
-#ifdef ARDUINO_ARCH_SAMD
-    if (evt_->len%4 != 0) {
-        evt_->len += 4-(evt_->len%4); // TODO: prevents unaligned access to ceu_isrs_buf
-    }
-#endif
-
-    int nxt = ceu_isrs_n + offsetof(tceu_isr_evt,args) + evt_->len;
-
-    if (ceu_isrs_i <= ceu_isrs_n) {
-        if (nxt+sizeof(tceu_nevt) > CEU_ISRS_N) {      // +sizeof(tceu_nevt) to fit NONE
-            *((tceu_nevt*)&ceu_isrs_buf[ceu_isrs_n]) = CEU_INPUT__NONE;     // evt does not fit the end of the buffer
-            ceu_isrs_n = 0;
-            nxt = 0 + offsetof(tceu_isr_evt,args) + evt_->len;
-        }
-    }
-    if (ceu_isrs_i > ceu_isrs_n) {     // test again b/c ceu_isrs_n may change above
-        ceu_assert(nxt < ceu_isrs_i, "isrs buffer is full");
-    }
-
-    *((tceu_nevt*)&ceu_isrs_buf[ceu_isrs_n+offsetof(tceu_isr_evt,id )]) = evt_->id;
-    *((u8*)       &ceu_isrs_buf[ceu_isrs_n+offsetof(tceu_isr_evt,len)]) = evt_->len;
-    ceu_isrs_n += offsetof(tceu_isr_evt,args);
-
-    memcpy(&ceu_isrs_buf[ceu_isrs_n], evt_->args, evt_->len);
-    ceu_isrs_n += evt_->len;
+void ceu_arduino_callback_isr_emit (int n, void* evt) {
+    ceu_isrs[n] = ((tceu_isr_evt*)evt)->id;
 }
 
 void setup () {
+    memset(ceu_isrs, CEU_INPUT__NONE, sizeof(tceu_nevt)*CEU_ISRS_N);
 #ifdef CEU_PM
     ceu_pm_init();
 #else
@@ -169,19 +141,14 @@ void setup () {
     while (1)
     {
         noInterrupts();
-        if (ceu_isrs_i != ceu_isrs_n) {
-            tceu_nevt id  = *((tceu_nevt*)&ceu_isrs_buf[ceu_isrs_i+offsetof(tceu_isr_evt,id )]);
-            u8        len = *((u8*)       &ceu_isrs_buf[ceu_isrs_i+offsetof(tceu_isr_evt,len)]);
-            ceu_isrs_i += offsetof(tceu_isr_evt,args);
-            void* args = &ceu_isrs_buf[ceu_isrs_i];
-            if (id == CEU_INPUT__NONE) {
-                ceu_isrs_i = 0;
-            } else {
-                ceu_isrs_i += len;
+        for (int i=0; i<CEU_ISRS_N; i++) {
+            tceu_nevt evt = ceu_isrs[i];
+            if (evt != CEU_INPUT__NONE) {
+                ceu_isrs[i] = CEU_INPUT__NONE;
+                interrupts();
+                ceu_input(evt, NULL);
+                goto _CEU_ARDUINO_AWAKE_;
             }
-            interrupts();
-            ceu_input(id, args);
-            goto _CEU_ARDUINO_AWAKE_;
         }
         interrupts();
 #ifdef CEU_PM

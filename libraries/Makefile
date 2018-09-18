@@ -1,7 +1,7 @@
 BRANCH = pre-v0.40
 
 LIBRARIES = arch-avr arch-samd driver-adc driver-gpio driver-hcsr04 driver-i2c \
-            driver-time driver-nrf24l01 driver-pm driver-spi driver-rtc \
+            driver-nrf24l01 driver-pm driver-spi driver-rtc \
             driver-usart driver-wclock driver-wdt #protocol-rf24network
 
 all:

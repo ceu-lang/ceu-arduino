@@ -8,13 +8,15 @@ native/const
     _CHANGE,
     _DEFAULT,
     _FALLING,
+    _HEX,
     _HIGH,
     _LOW,
     _INPUT,
     _INPUT_PULLDOWN,
     _INPUT_PULLUP,
     _OUTPUT,
-    _HEX,
+    _PCINT0, _PCINT1, _PCINT2, _PCINT3, _PCINT4, _PCINT5, _PCINT6, _PCINT7,
+    _PCINT8, _PCINT9, _PCINT10, _PCINT11, _PCINT12, _PCINT13, _PCINT14, _PCINT15,
 ;
 
 native

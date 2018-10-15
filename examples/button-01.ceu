@@ -1,11 +1,13 @@
-#include "gpio.ceu"
+#include "out.ceu"
+#include "int0.ceu"     // UNO=D2, MEGA=D21
 
-#define OUT 13
-#define IN   2      // UNO/ZERO
-//#define IN  10      // MEGA
+output high/low OUT_13;
 
-emit PIN(OUT, _digitalRead(IN));
+var high/low v = call INT0_Get();
+emit OUT(13, v);
+
 loop do
-    var high/low v = await Pin(IN);
-    emit PIN(OUT, v);
+    await INT0;
+    v = call INT0_Get();
+    emit OUT_13(v);
 end

@@ -47,8 +47,6 @@ https://github.com/ceu-lang/ceu/
 $ git clone https://github.com/ceu-lang/ceu-arduino
 $ cd ceu-arduino/
 $ git checkout pre-v0.40
-$ cd libraries/
-$ make clone
 ```
 
 ## Configure:
@@ -58,6 +56,17 @@ Edit the `Makefile.conf` to set your configurations and preferences:
 ```
 $ gedit Makefile.conf
 ```
+
+## Clone the Libraries:
+
+```
+$ cd libraries/
+$ make clone
+```
+
+Each library provides documentation in separate:
+
+https://github.com/ceu-arduino/
 
 Use
 ===
@@ -91,15 +100,15 @@ The program is an infinite `loop` that intercalates between turning the LED
 *on* and *off* in intervals of 1 second:
 
 ```
-#include "gpio.ceu"             // uses GPIO (PIN_13)
+#include "out.ceu"              // uses GPIO (OUT_13)
 #include "wclock.ceu"           // uses timers (await 1s)
 
-output high/low PIN_13;         // PIN_13 is an output pin
+output high/low OUT_13;         // declares OUT_13 an output pin
 
-loop do                         // an infinite loop that:
-    emit PIN_13(high);          //   - turns the LED on
+loop do                         // runs an infinite loop that
+    emit OUT_13(high);          //   - turns the LED on
     await 1s;                   //   - awaits 1 second
-    emit PIN_13(low);           //   - turns the LED off
+    emit OUT_13(low);           //   - turns the LED off
     await 1s;                   //   - awaits another 1 second
 end                             //   - repeats
 ```
@@ -132,22 +141,26 @@ The program waits for changes on *pin 2* (the switch), copying its value to
 *pin 13* (the LED):
 
 ```
-#include "gpio.ceu"
-#include "pin_02.ceu"   // declares "input high/low PIN_02"
+#include "out.ceu"
+#include "int0.ceu"                 // declares input `INT0` (UNO=D2, MEGA=D21)
 
-output high/low PIN_13;
-emit PIN_13(_digitalRead(2));
+output high/low OUT_13;
+
+var high/low v = call INT0_Get();   // gets current value of the pin
+emit OUT_13(v);                     // sets the LED to this value
 
 loop do
-    var high/low v = await PIN_02;
-    emit PIN_13(v);
+    await INT0;                     // waits for a pin change event
+    v = call INT0_Get();            // gets the new state of the pin
+    emit OUT_13(v);                 // sets the LED to this value
 end
+
 ```
 
+<!--
 Céu can directly use standard Arduino functionality by prefixing its symbols
 with an underscore (e.g., `_digitalRead(2)`).
 
-<!--
 Now, we also use an input event to read <tt>int</tt> values from <tt>PIN2</tt>.
 Whenever its value changes, the command <tt>await PIN02</tt> resumes and sets
 <tt>v</tt>, which is copied to <tt>PIN13</tt>.
@@ -166,32 +179,32 @@ The example `blink-02.ceu` requires two additional LEDs connected to
 The program blinks the LEDs with different frequencies, in parallel:
 
 ```
-#include "gpio.ceu"
+#include "out.ceu"
 #include "wclock.ceu"
 
-output high/low PIN_11;
-output high/low PIN_12;
-output high/low PIN_13;
+output high/low OUT_11;
+output high/low OUT_12;
+output high/low OUT_13;
 
 par do
     loop do
-        emit PIN_11(high);
+        emit OUT_11(high);
         await 1s;
-        emit PIN_11(low);
+        emit OUT_11(low);
         await 1s;
     end
 with
     loop do
-        emit PIN_12(high);
+        emit OUT_12(high);
         await 500ms;
-        emit PIN_12(low);
+        emit OUT_12(low);
         await 500ms;
     end
 with
     loop do
-        emit PIN_13(high);
+        emit OUT_13(high);
         await 250ms;
-        emit PIN_13(low);
+        emit OUT_13(low);
         await 250ms;
     end
 end
@@ -205,25 +218,23 @@ concurrently in the same program.
 Fading a LED
 ------------
 
-The example `pwm-01.ceu` assumes that a LED is connected to *pin 06*.
+The example `pwm-01.ceu` assumes that an LED is connected to *pin 06*.
 
 The program fades the LED from `0` to `255` and from `255` to `0` in two
 consecutive loops:
 
 ```
-#include "gpio.ceu"
+#include "pwm.ceu"
 #include "wclock.ceu"
-
-output u8 PWM_06;
 
 loop do
     var int i;
     loop i in [0->255] do
-        emit PWM_06(i);
+        spawn Pwm(6, i);
         await 5ms;
     end
     loop i in [0<-255] do
-        emit PWM_06(i);
+        spawn Pwm(6, i);
         await 5ms;
     end
 end
@@ -238,12 +249,12 @@ continuous loop:
 ```
 #include "usart.ceu"
 
-spawn Usart(9600);
+spawn USART_Init(9600);
 
 loop do
     var[20] byte str = [];
-    await Usart_RX(&str, _);
-    await Usart_TX(&str);
+    await USART_Rx(&str, _);
+    await USART_Tx(&str);
 end
 ```
 

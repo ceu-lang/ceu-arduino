@@ -1,29 +1,29 @@
-#include "gpio.ceu"
+#include "out.ceu"
 #include "wclock.ceu"
 
-output high/low PIN_11;
-output high/low PIN_12;
-output high/low PIN_13;
+output high/low OUT_11;
+output high/low OUT_12;
+output high/low OUT_13;
 
 par do
     loop do
-        emit PIN_11(high);
+        emit OUT_11(high);
         await 1s;
-        emit PIN_11(low);
+        emit OUT_11(low);
         await 1s;
     end
 with
     loop do
-        emit PIN_12(high);
+        emit OUT_12(high);
         await 500ms;
-        emit PIN_12(low);
+        emit OUT_12(low);
         await 500ms;
     end
 with
     loop do
-        emit PIN_13(high);
+        emit OUT_13(high);
         await 250ms;
-        emit PIN_13(low);
+        emit OUT_13(low);
         await 250ms;
     end
 end

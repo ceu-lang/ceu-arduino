@@ -1,0 +1,9 @@
+#include "usart.ceu"
+
+spawn USART_Init(9600);
+
+loop do
+    var[20] byte str = [];
+    await USART_Rx(&str, _);
+    await USART_Tx(&str);
+end

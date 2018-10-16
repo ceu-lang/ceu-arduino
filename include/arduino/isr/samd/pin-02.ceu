@@ -1,6 +1,0 @@
-#include "arduino/samd.ceu"
-
-#define CEU_PIN_02_PULL INPUT_PULLUP
-#define CEU_PIN_02_MODE _LOW
-
-#include "../pin-02.ceu"

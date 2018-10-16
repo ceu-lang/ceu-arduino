@@ -1,0 +1,13 @@
+#include "out.ceu"
+#include "int0.ceu"     // UNO=D2, MEGA=D21
+
+output high/low OUT_13;
+
+var high/low v = call INT0_Get();
+emit OUT(13, v);
+
+loop do
+    await INT0;
+    v = call INT0_Get();
+    emit OUT_13(v);
+end

@@ -1,4 +1,4 @@
-BRANCH = v0.40
+BRANCH = pre-v0.40
 
 LIBRARIES = arch-avr arch-samd driver-adc driver-gpio driver-hcsr04 driver-i2c \
             driver-nrf24l01 driver-pm driver-spi driver-rtc driver-mfs \
@@ -24,6 +24,16 @@ branch:
 	    cd "$$i";                           \
 	    git branch $(BRANCH);               \
 	    git checkout $(BRANCH);             \
+	    cd -;                               \
+	done
+
+merge:
+	for i in $(LIBRARIES); do               \
+	    echo;                               \
+	    echo ">>> $$i";                     \
+	    cd "$$i";                           \
+	    git checkout master;                \
+	    git merge $(BRANCH);                \
 	    cd -;                               \
 	done
 

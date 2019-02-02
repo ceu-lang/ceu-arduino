@@ -104,13 +104,13 @@ void ceu_arduino_callback_wclock_min (s32) {}
 
 #else
 
-u32 ceu_arduino_micros_old;
+u32 ceu_arduino_millis_old;
 void ceu_arduino_callback_wclock_min (s32) {}
 s32 ceu_arduino_callback_wclock_dt (void) {
-    u32 now = micros();
-    u32 dt  = (now - ceu_arduino_micros_old);  // no problems with overflow
-    ceu_arduino_micros_old = now;
-    return dt;
+    u32 now = TV.millis();
+    u32 dt  = (now - ceu_arduino_millis_old);  // no problems with overflow
+    ceu_arduino_millis_old = now;
+    return dt*1000;
 }
 
 #endif
@@ -134,7 +134,7 @@ void setup () {
 #ifdef CEU_PM
     ceu_pm_init();
 #else
-    ceu_arduino_micros_old = micros();
+    ceu_arduino_millis_old = TV.millis();
 #endif
     ceu_start(0, NULL);
 

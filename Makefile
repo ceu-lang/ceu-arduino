@@ -32,7 +32,7 @@ CEU_INCS  = $(addprefix -I./, $(addsuffix $(ARD_ARCH)/$(ARD_BOARD)/$(ARD_CPU), $
 	        -I ./include                    \
 	        -I $(CEU_DIR)/include           \
 
-CEU_PM = -DCEU_PM
+#CEU_PM = -DCEU_PM -include pm.ceu
 
 ifdef ARD_CPU
 	ARD_CPU_ := :cpu=$(ARD_CPU)
@@ -65,7 +65,7 @@ c:
 	           --upload $(ENV)/env.ino
 
 ceu:
-	$(CEU_EXE) --pre --pre-args="-include ./include/arduino/arduino.ceu -include ./libraries/arch-$(ARD_ARCH)/$(ARD_ARCH).ceu $(CEU_INCS) -include pm.ceu $(CEU_DEFS) -DCEUMAKER_ARDUINO -DARDUINO_ARCH_$(ARD_ARCH_UPPER) -DARDUINO_MCU_$(ARD_MCU_UPPER) -DARDUINO_BOARD_$(ARD_BOARD_UPPER) $(CEU_PM)"      \
+	$(CEU_EXE) --pre --pre-args="-include ./include/arduino/arduino.ceu -include ./libraries/arch-$(ARD_ARCH)/$(ARD_ARCH).ceu $(CEU_INCS) $(CEU_DEFS) $(CEU_PM) -DCEUMAKER_ARDUINO -DARDUINO_ARCH_$(ARD_ARCH_UPPER) -DARDUINO_MCU_$(ARD_MCU_UPPER) -DARDUINO_BOARD_$(ARD_BOARD_UPPER)"      \
 	          --pre-input="$(CEU_SRC_)"                                        \
 	    --ceu --ceu-err-unused=pass --ceu-err-uninitialized=pass               \
 	          --ceu-line-directives=true                                       \

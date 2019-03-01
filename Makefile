@@ -12,7 +12,7 @@ endif
 ifdef CEU_SRC
 CEU_SRC_ = $(CEU_SRC)
 ifneq ("$(wildcard $(CEU_SRC)/main.ceu)","")
-	CEU_SRC_ = "$(CEU_SRC)/main.ceu"
+	CEU_SRC_ = $(CEU_SRC)/main.ceu
 endif
 else
 $(error missing `CEU_SRC` path to compile)

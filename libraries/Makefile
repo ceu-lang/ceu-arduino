@@ -1,4 +1,4 @@
-BRANCH = pre-v0.40
+BRANCH = master
 
 LIBRARIES = arch-avr arch-samd driver-adc driver-gpio driver-hcsr04 driver-i2c \
             driver-nrf24l01 driver-pm driver-spi driver-rtc driver-mfs \
